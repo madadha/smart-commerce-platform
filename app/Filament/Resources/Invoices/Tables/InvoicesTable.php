@@ -114,9 +114,15 @@ class InvoicesTable
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Active'),
             ])
-            ->recordActions([
-                EditAction::make(),
-            ])
+           ->recordActions([
+    EditAction::make(),
+
+    \Filament\Actions\Action::make('pdf')
+        ->label('PDF')
+        ->icon('heroicon-o-printer')
+        ->url(fn (\App\Models\Invoice $record): string => route('admin.invoices.pdf', $record))
+        ->openUrlInNewTab(),
+])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
