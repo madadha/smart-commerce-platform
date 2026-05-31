@@ -126,4 +126,10 @@ class Order extends Model
     {
         return $this->status === OrderStatus::Completed;
     }
+
+    public function payments(): HasMany
+{
+    return $this->hasMany(Payment::class)
+        ->orderBy('id');
+}
 }
