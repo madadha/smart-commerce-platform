@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductVariant extends Model
 {
@@ -113,4 +114,18 @@ class ProductVariant extends Model
 
         return $this->stock_quantity > 0;
     }
+
+    public function digitalCodes(): HasMany
+{
+    return $this->hasMany(ProductDigitalCode::class)
+        ->orderBy('sort_order')
+        ->orderBy('id');
+}
+
+public function availableDigitalCodes(): HasMany
+{
+    return $this->digitalCodes()
+        ->where('status', \App\Enums\DigitalCodeStatus::Available->value)
+        ->where('is_active', true);
+}
 }

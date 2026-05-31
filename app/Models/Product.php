@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+
 class Product extends Model
 {
     protected $fillable = [
@@ -241,4 +242,19 @@ public function defaultVariant(): HasMany
     return $this->variants()
         ->where('is_default', true);
 }
+
+public function digitalCodes(): HasMany
+{
+    return $this->hasMany(ProductDigitalCode::class)
+        ->orderBy('sort_order')
+        ->orderBy('id');
+}
+
+public function availableDigitalCodes(): HasMany
+{
+    return $this->digitalCodes()
+        ->where('status', \App\Enums\DigitalCodeStatus::Available->value)
+        ->where('is_active', true);
+}
+
 }
