@@ -4,11 +4,15 @@ namespace App\Filament\Resources\Carts\Tables;
 
 use App\Enums\CartStatus;
 use App\Models\Cart;
+use App\Services\Checkout\CartCheckoutService;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Throwable;
 
 class CartsTable
 {
@@ -110,6 +114,32 @@ class CartsTable
             ])
             ->recordActions([
                 EditAction::make(),
+
+                Action::make('convert_to_order')
+                    ->label('Convert to Order')
+                    ->icon('heroicon-o-arrow-right-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Convert Cart to Order')
+                    ->modalDescription('This will create a new order from this cart and mark the cart as converted.')
+                    ->visible(fn (Cart $record): bool => $record->status === CartStatus::Active)
+                    ->action(function (Cart $record): void {
+                        try {
+                            $order = app(CartCheckoutService::class)->convertToOrder($record);
+
+                            Notification::make()
+                                ->title('Cart converted successfully')
+                                ->body('Order created: ' . $order->order_number)
+                                ->success()
+                                ->send();
+                        } catch (Throwable $exception) {
+                            Notification::make()
+                                ->title('Checkout failed')
+                                ->body($exception->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
