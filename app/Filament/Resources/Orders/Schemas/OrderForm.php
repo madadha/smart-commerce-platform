@@ -7,9 +7,13 @@ use App\Enums\PaymentStatus;
 use App\Enums\ShippingMethod;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Product;
+use App\Models\ProductDigitalCode;
+use App\Models\ProductVariant;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -105,12 +109,127 @@ class OrderForm
                     ])
                     ->columns(2),
 
+                Section::make('Order Items')
+                    ->schema([
+                        Repeater::make('items')
+                            ->label('Items')
+                            ->relationship('items')
+                            ->schema([
+                                Select::make('product_id')
+                                    ->label('Product')
+                                    ->options(fn (): array => Product::query()
+                                        ->orderBy('sort_order')
+                                        ->orderBy('id')
+                                        ->get()
+                                        ->mapWithKeys(fn (Product $product) => [
+                                            $product->id => $product->getName('ar') . ' - ' . ($product->sku ?? $product->slug),
+                                        ])
+                                        ->toArray())
+                                    ->searchable()
+                                    ->preload(),
+
+                                Select::make('product_variant_id')
+                                    ->label('Variant')
+                                    ->options(fn (): array => ProductVariant::query()
+                                        ->with('product')
+                                        ->orderBy('sort_order')
+                                        ->orderBy('id')
+                                        ->get()
+                                        ->mapWithKeys(fn (ProductVariant $variant) => [
+                                            $variant->id => ($variant->product?->getName('ar') ?? '-') . ' / ' . $variant->getName('ar') . ' / ' . ($variant->sku ?? '-'),
+                                        ])
+                                        ->toArray())
+                                    ->searchable()
+                                    ->preload(),
+
+                                Select::make('digital_code_id')
+                                    ->label('Digital Code')
+                                    ->options(fn (): array => ProductDigitalCode::query()
+                                        ->with('product')
+                                        ->latest()
+                                        ->get()
+                                        ->mapWithKeys(fn (ProductDigitalCode $code) => [
+                                            $code->id => ($code->product?->getName('ar') ?? '-') . ' / ' . $code->maskCode(),
+                                        ])
+                                        ->toArray())
+                                    ->searchable()
+                                    ->preload(),
+
+                                Select::make('item_type')
+                                    ->label('Item Type')
+                                    ->options([
+                                        'product' => 'Product',
+                                        'digital_code' => 'Digital Code',
+                                        'service' => 'Service',
+                                    ])
+                                    ->required()
+                                    ->default('product'),
+
+                                TextInput::make('product_name.ar')
+                                    ->label('Product Name Arabic')
+                                    ->required()
+                                    ->maxLength(255),
+
+                                TextInput::make('product_name.he')
+                                    ->label('Product Name Hebrew')
+                                    ->maxLength(255),
+
+                                TextInput::make('product_name.en')
+                                    ->label('Product Name English')
+                                    ->maxLength(255),
+
+                                TextInput::make('sku')
+                                    ->label('SKU')
+                                    ->maxLength(255),
+
+                                TextInput::make('quantity')
+                                    ->label('Quantity')
+                                    ->numeric()
+                                    ->required()
+                                    ->default(1),
+
+                                TextInput::make('unit_price')
+                                    ->label('Unit Price')
+                                    ->numeric()
+                                    ->required()
+                                    ->default(0),
+
+                                TextInput::make('discount_total')
+                                    ->label('Discount')
+                                    ->numeric()
+                                    ->default(0),
+
+                                TextInput::make('tax_total')
+                                    ->label('Tax')
+                                    ->numeric()
+                                    ->default(0),
+
+                                KeyValue::make('options')
+                                    ->label('Options')
+                                    ->keyLabel('Option')
+                                    ->valueLabel('Value')
+                                    ->columnSpanFull(),
+
+                                Textarea::make('notes')
+                                    ->label('Notes')
+                                    ->rows(2)
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(3)
+                            ->columnSpanFull()
+                            ->defaultItems(0)
+                            ->addActionLabel('Add Order Item')
+                            ->reorderable()
+                            ->collapsible(),
+                    ]),
+
                 Section::make('Totals')
                     ->schema([
                         TextInput::make('subtotal')
                             ->label('Subtotal')
                             ->numeric()
-                            ->default(0),
+                            ->default(0)
+                            ->helperText('Calculated after saving order items.'),
 
                         TextInput::make('discount_total')
                             ->label('Discount Total')
@@ -130,7 +249,8 @@ class OrderForm
                         TextInput::make('grand_total')
                             ->label('Grand Total')
                             ->numeric()
-                            ->default(0),
+                            ->default(0)
+                            ->helperText('Calculated after saving order.'),
 
                         TextInput::make('paid_total')
                             ->label('Paid Total')
