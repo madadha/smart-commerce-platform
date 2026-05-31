@@ -2,12 +2,11 @@
 
 namespace App\Filament\Resources\Categories\Tables;
 
+use App\Models\Category;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Tables;
 use Filament\Tables\Table;
 
 class CategoriesTable
@@ -16,33 +15,51 @@ class CategoriesTable
     {
         return $table
             ->columns([
-                TextColumn::make('parent.name')
-                    ->searchable(),
-                TextColumn::make('slug')
-                    ->searchable(),
-                ImageColumn::make('image'),
-                TextColumn::make('icon')
-                    ->searchable(),
-                ImageColumn::make('banner_image'),
-                IconColumn::make('is_active')
-                    ->boolean(),
-                IconColumn::make('show_in_menu')
-                    ->boolean(),
-                TextColumn::make('sort_order')
-                    ->numeric()
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Image')
+                    ->circular(),
+
+                Tables\Columns\TextColumn::make('category_name')
+                    ->label('Name')
+                    ->state(fn (Category $record): string => $record->getName('ar'))
+                    ->searchable(query: function ($query, string $search) {
+                        return $query->where('slug', 'like', "%{$search}%")
+                            ->orWhere('name->ar', 'like', "%{$search}%")
+                            ->orWhere('name->en', 'like', "%{$search}%")
+                            ->orWhere('name->he', 'like', "%{$search}%");
+                    })
+                    ->sortable(false),
+
+                Tables\Columns\TextColumn::make('full_path')
+                    ->label('Full Path')
+                    ->state(fn (Category $record): string => $record->getFullPath('ar'))
+                    ->limit(60)
+                    ->tooltip(fn (Category $record): string => $record->getFullPath('ar')),
+
+                Tables\Columns\TextColumn::make('parent.slug')
+                    ->label('Parent')
+                    ->placeholder('-')
                     ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('slug')
+                    ->label('Slug')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
+
+                Tables\Columns\IconColumn::make('show_in_menu')
+                    ->label('Menu')
+                    ->boolean(),
+
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->label('Order')
+                    ->sortable(),
             ])
-            ->filters([
-                //
-            ])
+            ->defaultSort('sort_order')
+            ->filters([])
             ->recordActions([
                 EditAction::make(),
             ])
