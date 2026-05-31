@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -214,4 +215,30 @@ class Product extends Model
 
         return $this->stock_quantity > 0;
     }
+
+    public function options(): HasMany
+{
+    return $this->hasMany(ProductOption::class)
+        ->orderBy('sort_order')
+        ->orderBy('id');
+}
+
+public function variants(): HasMany
+{
+    return $this->hasMany(ProductVariant::class)
+        ->orderBy('sort_order')
+        ->orderBy('id');
+}
+
+public function activeVariants(): HasMany
+{
+    return $this->variants()
+        ->where('is_active', true);
+}
+
+public function defaultVariant(): HasMany
+{
+    return $this->variants()
+        ->where('is_default', true);
+}
 }
