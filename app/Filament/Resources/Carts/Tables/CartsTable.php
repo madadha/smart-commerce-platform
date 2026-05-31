@@ -125,7 +125,12 @@ class CartsTable
                     ->visible(fn (Cart $record): bool => $record->status === CartStatus::Active)
                     ->action(function (Cart $record): void {
                         try {
-                            $order = app(CartCheckoutService::class)->convertToOrder($record);
+                           $order = app(CartCheckoutService::class)->convertToOrder(
+    cart: $record,
+    createPayment: true,
+    paymentMethod: 'cash',
+    transactionId: null
+);
 
                             Notification::make()
                                 ->title('Cart converted successfully')
