@@ -11,20 +11,23 @@ return new class extends Migration
         Schema::create('countries', function (Blueprint $table) {
             $table->id();
 
-            $table->json('name'); // ar/he/en
-            $table->string('code', 10)->unique(); // IL, JO, AE, EG
-            $table->foreignId('currency_id')
-                ->nullable()
-                ->constrained('currencies')
-                ->nullOnDelete();
+            $table->json('name');
+            $table->string('code', 10)->unique();
 
-            $table->string('phone_code', 10)->nullable(); // +972, +962
+            $table->unsignedBigInteger('currency_id')->nullable();
+
+            $table->string('phone_code', 10)->nullable();
             $table->string('flag', 255)->nullable();
 
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
 
             $table->timestamps();
+
+            $table->foreign('currency_id')
+                ->references('id')
+                ->on('currencies')
+                ->nullOnDelete();
 
             $table->index(['is_active', 'sort_order']);
         });
