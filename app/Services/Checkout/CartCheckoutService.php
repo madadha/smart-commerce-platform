@@ -13,6 +13,7 @@ use App\Models\InvoiceItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Services\Inventory\InventoryService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -42,11 +43,17 @@ class CartCheckoutService
 
         return DB::transaction(function () use ($cart, $createPayment, $paymentMethod, $transactionId): Order {
             $cart->refresh();
+            $cart->load(['items.product', 'items.productVariant', 'customer.country']);
             $cart->recalculateTotals();
 
             $order = $this->createOrderFromCart($cart);
 
             $this->createOrderItemsFromCart($cart, $order);
+
+            $order->refresh();
+            $order->load(['items.product', 'items.productVariant', 'customer']);
+
+            $this->processInventoryAndDigitalCodes($order);
 
             $order->refresh();
             $order->recalculateTotals();
@@ -122,6 +129,15 @@ class CartCheckoutService
         }
     }
 
+    private function processInventoryAndDigitalCodes(Order $order): void
+    {
+        $inventoryService = app(InventoryService::class);
+
+        foreach ($order->items as $orderItem) {
+            $inventoryService->processOrderItem($orderItem);
+        }
+    }
+
     private function createPaymentForOrder(Order $order, string $paymentMethod, ?string $transactionId = null): Payment
     {
         return Payment::query()->create([
@@ -148,6 +164,9 @@ class CartCheckoutService
 
     private function createInvoiceForOrder(Order $order): Invoice
     {
+        $order->refresh();
+        $order->load(['items', 'customer', 'currency']);
+
         $invoice = Invoice::query()->create([
             'order_id' => $order->id,
             'customer_id' => $order->customer_id,

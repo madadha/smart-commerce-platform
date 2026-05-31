@@ -3,12 +3,14 @@
 namespace Database\Seeders;
 
 use App\Enums\CartStatus;
+use App\Enums\DigitalCodeStatus;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\ProductDigitalCode;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use Illuminate\Database\Seeder;
@@ -38,6 +40,27 @@ class CartSeeder extends Seeder
             return;
         }
 
+        if ($variant && $variant->stock_quantity < 10) {
+            $variant->update([
+                'track_stock' => true,
+                'stock_quantity' => 10,
+            ]);
+        }
+
+        ProductDigitalCode::query()->updateOrCreate(
+            ['code' => 'PSN-US-50-CHECKOUT-TEST-0001'],
+            [
+                'product_id' => $psCard->id,
+                'product_variant_id' => null,
+                'status' => DigitalCodeStatus::Available,
+                'source' => 'manual',
+                'expires_at' => now()->addYear(),
+                'internal_notes' => 'Checkout test digital code.',
+                'is_active' => true,
+                'sort_order' => 100,
+            ]
+        );
+
         $cart = Cart::query()->updateOrCreate(
             [
                 'cart_number' => 'CART-DEMO-00001',
@@ -50,6 +73,7 @@ class CartSeeder extends Seeder
                 'status' => CartStatus::Active,
                 'customer_notes' => 'Demo cart.',
                 'internal_notes' => 'Created by CartSeeder.',
+                'converted_at' => null,
                 'is_active' => true,
                 'sort_order' => 1,
             ]
