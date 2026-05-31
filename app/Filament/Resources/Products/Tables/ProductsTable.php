@@ -17,7 +17,7 @@ class ProductsTable
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('mainMedia.path')
+                Tables\Columns\ImageColumn::make('main_image')
                     ->label('Image')
                     ->disk('public')
                     ->square()

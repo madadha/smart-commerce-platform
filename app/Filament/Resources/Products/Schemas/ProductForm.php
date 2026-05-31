@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\Currency;
 use App\Models\MediaFile;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -74,6 +75,36 @@ class ProductForm
                     ])
                     ->columns(2),
 
+                Section::make('Product Image')
+                    ->schema([
+                        FileUpload::make('main_image')
+                            ->label('Upload Product Image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('products/main-images')
+                            ->visibility('public')
+                            ->imageEditor()
+                            ->downloadable()
+                            ->openable()
+                            ->maxSize(5120)
+                            ->helperText('Upload image directly from product page.'),
+
+                        Select::make('main_media_id')
+                            ->label('Or Select Image From Media Library')
+                            ->options(fn (): array => MediaFile::query()
+                                ->where('type', 'image')
+                                ->latest()
+                                ->get()
+                                ->mapWithKeys(fn (MediaFile $mediaFile) => [
+                                    $mediaFile->id => $mediaFile->getTitle('ar') . ' - ' . $mediaFile->path,
+                                ])
+                                ->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Optional: choose an existing image from Media Library.'),
+                    ])
+                    ->columns(2),
+
                 Section::make('Relations')
                     ->schema([
                         Select::make('brand_id')
@@ -110,19 +141,6 @@ class ProductForm
                                 ->get()
                                 ->mapWithKeys(fn (Currency $currency) => [
                                     $currency->id => $currency->code . ' - ' . $currency->getName('ar'),
-                                ])
-                                ->toArray())
-                            ->searchable()
-                            ->preload(),
-
-                        Select::make('main_media_id')
-                            ->label('Main Image')
-                            ->options(fn (): array => MediaFile::query()
-                                ->where('type', 'image')
-                                ->latest()
-                                ->get()
-                                ->mapWithKeys(fn (MediaFile $mediaFile) => [
-                                    $mediaFile->id => $mediaFile->getTitle('ar') . ' - ' . $mediaFile->path,
                                 ])
                                 ->toArray())
                             ->searchable()

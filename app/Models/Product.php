@@ -7,6 +7,7 @@ use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -24,6 +25,7 @@ class Product extends Model
         'company_id',
         'currency_id',
         'main_media_id',
+        'main_image',
         'price',
         'sale_price',
         'cost_price',
@@ -183,6 +185,15 @@ class Product extends Model
             ?? $description['en']
             ?? $description['ar']
             ?? null;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        if ($this->main_image) {
+            return Storage::disk('public')->url($this->main_image);
+        }
+
+        return $this->mainMedia?->getUrl();
     }
 
     public function finalPrice(): float
