@@ -61,6 +61,13 @@ class OrdersTable
                     ->badge()
                     ->sortable(false),
 
+                Tables\Columns\TextColumn::make('coupon_code')
+                    ->label('Coupon')
+                    ->badge()
+                    ->placeholder('-')
+                    ->searchable()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('items_count')
                     ->label('Items')
                     ->counts('items'),

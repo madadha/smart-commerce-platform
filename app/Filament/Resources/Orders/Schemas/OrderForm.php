@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Product;
@@ -114,6 +115,40 @@ class OrderForm
                             ->searchable()
                             ->preload()
                             ->helperText('Choose from Shipping Methods module.'),
+                    ])
+                    ->columns(2),
+
+                Section::make('Coupon / Discount')
+                    ->schema([
+                        Select::make('coupon_id')
+                            ->label('Coupon')
+                            ->options(fn (): array => Coupon::query()
+                                ->where('is_active', true)
+                                ->orderBy('sort_order')
+                                ->orderBy('id')
+                                ->get()
+                                ->mapWithKeys(fn (Coupon $coupon) => [
+                                    $coupon->id => $coupon->code . ' - ' . $coupon->getName('ar'),
+                                ])
+                                ->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Discount will be calculated after saving.'),
+
+                        TextInput::make('coupon_code')
+                            ->label('Coupon Code')
+                            ->disabled()
+                            ->dehydrated(false),
+
+                        TextInput::make('coupon_discount_type')
+                            ->label('Coupon Discount Type')
+                            ->disabled()
+                            ->dehydrated(false),
+
+                        TextInput::make('coupon_discount_value')
+                            ->label('Coupon Discount Value')
+                            ->disabled()
+                            ->dehydrated(false),
                     ])
                     ->columns(2),
 
@@ -242,7 +277,8 @@ class OrderForm
                         TextInput::make('discount_total')
                             ->label('Discount Total')
                             ->numeric()
-                            ->default(0),
+                            ->default(0)
+                            ->helperText('Calculated from selected coupon if available.'),
 
                         TextInput::make('tax_total')
                             ->label('Tax Total')

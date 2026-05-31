@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-
 class Order extends Model
 {
     protected $fillable = [
@@ -18,6 +17,10 @@ class Order extends Model
         'user_id',
         'currency_id',
         'shipping_method_id',
+        'coupon_id',
+        'coupon_code',
+        'coupon_discount_type',
+        'coupon_discount_value',
         'status',
         'payment_status',
         'payment_method',
@@ -50,6 +53,7 @@ class Order extends Model
         'shipping_total' => 'decimal:2',
         'grand_total' => 'decimal:2',
         'paid_total' => 'decimal:2',
+        'coupon_discount_value' => 'decimal:2',
         'billing_address' => 'array',
         'shipping_address' => 'array',
         'ordered_at' => 'datetime',
@@ -73,10 +77,31 @@ class Order extends Model
         });
 
         static::saving(function (Order $order): void {
+            if ($order->coupon) {
+                $order->coupon_code = $order->coupon->code;
+                $order->coupon_discount_type = $order->coupon->discount_type?->value ?? null;
+                $order->coupon_discount_value = $order->coupon->discount_value;
+            }
+
             if ($order->shippingMethod) {
                 $order->shipping_method = $order->shippingMethod->type?->value ?? $order->shipping_method;
                 $order->shipping_total = $order->shippingMethod->calculateCost((float) $order->subtotal);
             }
+
+            if ($order->coupon) {
+                $order->discount_total = $order->coupon->calculateDiscount(
+                    (float) $order->subtotal,
+                    (float) $order->shipping_total
+                );
+            }
+
+            $order->grand_total = max(
+                0,
+                (float) $order->subtotal
+                - (float) $order->discount_total
+                + (float) $order->tax_total
+                + (float) $order->shipping_total
+            );
         });
     }
 
@@ -111,6 +136,11 @@ class Order extends Model
         return $this->belongsTo(ShippingMethod::class, 'shipping_method_id');
     }
 
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
@@ -119,6 +149,12 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)
+            ->orderBy('id');
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)
             ->orderBy('id');
     }
 
@@ -131,6 +167,17 @@ class Order extends Model
         if ($this->shippingMethod) {
             $this->shipping_total = $this->shippingMethod->calculateCost((float) $subtotal);
             $this->shipping_method = $this->shippingMethod->type?->value ?? $this->shipping_method;
+        }
+
+        if ($this->coupon) {
+            $this->coupon_code = $this->coupon->code;
+            $this->coupon_discount_type = $this->coupon->discount_type?->value ?? null;
+            $this->coupon_discount_value = $this->coupon->discount_value;
+
+            $this->discount_total = $this->coupon->calculateDiscount(
+                (float) $subtotal,
+                (float) $this->shipping_total
+            );
         }
 
         $this->grand_total = max(
@@ -153,10 +200,4 @@ class Order extends Model
     {
         return $this->status === OrderStatus::Completed;
     }
-
-    public function invoices(): HasMany
-{
-    return $this->hasMany(Invoice::class)
-        ->orderBy('id');
-}
 }
