@@ -6,6 +6,7 @@ use App\Enums\ShippingMethodType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ShippingMethod extends Model
 {
@@ -144,4 +145,10 @@ class ShippingMethod extends Model
 
         return $this->min_delivery_days . ' - ' . $this->max_delivery_days . ' days';
     }
+
+
+    public function orders(): HasMany
+{
+    return $this->hasMany(Order::class, 'shipping_method_id');
+}
 }

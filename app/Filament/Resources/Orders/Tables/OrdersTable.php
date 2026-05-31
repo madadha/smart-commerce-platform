@@ -55,11 +55,11 @@ class OrdersTable
                     ->placeholder('-')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('shipping_method')
+                Tables\Columns\TextColumn::make('shipping_method_name')
                     ->label('Shipping')
+                    ->state(fn (Order $record): string => $record->shippingMethod?->getName('ar') ?? '-')
                     ->badge()
-                    ->placeholder('-')
-                    ->sortable(),
+                    ->sortable(false),
 
                 Tables\Columns\TextColumn::make('items_count')
                     ->label('Items')

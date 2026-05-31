@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\ShippingMethod;
+use App\Enums\ShippingMethod as ShippingMethodEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +16,7 @@ class Order extends Model
         'customer_id',
         'user_id',
         'currency_id',
+        'shipping_method_id',
         'status',
         'payment_status',
         'payment_method',
@@ -41,7 +42,7 @@ class Order extends Model
     protected $casts = [
         'status' => OrderStatus::class,
         'payment_status' => PaymentStatus::class,
-        'shipping_method' => ShippingMethod::class,
+        'shipping_method' => ShippingMethodEnum::class,
         'subtotal' => 'decimal:2',
         'discount_total' => 'decimal:2',
         'tax_total' => 'decimal:2',
@@ -69,11 +70,19 @@ class Order extends Model
                 $order->ordered_at = now();
             }
         });
+
+        static::saving(function (Order $order): void {
+            if ($order->shippingMethod) {
+                $order->shipping_method = $order->shippingMethod->type?->value ?? $order->shipping_method;
+                $order->shipping_total = $order->shippingMethod->calculateCost((float) $order->subtotal);
+            }
+        });
     }
 
     public static function generateOrderNumber(): string
     {
         $prefix = 'ORD-' . now()->format('Ymd') . '-';
+
         $count = self::query()
             ->whereDate('created_at', today())
             ->count() + 1;
@@ -96,9 +105,20 @@ class Order extends Model
         return $this->belongsTo(Currency::class);
     }
 
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(ShippingMethod::class, 'shipping_method_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)
+            ->orderBy('id');
     }
 
     public function recalculateTotals(): void
@@ -106,15 +126,21 @@ class Order extends Model
         $subtotal = $this->items()->sum('line_total');
 
         $this->subtotal = $subtotal;
+
+        if ($this->shippingMethod) {
+            $this->shipping_total = $this->shippingMethod->calculateCost((float) $subtotal);
+            $this->shipping_method = $this->shippingMethod->type?->value ?? $this->shipping_method;
+        }
+
         $this->grand_total = max(
             0,
-            (float) $subtotal
+            (float) $this->subtotal
             - (float) $this->discount_total
             + (float) $this->tax_total
             + (float) $this->shipping_total
         );
 
-        $this->save();
+        $this->saveQuietly();
     }
 
     public function isPaid(): bool
@@ -126,10 +152,4 @@ class Order extends Model
     {
         return $this->status === OrderStatus::Completed;
     }
-
-    public function payments(): HasMany
-{
-    return $this->hasMany(Payment::class)
-        ->orderBy('id');
-}
 }

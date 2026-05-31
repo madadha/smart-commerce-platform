@@ -4,12 +4,12 @@ namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\ShippingMethod;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductDigitalCode;
 use App\Models\ProductVariant;
+use App\Models\ShippingMethod;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
@@ -100,12 +100,20 @@ class OrderForm
                             ])
                             ->searchable(),
 
-                        Select::make('shipping_method')
+                        Select::make('shipping_method_id')
                             ->label('Shipping Method')
-                            ->options(collect(ShippingMethod::cases())->mapWithKeys(fn (ShippingMethod $method) => [
-                                $method->value => $method->label(),
-                            ])->toArray())
-                            ->searchable(),
+                            ->options(fn (): array => ShippingMethod::query()
+                                ->where('is_active', true)
+                                ->orderBy('sort_order')
+                                ->orderBy('id')
+                                ->get()
+                                ->mapWithKeys(fn (ShippingMethod $method) => [
+                                    $method->id => $method->getName('ar') . ' - ' . ($method->currency?->symbol ?? '₪') . ' ' . number_format((float) $method->base_cost, 2),
+                                ])
+                                ->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Choose from Shipping Methods module.'),
                     ])
                     ->columns(2),
 
@@ -244,7 +252,8 @@ class OrderForm
                         TextInput::make('shipping_total')
                             ->label('Shipping Total')
                             ->numeric()
-                            ->default(0),
+                            ->default(0)
+                            ->helperText('Calculated according to the selected shipping method.'),
 
                         TextInput::make('grand_total')
                             ->label('Grand Total')
