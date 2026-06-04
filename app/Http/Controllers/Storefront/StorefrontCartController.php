@@ -14,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class StorefrontCartController extends Controller
 {
@@ -44,26 +43,25 @@ class StorefrontCartController extends Controller
                 ->findOrFail($validated['product_variant_id']);
         }
 
-        $cart = $this->getOrCreateCart($request, $product);
+        $cart = $this->getOrCreateCart($product);
 
         $this->addItemToCart($cart, $product, $variant, $quantity, $locale);
 
-        $cart->refresh();
-        $cart->recalculateTotals();
+        $this->recalculateCartTotals($cart);
 
         return back()
             ->with('success', __('storefront.cart.added_successfully'))
             ->with('cart_id', $cart->id);
     }
 
-    private function getOrCreateCart(Request $request, Product $product): Cart
+    private function getOrCreateCart(Product $product): Cart
     {
         $cartId = session('storefront_cart_id');
 
         if ($cartId) {
             $existingCart = Cart::query()
                 ->where('id', $cartId)
-                ->where('status', CartStatus::Active)
+                ->where('status', CartStatus::Active->value)
                 ->where('is_active', true)
                 ->first();
 
@@ -88,7 +86,7 @@ class StorefrontCartController extends Controller
             'coupon_code' => null,
             'coupon_discount_type' => null,
             'coupon_discount_value' => 0,
-            'status' => CartStatus::Active,
+            'status' => CartStatus::Active->value,
             'subtotal' => 0,
             'discount_total' => 0,
             'tax_total' => 0,
@@ -113,10 +111,7 @@ class StorefrontCartController extends Controller
         int $quantity,
         string $locale
     ): void {
-        $unitPrice = $variant && method_exists($variant, 'finalPrice')
-            ? $variant->finalPrice()
-            : (method_exists($product, 'finalPrice') ? $product->finalPrice() : ($product->sale_price ?: $product->price));
-
+        $unitPrice = $this->getUnitPrice($product, $variant);
         $itemType = $this->resolveItemType($product);
 
         $existingItem = CartItem::query()
@@ -126,12 +121,18 @@ class StorefrontCartController extends Controller
             ->first();
 
         if ($existingItem) {
+            $newQuantity = (int) $existingItem->quantity + $quantity;
+            $lineTotal = $unitPrice * $newQuantity;
+
             $existingItem->update([
-                'quantity' => (int) $existingItem->quantity + $quantity,
+                'quantity' => $newQuantity,
                 'unit_price' => $unitPrice,
+                'line_total' => $lineTotal,
                 'product_name' => $variant?->name ?? $product->name,
                 'sku' => $variant?->sku ?? $product->sku,
                 'item_type' => $itemType,
+                'discount_total' => 0,
+                'tax_total' => 0,
                 'options' => $variant?->option_values,
             ]);
 
@@ -147,10 +148,58 @@ class StorefrontCartController extends Controller
             'item_type' => $itemType,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
+            'line_total' => $unitPrice * $quantity,
             'discount_total' => 0,
             'tax_total' => 0,
             'options' => $variant?->option_values,
             'notes' => 'Added from storefront. Locale: ' . $locale,
+        ]);
+    }
+
+    private function getUnitPrice(Product $product, ?ProductVariant $variant): float
+    {
+        if ($variant) {
+            if (method_exists($variant, 'finalPrice')) {
+                return (float) $variant->finalPrice();
+            }
+
+            if (isset($variant->sale_price) && (float) $variant->sale_price > 0) {
+                return (float) $variant->sale_price;
+            }
+
+            if (isset($variant->price)) {
+                return (float) $variant->price;
+            }
+        }
+
+        if (method_exists($product, 'finalPrice')) {
+            return (float) $product->finalPrice();
+        }
+
+        if (isset($product->sale_price) && (float) $product->sale_price > 0) {
+            return (float) $product->sale_price;
+        }
+
+        return (float) $product->price;
+    }
+
+    private function recalculateCartTotals(Cart $cart): void
+    {
+        $cart->load('items');
+
+        $subtotal = (float) $cart->items->sum(function ($item) {
+            return (float) $item->line_total;
+        });
+
+        $discountTotal = (float) ($cart->discount_total ?? 0);
+        $taxTotal = (float) ($cart->tax_total ?? 0);
+        $shippingTotal = (float) ($cart->shipping_total ?? 0);
+
+        $grandTotal = max($subtotal - $discountTotal + $taxTotal + $shippingTotal, 0);
+
+        $cart->update([
+            'subtotal' => $subtotal,
+            'grand_total' => $grandTotal,
         ]);
     }
 
