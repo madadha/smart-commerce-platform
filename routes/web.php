@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\InvoicePdfController;
+use App\Http\Controllers\Storefront\StorefrontController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -17,6 +18,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::middleware(['auth'])->get('/admin/invoices/{invoice}/pdf', [InvoicePdfController::class, 'show'])
     ->name('admin.invoices.pdf');
+    Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
+
+Route::prefix('store')->name('storefront.')->group(function () {
+    Route::get('/', [StorefrontController::class, 'home'])->name('index');
+});
 });
 
 require __DIR__.'/auth.php';

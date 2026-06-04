@@ -1,0 +1,75 @@
+<?php
+
+return [
+    'topbar' => 'Smart Commerce Platform — Dynamic multilingual commerce experience',
+
+    'nav' => [
+        'home' => 'Home',
+        'products' => 'Products',
+        'digital_codes' => 'Digital Codes',
+        'deals' => 'Deals',
+        'brands' => 'Brands',
+        'wishlist' => 'Wishlist',
+        'cart' => 'Cart',
+        'search' => 'Search',
+        'search_placeholder' => 'Search products, brands, digital codes...',
+    ],
+
+    'hero' => [
+        'badge' => 'Smart Commerce Platform',
+        'title' => 'Modern shopping experience for every product type',
+        'text' => 'Physical products, digital codes, discounts, cart, payments and invoices — fully dynamic and multilingual.',
+        'shop_now' => 'Shop Now',
+        'view_deals' => 'View Deals',
+        'products' => 'Products',
+        'categories' => 'Categories',
+        'languages' => 'Languages',
+        'showcase_small' => 'Digital + Physical',
+        'showcase_title' => 'One Smart Storefront',
+        'coupons' => 'Coupons',
+        'dynamic_deals' => 'Dynamic Deals',
+        'checkout' => 'Checkout',
+        'cart_to_order' => 'Cart → Order',
+    ],
+
+    'sections' => [
+        'categories' => 'Main Categories',
+        'categories_subtitle' => 'Dynamic categories loaded directly from database.',
+        'featured' => 'Featured Products',
+        'featured_subtitle' => 'Products are dynamic, multilingual, and connected with brands, currencies and media.',
+        'latest' => 'Latest Products',
+        'latest_subtitle' => 'Recently added products from your dynamic product catalog.',
+        'brands' => 'Trusted Brands',
+        'brands_subtitle' => 'Brands loaded from the brands module.',
+        'view_all' => 'View all',
+    ],
+
+    'product' => [
+        'add_to_cart' => 'Add to Cart',
+        'details' => 'Details',
+        'sale' => 'Sale',
+        'default_brand' => 'Smart Commerce',
+        'no_featured' => 'No featured products yet.',
+        'no_latest' => 'No latest products yet.',
+    ],
+
+    'empty' => [
+        'categories' => 'No categories yet.',
+        'brands' => 'No brands yet.',
+    ],
+
+    'footer' => [
+        'description' => 'Dynamic multilingual commerce platform for physical products, digital codes, coupons, carts, checkout, orders and invoices.',
+        'quick_links' => 'Quick Links',
+        'support' => 'Support',
+        'products' => 'Products',
+        'categories' => 'Categories',
+        'brands' => 'Brands',
+        'deals' => 'Deals',
+        'contact' => 'Contact',
+        'shipping' => 'Shipping',
+        'returns' => 'Returns',
+        'faq' => 'FAQ',
+        'rights' => 'All rights reserved.',
+    ],
+];
