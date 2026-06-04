@@ -89,6 +89,14 @@
 </header>
 
 <main>
+    @if(session('success'))
+        <div class="scp-container">
+            <div class="scp-alert-success">
+                {{ session('success') }}
+            </div>
+        </div>
+    @endif
+
     @yield('content')
 </main>
 

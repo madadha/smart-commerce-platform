@@ -243,9 +243,17 @@
     {{ __('storefront.product.details') }}
 </a>
 
-                                        <button type="button" class="scp-btn-small primary">
-                                            {{ __('storefront.product.add_to_cart') }}
-                                        </button>
+                                   <form method="POST" action="{{ route('storefront.cart.add') }}" class="scp-card-cart-form">
+    @csrf
+
+    <input type="hidden" name="lang" value="{{ $locale }}">
+    <input type="hidden" name="product_id" value="{{ $product->id }}">
+    <input type="hidden" name="quantity" value="1">
+
+    <button type="submit" class="scp-btn-small primary">
+        {{ __('storefront.product.add_to_cart') }}
+    </button>
+</form>
                                     </div>
                                 </div>
                             </article>

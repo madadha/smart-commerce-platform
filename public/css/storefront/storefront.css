@@ -1597,4 +1597,72 @@ select {
         max-width: 100%;
         white-space: normal;
     }
+
+
+    /* ================================
+   Storefront Cart Actions
+================================ */
+
+.scp-alert-success {
+    margin-top: 18px;
+    margin-bottom: 10px;
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    border-radius: 18px;
+    padding: 14px 18px;
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: 0 12px 28px rgba(22, 163, 74, 0.12);
+}
+
+.scp-card-cart-form {
+    flex: 1;
+    display: flex;
+}
+
+.scp-card-cart-form .scp-btn-small {
+    width: 100%;
+}
+
+.scp-detail-cart-form {
+    display: grid;
+    grid-template-columns: 135px 1fr;
+    gap: 10px;
+    width: 100%;
+}
+
+.scp-quantity-box {
+    min-height: 56px;
+    border: 1px solid var(--scp-border);
+    border-radius: 18px;
+    background: #f8fafc;
+    padding: 6px 10px;
+    display: grid;
+    align-items: center;
+}
+
+.scp-quantity-box label {
+    display: block;
+    color: var(--scp-muted);
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.scp-quantity-box input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--scp-text);
+    font-size: 16px;
+    font-weight: 950;
+}
+
+@media (max-width: 700px) {
+    .scp-detail-cart-form {
+        grid-template-columns: 1fr;
+    }
+}
 }

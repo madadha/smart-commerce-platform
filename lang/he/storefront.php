@@ -117,5 +117,10 @@ return [
     'no_related_products' => 'אין כרגע מוצרים דומים.',
 ],
 
+'cart' => [
+    'quantity' => 'כמות',
+    'added_successfully' => 'המוצר נוסף לעגלה בהצלחה.',
+],
+
 
 ];

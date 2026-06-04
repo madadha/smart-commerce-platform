@@ -200,15 +200,34 @@
                         </div>
                     @endif
 
-                    <div class="scp-product-detail-actions">
-                        <button type="button" class="scp-detail-add-to-cart">
-                            {{ __('storefront.product.add_to_cart') }}
-                        </button>
+<div class="scp-product-detail-actions">
+    <form method="POST" action="{{ route('storefront.cart.add') }}" class="scp-detail-cart-form">
+        @csrf
 
-                        <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-detail-secondary-btn">
-                            {{ __('storefront.product_details.back_to_products') }}
-                        </a>
-                    </div>
+        <input type="hidden" name="lang" value="{{ $locale }}">
+        <input type="hidden" name="product_id" value="{{ $product->id }}">
+
+        <div class="scp-quantity-box">
+            <label>{{ __('storefront.cart.quantity') }}</label>
+
+            <input
+                type="number"
+                name="quantity"
+                value="1"
+                min="1"
+                max="99"
+            >
+        </div>
+
+        <button type="submit" class="scp-detail-add-to-cart">
+            {{ __('storefront.product.add_to_cart') }}
+        </button>
+    </form>
+
+    <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-detail-secondary-btn">
+        {{ __('storefront.product_details.back_to_products') }}
+    </a>
+</div>
                 </div>
 
             </div>

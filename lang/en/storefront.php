@@ -116,4 +116,11 @@ return [
     'related_subtitle' => 'Products from the same categories or products you may like.',
     'no_related_products' => 'No related products available right now.',
 ],
+
+'cart' => [
+    'quantity' => 'Quantity',
+    'added_successfully' => 'Product added to cart successfully.',
+],
+
+
 ];

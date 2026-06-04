@@ -115,6 +115,9 @@ return [
     'no_related_products' => 'لا توجد منتجات مشابهة حاليًا.',
 ],
 
-
+'cart' => [
+    'quantity' => 'الكمية',
+    'added_successfully' => 'تمت إضافة المنتج إلى السلة بنجاح.',
+],
 
 ];
