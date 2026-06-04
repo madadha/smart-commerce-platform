@@ -98,6 +98,23 @@ return [
     'no_products' => 'لا توجد منتجات مطابقة للفلاتر الحالية.',
 ],
 
+'product_details' => [
+    'type' => 'النوع',
+    'status' => 'الحالة',
+    'stock' => 'المخزون',
+    'categories' => 'التصنيفات',
+    'variants' => 'الخيارات / النسخ',
+    'description' => 'وصف المنتج',
+    'specifications' => 'المواصفات',
+    'notes' => 'ملاحظات',
+    'back_to_products' => 'العودة للمنتجات',
+    'no_description' => 'لا يوجد وصف لهذا المنتج بعد.',
+    'no_specifications' => 'لا توجد مواصفات مضافة بعد.',
+    'related_products' => 'منتجات مشابهة',
+    'related_subtitle' => 'منتجات من نفس التصنيفات أو منتجات قد تهمك.',
+    'no_related_products' => 'لا توجد منتجات مشابهة حاليًا.',
+],
+
 
 
 ];

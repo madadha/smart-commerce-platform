@@ -98,4 +98,22 @@ return [
     'searching_for' => 'Searching for',
     'no_products' => 'No products match the current filters.',
 ],
+
+
+'product_details' => [
+    'type' => 'Type',
+    'status' => 'Status',
+    'stock' => 'Stock',
+    'categories' => 'Categories',
+    'variants' => 'Variants / Options',
+    'description' => 'Product Description',
+    'specifications' => 'Specifications',
+    'notes' => 'Notes',
+    'back_to_products' => 'Back to Products',
+    'no_description' => 'No description has been added for this product yet.',
+    'no_specifications' => 'No specifications have been added yet.',
+    'related_products' => 'Related Products',
+    'related_subtitle' => 'Products from the same categories or products you may like.',
+    'no_related_products' => 'No related products available right now.',
+],
 ];

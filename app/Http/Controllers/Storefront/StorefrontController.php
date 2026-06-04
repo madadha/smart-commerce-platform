@@ -150,6 +150,49 @@ class StorefrontController extends Controller
         ]);
     }
 
+    public function productShow(Request $request, string $slug)
+{
+    $locale = $this->resolveLocale($request);
+
+    $product = Product::query()
+        ->with([
+            'brand',
+            'currency',
+            'categories',
+            'variants',
+            'media',
+        ])
+        ->where('is_active', true)
+        ->where('slug', $slug)
+        ->firstOrFail();
+
+    $relatedProducts = Product::query()
+        ->with(['brand', 'currency'])
+        ->where('is_active', true)
+        ->where('id', '!=', $product->id)
+        ->when(method_exists($product, 'categories') && $product->categories->isNotEmpty(), function (Builder $query) use ($product) {
+            $query->whereHas('categories', function (Builder $categoryQuery) use ($product) {
+                $categoryQuery->whereIn('categories.id', $product->categories->pluck('id')->toArray());
+            });
+        })
+        ->latest()
+        ->limit(4)
+        ->get();
+
+    return view('storefront.products.show', [
+        'locale' => $locale,
+        'direction' => $this->direction($locale),
+        'product' => $product,
+        'relatedProducts' => $relatedProducts,
+        'pageTitle' => $product->getName($locale) . ' - Smart Commerce Platform',
+        'pageDescription' => method_exists($product, 'getShortDescription')
+            ? $product->getShortDescription($locale)
+            : $product->getName($locale),
+    ]);
+}
+
+
+
     private function applyPriceSort(Builder $query, string $direction): Builder
     {
         if (Schema::hasColumn('products', 'sale_price') && Schema::hasColumn('products', 'price')) {

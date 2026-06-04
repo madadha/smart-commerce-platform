@@ -239,9 +239,9 @@
                                     </div>
 
                                     <div class="scp-product-actions">
-                                        <a href="#" class="scp-btn-small">
-                                            {{ __('storefront.product.details') }}
-                                        </a>
+                                     <a href="{{ route('storefront.products.show', ['slug' => $product->slug, 'lang' => $locale]) }}" class="scp-btn-small">
+    {{ __('storefront.product.details') }}
+</a>
 
                                         <button type="button" class="scp-btn-small primary">
                                             {{ __('storefront.product.add_to_cart') }}

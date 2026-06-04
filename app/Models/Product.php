@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\ProductMedia;
+
 
 
 class Product extends Model
@@ -255,6 +257,14 @@ public function availableDigitalCodes(): HasMany
     return $this->digitalCodes()
         ->where('status', \App\Enums\DigitalCodeStatus::Available->value)
         ->where('is_active', true);
+}
+
+
+public function media(): HasMany
+{
+    return $this->hasMany(ProductMedia::class)
+        ->orderBy('sort_order')
+        ->orderBy('id');
 }
 
 }

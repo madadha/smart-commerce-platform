@@ -26,6 +26,7 @@ Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
 Route::prefix('store')->name('storefront.')->group(function () {
     Route::get('/', [StorefrontController::class, 'home'])->name('index');
     Route::get('/products', [StorefrontController::class, 'products'])->name('products.index');
+    Route::get('/products/{slug}', [StorefrontController::class, 'productShow'])->name('products.show');
 });
 });
 

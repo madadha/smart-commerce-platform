@@ -98,4 +98,24 @@ return [
     'searching_for' => 'תוצאות חיפוש עבור',
     'no_products' => 'לא נמצאו מוצרים התואמים לסינון הנוכחי.',
 ],
+
+
+'product_details' => [
+    'type' => 'סוג',
+    'status' => 'סטטוס',
+    'stock' => 'מלאי',
+    'categories' => 'קטגוריות',
+    'variants' => 'אפשרויות / גרסאות',
+    'description' => 'תיאור מוצר',
+    'specifications' => 'מפרט',
+    'notes' => 'הערות',
+    'back_to_products' => 'חזרה למוצרים',
+    'no_description' => 'אין עדיין תיאור למוצר זה.',
+    'no_specifications' => 'לא נוספו עדיין מפרטים.',
+    'related_products' => 'מוצרים דומים',
+    'related_subtitle' => 'מוצרים מאותה קטגוריה או מוצרים שעשויים לעניין אותך.',
+    'no_related_products' => 'אין כרגע מוצרים דומים.',
+],
+
+
 ];
