@@ -9,13 +9,14 @@ use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductDigitalCode;
 use App\Models\ProductVariant;
-use Carbon\Carbon;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class Reports extends Page
 {
@@ -85,6 +86,7 @@ class Reports extends Page
     public function getStats(): array
     {
         $ordersQuery = $this->applyDateRange(Order::query());
+
         $completedOrdersQuery = $this->applyDateRange(
             Order::query()->where('status', OrderStatus::Completed->value)
         );
@@ -101,19 +103,18 @@ class Reports extends Page
         );
 
         $customersQuery = $this->applyDateRange(Customer::query());
+
         $productsQuery = $this->applyDateRange(Product::query());
+
         $activeCartsQuery = $this->applyDateRange(
             Cart::query()->where('status', 'active')
         );
+
         $invoicesQuery = $this->applyDateRange(Invoice::query());
 
-        $totalSales = (float) $salesQuery->sum('grand_total');
-
-        $paidPayments = (float) $paymentsQuery->sum('amount');
-
         return [
-            'total_sales' => $totalSales,
-            'paid_payments' => $paidPayments,
+            'total_sales' => (float) $salesQuery->sum('grand_total'),
+            'paid_payments' => (float) $paymentsQuery->sum('amount'),
 
             'orders_count' => $ordersQuery->count(),
             'completed_orders_count' => $completedOrdersQuery->count(),
@@ -141,6 +142,146 @@ class Reports extends Page
                 ->whereColumn('stock_quantity', '<=', 'min_stock_quantity')
                 ->count(),
         ];
+    }
+
+    public function getSalesChartData(): array
+    {
+        $query = Order::query()
+            ->selectRaw('DATE(created_at) as date_label')
+            ->selectRaw('SUM(grand_total) as total_sales')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->where(function (Builder $query) {
+                $query->where('status', OrderStatus::Completed->value)
+                    ->orWhere('payment_status', 'paid');
+            })
+            ->groupByRaw('DATE(created_at)')
+            ->orderByRaw('DATE(created_at)');
+
+        $this->applyDateRange($query);
+
+        $rows = $query->get();
+
+        $maxSales = max((float) $rows->max('total_sales'), 1);
+
+        return $rows->map(function ($row) use ($maxSales) {
+            return [
+                'label' => $row->date_label,
+                'sales' => (float) $row->total_sales,
+                'orders' => (int) $row->orders_count,
+                'percent' => round(((float) $row->total_sales / $maxSales) * 100, 1),
+            ];
+        })->toArray();
+    }
+
+    public function getOrdersByStatusChartData(): array
+    {
+        $query = Order::query()
+            ->select('status')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('status');
+
+        $this->applyDateRange($query);
+
+        $rows = $query->get();
+
+        $max = max((int) $rows->max('total'), 1);
+
+        return $rows->map(function ($row) use ($max) {
+            $label = $row->status;
+
+            if ($label instanceof \BackedEnum) {
+                $label = $label->value;
+            }
+
+            return [
+                'label' => ucfirst(str_replace('_', ' ', (string) $label)),
+                'value' => (int) $row->total,
+                'percent' => round(((int) $row->total / $max) * 100, 1),
+            ];
+        })->toArray();
+    }
+
+    public function getPaymentsByMethodChartData(): array
+    {
+        $query = Payment::query()
+            ->select('payment_method')
+            ->selectRaw('SUM(amount) as total_amount')
+            ->selectRaw('COUNT(*) as payments_count')
+            ->where('status', PaymentTransactionStatus::Paid->value)
+            ->groupBy('payment_method');
+
+        $this->applyDateRange($query);
+
+        $rows = $query->get();
+
+        $max = max((float) $rows->max('total_amount'), 1);
+
+        return $rows->map(function ($row) use ($max) {
+            return [
+                'label' => ucfirst(str_replace('_', ' ', (string) $row->payment_method)),
+                'amount' => (float) $row->total_amount,
+                'count' => (int) $row->payments_count,
+                'percent' => round(((float) $row->total_amount / $max) * 100, 1),
+            ];
+        })->toArray();
+    }
+
+    public function getTopProductsChartData(): array
+    {
+        $query = OrderItem::query()
+            ->select('product_id')
+            ->selectRaw('SUM(quantity) as total_quantity')
+            ->selectRaw('SUM(line_total) as total_sales')
+            ->with('product')
+            ->whereNotNull('product_id')
+            ->groupBy('product_id')
+            ->orderByDesc('total_quantity')
+            ->limit(7);
+
+        $query->whereHas('order', function (Builder $orderQuery) {
+            $this->applyDateRange($orderQuery);
+        });
+
+        $rows = $query->get();
+
+        $max = max((int) $rows->max('total_quantity'), 1);
+
+        return $rows->map(function ($row) use ($max) {
+            return [
+                'label' => $row->product?->getName('ar') ?? 'Product #' . $row->product_id,
+                'quantity' => (int) $row->total_quantity,
+                'sales' => (float) $row->total_sales,
+                'percent' => round(((int) $row->total_quantity / $max) * 100, 1),
+            ];
+        })->toArray();
+    }
+
+    public function getTopCustomersChartData(): array
+    {
+        $query = Order::query()
+            ->select('customer_id')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->selectRaw('SUM(grand_total) as total_sales')
+            ->with('customer')
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id')
+            ->orderByDesc('total_sales')
+            ->limit(7);
+
+        $this->applyDateRange($query);
+
+        $rows = $query->get();
+
+        $max = max((float) $rows->max('total_sales'), 1);
+
+        return $rows->map(function ($row) use ($max) {
+            return [
+                'label' => $row->customer?->getDisplayName() ?? 'Customer #' . $row->customer_id,
+                'orders' => (int) $row->orders_count,
+                'sales' => (float) $row->total_sales,
+                'percent' => round(((float) $row->total_sales / $max) * 100, 1),
+            ];
+        })->toArray();
     }
 
     public function getLatestOrders()
