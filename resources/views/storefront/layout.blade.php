@@ -68,9 +68,9 @@
                 {{ __('storefront.nav.home') }}
             </a>
 
-            <a href="#">
-                {{ __('storefront.nav.products') }}
-            </a>
+           <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar']) }}">
+    {{ __('storefront.nav.products') }}
+</a>
 
             <a href="#">
                 {{ __('storefront.nav.digital_codes') }}
@@ -105,7 +105,9 @@
             <div>
                 <h4>{{ __('storefront.footer.quick_links') }}</h4>
 
-                <a href="#">{{ __('storefront.footer.products') }}</a>
+                <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar']) }}">
+    {{ __('storefront.footer.products') }}
+</a>
                 <a href="#">{{ __('storefront.footer.categories') }}</a>
                 <a href="#">{{ __('storefront.footer.brands') }}</a>
                 <a href="#">{{ __('storefront.footer.deals') }}</a>

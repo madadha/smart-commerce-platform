@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\InvoicePdfController;
 use App\Http\Controllers\Storefront\StorefrontController;
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -20,8 +21,11 @@ Route::middleware('auth')->group(function () {
     ->name('admin.invoices.pdf');
     Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
 
+Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
+
 Route::prefix('store')->name('storefront.')->group(function () {
     Route::get('/', [StorefrontController::class, 'home'])->name('index');
+    Route::get('/products', [StorefrontController::class, 'products'])->name('products.index');
 });
 });
 
