@@ -459,7 +459,87 @@
             .scp-hero-title {
                 font-size: 25px;
             }
+
+            .scp-filters {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.scp-filter-actions {
+    width: 100%;
+}
+
+.scp-filter-btn {
+    flex: 1;
+    text-align: center;
+}
         }
+
+        .scp-filters {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 22px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.dark .scp-filters {
+    background: #111827;
+    border-color: #1f2937;
+}
+
+.scp-filter-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.dark .scp-filter-title {
+    color: white;
+}
+
+.scp-filter-subtitle {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.scp-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.scp-filter-btn {
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    color: #374151;
+    border-radius: 999px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.scp-filter-btn:hover {
+    background: #eef2ff;
+    color: #4f46e5;
+    border-color: #c7d2fe;
+}
+
+.scp-filter-btn.active {
+    background: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+    box-shadow: 0 10px 18px rgba(79, 70, 229, 0.24);
+}
     </style>
 
     <div class="scp-dashboard">
@@ -486,6 +566,31 @@
                 </div>
             </div>
         </div>
+
+
+        <div class="scp-filters">
+    <div>
+        <div class="scp-filter-title">
+            Date Range Filter
+        </div>
+
+        <div class="scp-filter-subtitle">
+            Current range: {{ $this->getDateRangeLabel() }}
+        </div>
+    </div>
+
+    <div class="scp-filter-actions">
+        @foreach($this->getDateRangeOptions() as $rangeKey => $rangeLabel)
+            <button
+                type="button"
+                wire:click="$set('dateRange', '{{ $rangeKey }}')"
+                class="scp-filter-btn {{ $this->dateRange === $rangeKey ? 'active' : '' }}"
+            >
+                {{ $rangeLabel }}
+            </button>
+        @endforeach
+    </div>
+</div>
 
         <div class="scp-grid-4">
             <div class="scp-card scp-kpi">

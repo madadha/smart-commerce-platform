@@ -13,7 +13,9 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductDigitalCode;
 use App\Models\ProductVariant;
+use Carbon\Carbon;
 use Filament\Pages\Page;
+use Illuminate\Database\Eloquent\Builder;
 
 class Reports extends Page
 {
@@ -27,32 +29,113 @@ class Reports extends Page
 
     protected string $view = 'filament.pages.reports';
 
+    public string $dateRange = 'all_time';
+
+    public function getDateRangeOptions(): array
+    {
+        return [
+            'today' => 'Today',
+            'this_week' => 'This Week',
+            'this_month' => 'This Month',
+            'all_time' => 'All Time',
+        ];
+    }
+
+    public function getDateRangeLabel(): string
+    {
+        return $this->getDateRangeOptions()[$this->dateRange] ?? 'All Time';
+    }
+
+    private function getDateRangeDates(): array
+    {
+        return match ($this->dateRange) {
+            'today' => [
+                now()->startOfDay(),
+                now()->endOfDay(),
+            ],
+
+            'this_week' => [
+                now()->startOfWeek(),
+                now()->endOfWeek(),
+            ],
+
+            'this_month' => [
+                now()->startOfMonth(),
+                now()->endOfMonth(),
+            ],
+
+            default => [
+                null,
+                null,
+            ],
+        };
+    }
+
+    private function applyDateRange(Builder $query, string $column = 'created_at'): Builder
+    {
+        [$startDate, $endDate] = $this->getDateRangeDates();
+
+        if ($startDate && $endDate) {
+            $query->whereBetween($column, [$startDate, $endDate]);
+        }
+
+        return $query;
+    }
+
     public function getStats(): array
     {
-        $totalSales = (float) Order::query()
-            ->where('status', OrderStatus::Completed->value)
-            ->orWhere('payment_status', 'paid')
-            ->sum('grand_total');
+        $ordersQuery = $this->applyDateRange(Order::query());
+        $completedOrdersQuery = $this->applyDateRange(
+            Order::query()->where('status', OrderStatus::Completed->value)
+        );
 
-        $paidPayments = (float) Payment::query()
-            ->where('status', PaymentTransactionStatus::Paid->value)
-            ->sum('amount');
+        $salesQuery = $this->applyDateRange(
+            Order::query()->where(function (Builder $query) {
+                $query->where('status', OrderStatus::Completed->value)
+                    ->orWhere('payment_status', 'paid');
+            })
+        );
+
+        $paymentsQuery = $this->applyDateRange(
+            Payment::query()->where('status', PaymentTransactionStatus::Paid->value)
+        );
+
+        $customersQuery = $this->applyDateRange(Customer::query());
+        $productsQuery = $this->applyDateRange(Product::query());
+        $activeCartsQuery = $this->applyDateRange(
+            Cart::query()->where('status', 'active')
+        );
+        $invoicesQuery = $this->applyDateRange(Invoice::query());
+
+        $totalSales = (float) $salesQuery->sum('grand_total');
+
+        $paidPayments = (float) $paymentsQuery->sum('amount');
 
         return [
             'total_sales' => $totalSales,
             'paid_payments' => $paidPayments,
-            'orders_count' => Order::query()->count(),
-            'completed_orders_count' => Order::query()->where('status', OrderStatus::Completed->value)->count(),
-            'customers_count' => Customer::query()->count(),
-            'products_count' => Product::query()->count(),
-            'active_carts_count' => Cart::query()->where('status', 'active')->count(),
-            'invoices_count' => Invoice::query()->count(),
-            'available_codes_count' => ProductDigitalCode::query()->where('status', DigitalCodeStatus::Available->value)->count(),
-            'sold_codes_count' => ProductDigitalCode::query()->where('status', DigitalCodeStatus::Sold->value)->count(),
+
+            'orders_count' => $ordersQuery->count(),
+            'completed_orders_count' => $completedOrdersQuery->count(),
+
+            'customers_count' => $customersQuery->count(),
+            'products_count' => $productsQuery->count(),
+            'active_carts_count' => $activeCartsQuery->count(),
+            'invoices_count' => $invoicesQuery->count(),
+
+            'available_codes_count' => ProductDigitalCode::query()
+                ->where('status', DigitalCodeStatus::Available->value)
+                ->count(),
+
+            'sold_codes_count' => ProductDigitalCode::query()
+                ->where('status', DigitalCodeStatus::Sold->value)
+                ->count(),
+
             'low_stock_products_count' => Product::query()
                 ->where('track_stock', true)
                 ->whereColumn('stock_quantity', '<=', 'min_stock_quantity')
                 ->count(),
+
             'low_stock_variants_count' => ProductVariant::query()
                 ->where('track_stock', true)
                 ->whereColumn('stock_quantity', '<=', 'min_stock_quantity')
@@ -62,8 +145,9 @@ class Reports extends Page
 
     public function getLatestOrders()
     {
-        return Order::query()
-            ->with(['customer', 'currency'])
+        return $this->applyDateRange(
+            Order::query()->with(['customer', 'currency'])
+        )
             ->latest()
             ->limit(10)
             ->get();
@@ -71,8 +155,9 @@ class Reports extends Page
 
     public function getLatestPayments()
     {
-        return Payment::query()
-            ->with(['order', 'customer', 'currency'])
+        return $this->applyDateRange(
+            Payment::query()->with(['order', 'customer', 'currency'])
+        )
             ->latest()
             ->limit(10)
             ->get();
@@ -103,11 +188,25 @@ class Reports extends Page
     public function getDigitalCodeSummary(): array
     {
         return [
-            'available' => ProductDigitalCode::query()->where('status', DigitalCodeStatus::Available->value)->count(),
-            'reserved' => ProductDigitalCode::query()->where('status', DigitalCodeStatus::Reserved->value)->count(),
-            'sold' => ProductDigitalCode::query()->where('status', DigitalCodeStatus::Sold->value)->count(),
-            'cancelled' => ProductDigitalCode::query()->where('status', DigitalCodeStatus::Cancelled->value)->count(),
-            'expired' => ProductDigitalCode::query()->where('status', DigitalCodeStatus::Expired->value)->count(),
+            'available' => ProductDigitalCode::query()
+                ->where('status', DigitalCodeStatus::Available->value)
+                ->count(),
+
+            'reserved' => ProductDigitalCode::query()
+                ->where('status', DigitalCodeStatus::Reserved->value)
+                ->count(),
+
+            'sold' => ProductDigitalCode::query()
+                ->where('status', DigitalCodeStatus::Sold->value)
+                ->count(),
+
+            'cancelled' => ProductDigitalCode::query()
+                ->where('status', DigitalCodeStatus::Cancelled->value)
+                ->count(),
+
+            'expired' => ProductDigitalCode::query()
+                ->where('status', DigitalCodeStatus::Expired->value)
+                ->count(),
         ];
     }
 
