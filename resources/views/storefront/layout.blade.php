@@ -97,6 +97,14 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="scp-container">
+            <div class="scp-alert-error">
+                {{ session('error') }}
+            </div>
+        </div>
+    @endif
+
     @yield('content')
 </main>
 

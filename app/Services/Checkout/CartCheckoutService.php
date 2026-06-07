@@ -17,6 +17,11 @@ use RuntimeException;
 
 class CartCheckoutService
 {
+    public function __construct(
+        private readonly CheckoutInventoryService $checkoutInventoryService
+    ) {
+    }
+
     public function convertCartToOrder(Cart $cart, array $data, ?int $userId = null): Order
     {
         return DB::transaction(function () use ($cart, $data, $userId) {
@@ -29,6 +34,8 @@ class CartCheckoutService
             if ($cart->items->isEmpty()) {
                 throw new RuntimeException('Cart is empty.');
             }
+
+            $this->validateCartBeforeCheckout($cart);
 
             $customer = $this->findOrCreateCustomer($data, $userId);
 
@@ -113,6 +120,14 @@ class CartCheckoutService
                 ]);
             }
 
+            $order->refresh();
+            $order->load([
+                'items.product',
+                'items.productVariant',
+            ]);
+
+            $this->checkoutInventoryService->handleOrderInventory($order);
+
             $this->createPendingPaymentIfPossible($order, $customer, $cart, $data, $grandTotal);
 
             $cart->forceFill($this->filterColumns('carts', [
@@ -123,6 +138,89 @@ class CartCheckoutService
 
             return $order->refresh();
         });
+    }
+
+    private function validateCartBeforeCheckout(Cart $cart): void
+    {
+        foreach ($cart->items as $cartItem) {
+            $product = $cartItem->product;
+
+            if (! $product) {
+                throw new RuntimeException('Product not found in cart item.');
+            }
+
+            $quantity = max((int) $cartItem->quantity, 1);
+            $productType = $this->resolveProductType($product);
+
+            if ($productType === 'digital' || $productType === 'digital_code' || $cartItem->item_type === 'digital_code') {
+                $this->validateDigitalCodeAvailability($product->id, $quantity);
+                continue;
+            }
+
+            if ($cartItem->productVariant) {
+                $this->validateVariantStock($cartItem->productVariant, $quantity);
+                continue;
+            }
+
+            $this->validateProductStock($product, $quantity);
+        }
+    }
+
+    private function validateProductStock($product, int $quantity): void
+    {
+        if (! Schema::hasColumn('products', 'stock_quantity')) {
+            return;
+        }
+
+        $trackStock = Schema::hasColumn('products', 'track_stock')
+            ? (bool) $product->track_stock
+            : true;
+
+        if (! $trackStock) {
+            return;
+        }
+
+        if ((int) ($product->stock_quantity ?? 0) < $quantity) {
+            throw new RuntimeException('Insufficient stock for product: ' . ($product->sku ?? $product->id));
+        }
+    }
+
+    private function validateVariantStock($variant, int $quantity): void
+    {
+        if (! Schema::hasColumn('product_variants', 'stock_quantity')) {
+            return;
+        }
+
+        $trackStock = Schema::hasColumn('product_variants', 'track_stock')
+            ? (bool) $variant->track_stock
+            : true;
+
+        if (! $trackStock) {
+            return;
+        }
+
+        if ((int) ($variant->stock_quantity ?? 0) < $quantity) {
+            throw new RuntimeException('Insufficient stock for variant: ' . ($variant->sku ?? $variant->id));
+        }
+    }
+
+    private function validateDigitalCodeAvailability(int $productId, int $quantity): void
+    {
+        if (! Schema::hasTable('product_digital_codes')) {
+            throw new RuntimeException('Digital codes table does not exist.');
+        }
+
+        $availableCount = DB::table('product_digital_codes')
+            ->where('product_id', $productId)
+            ->where(function ($query) {
+                $query->where('status', 'available')
+                    ->orWhereNull('status');
+            })
+            ->count();
+
+        if ($availableCount < $quantity) {
+            throw new RuntimeException('Not enough digital codes available.');
+        }
     }
 
     private function findOrCreateCustomer(array $data, ?int $userId = null): ?Customer
@@ -210,7 +308,7 @@ class CartCheckoutService
             return 0;
         }
 
-        foreach (['price', 'cost', 'amount', 'shipping_cost'] as $column) {
+        foreach (['price', 'cost', 'amount', 'shipping_cost', 'base_cost'] as $column) {
             if (Schema::hasColumn('shipping_methods', $column) && $shippingMethod->{$column} !== null) {
                 return (float) $shippingMethod->{$column};
             }
@@ -285,6 +383,17 @@ class CartCheckoutService
         }
 
         return [];
+    }
+
+    private function resolveProductType($product): string
+    {
+        $type = $product->product_type ?? null;
+
+        if ($type instanceof \BackedEnum) {
+            return (string) $type->value;
+        }
+
+        return (string) $type;
     }
 
     private function generateOrderNumber(): string

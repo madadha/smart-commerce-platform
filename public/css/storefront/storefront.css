@@ -2671,3 +2671,16 @@ select {
         grid-template-columns: 1fr;
     }
 }
+
+.scp-alert-error {
+    margin-top: 18px;
+    margin-bottom: 10px;
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    border-radius: 18px;
+    padding: 14px 18px;
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: 0 12px 28px rgba(220, 38, 38, 0.12);
+}

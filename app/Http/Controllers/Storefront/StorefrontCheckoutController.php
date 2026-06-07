@@ -92,7 +92,7 @@ class StorefrontCheckoutController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', __('storefront.checkout.order_failed'));
+                ->with('error', $exception->getMessage() ?: __('storefront.checkout.order_failed'));
         }
     }
 
