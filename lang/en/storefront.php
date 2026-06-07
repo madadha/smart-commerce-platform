@@ -177,6 +177,13 @@ return [
     'place_order' => 'Place Order',
     'order_summary' => 'Order Summary',
     'finalization_note' => 'The Place Order button will be connected in the next step to convert the cart into a real order.',
+    'empty_cart_error' => 'Cannot place the order because the cart is empty.',
+'order_created_successfully' => 'Order created successfully.',
+'order_failed' => 'An error occurred while creating the order. Please try again.',
+'success_title' => 'Your order has been received',
+'success_text' => 'Thank you. Your cart has been converted into a real order and we will contact you soon.',
+'order_number' => 'Order Number',
+'order_status' => 'Order Status',
 ],
 
 

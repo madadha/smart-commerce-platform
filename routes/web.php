@@ -40,6 +40,12 @@ Route::prefix('store')->name('storefront.')->group(function () {
 
     Route::get('/checkout', [StorefrontCheckoutController::class, 'index'])
         ->name('checkout.index');
+
+    Route::post('/checkout/place-order', [StorefrontCheckoutController::class, 'placeOrder'])
+        ->name('checkout.place');
+
+    Route::get('/checkout/success/{order}', [StorefrontCheckoutController::class, 'success'])
+        ->name('checkout.success');
 });
 
 /*

@@ -3,243 +3,290 @@
 namespace App\Services\Checkout;
 
 use App\Enums\CartStatus;
-use App\Enums\InvoiceStatus;
-use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
-use App\Enums\PaymentTransactionStatus;
 use App\Models\Cart;
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
-use App\Services\Inventory\InventoryService;
+use App\Models\ShippingMethod;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class CartCheckoutService
 {
-    public function convertToOrder(
-        Cart $cart,
-        bool $createPayment = false,
-        string $paymentMethod = 'cash',
-        ?string $transactionId = null
-    ): Order {
-        if ($cart->isConverted()) {
-            $existingOrder = Order::query()
-                ->where('internal_notes', 'like', '%Converted from cart: ' . $cart->cart_number . '%')
-                ->first();
+    public function convertCartToOrder(Cart $cart, array $data, ?int $userId = null): Order
+    {
+        return DB::transaction(function () use ($cart, $data, $userId) {
+            $cart->load([
+                'items.product',
+                'items.productVariant',
+                'currency',
+            ]);
 
-            if ($existingOrder) {
-                return $existingOrder;
+            if ($cart->items->isEmpty()) {
+                throw new RuntimeException('Cart is empty.');
             }
 
-            throw new RuntimeException('This cart is already converted.');
-        }
+            $customer = $this->findOrCreateCustomer($data, $userId);
 
-        if (! $cart->items()->exists()) {
-            throw new RuntimeException('Cannot convert an empty cart.');
-        }
+            $shippingTotal = $this->resolveShippingTotal($data['shipping_method_id'] ?? null);
 
-        return DB::transaction(function () use ($cart, $createPayment, $paymentMethod, $transactionId): Order {
-            $cart->refresh();
-            $cart->load(['items.product', 'items.productVariant', 'customer.country']);
-            $cart->recalculateTotals();
+            $subtotal = (float) $cart->items->sum(function ($item) {
+                return (float) ($item->line_total ?? ((float) $item->unit_price * (int) $item->quantity));
+            });
 
-            $order = $this->createOrderFromCart($cart);
+            $discountTotal = (float) ($cart->discount_total ?? 0);
+            $taxTotal = (float) ($cart->tax_total ?? 0);
+            $grandTotal = max($subtotal - $discountTotal + $taxTotal + $shippingTotal, 0);
 
-            $this->createOrderItemsFromCart($cart, $order);
+            $cart->forceFill($this->filterColumns('carts', [
+                'customer_id' => $customer?->id,
+                'shipping_method_id' => $data['shipping_method_id'] ?? null,
+                'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'tax_total' => $taxTotal,
+                'shipping_total' => $shippingTotal,
+                'grand_total' => $grandTotal,
+                'customer_notes' => $data['customer_notes'] ?? null,
+            ]))->save();
 
-            $order->refresh();
-            $order->load(['items.product', 'items.productVariant', 'customer']);
+            $order = $this->createModel(Order::class, 'orders', [
+                'order_number' => $this->generateOrderNumber(),
+                'customer_id' => $customer?->id,
+                'user_id' => $userId,
+                'currency_id' => $cart->currency_id,
+                'shipping_method_id' => $data['shipping_method_id'] ?? null,
+                'coupon_id' => $cart->coupon_id ?? null,
+                'coupon_code' => $cart->coupon_code ?? null,
+                'coupon_discount_type' => $cart->coupon_discount_type ?? null,
+                'coupon_discount_value' => $cart->coupon_discount_value ?? 0,
 
-            $this->processInventoryAndDigitalCodes($order);
+                'status' => 'pending',
+                'payment_status' => 'unpaid',
 
-            $order->refresh();
-            $order->recalculateTotals();
+                'customer_name' => $data['customer_name'] ?? null,
+                'customer_email' => $data['customer_email'] ?? null,
+                'customer_phone' => $data['customer_phone'] ?? null,
+                'shipping_city' => $data['city'] ?? null,
+                'shipping_address' => $data['address'] ?? null,
+                'billing_city' => $data['city'] ?? null,
+                'billing_address' => $data['address'] ?? null,
 
-            if ($createPayment) {
-                $this->createPaymentForOrder($order, $paymentMethod, $transactionId);
-                $order->refresh();
+                'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'tax_total' => $taxTotal,
+                'shipping_total' => $shippingTotal,
+                'grand_total' => $grandTotal,
+
+                'customer_notes' => $data['customer_notes'] ?? null,
+                'internal_notes' => 'Created from storefront checkout. Cart: ' . $cart->cart_number,
+
+                'is_active' => true,
+                'sort_order' => 0,
+            ]);
+
+            foreach ($cart->items as $cartItem) {
+                $unitPrice = (float) $cartItem->unit_price;
+                $quantity = (int) $cartItem->quantity;
+                $lineTotal = (float) ($cartItem->line_total ?? ($unitPrice * $quantity));
+
+                $this->createModel(OrderItem::class, 'order_items', [
+                    'order_id' => $order->id,
+                    'product_id' => $cartItem->product_id,
+                    'product_variant_id' => $cartItem->product_variant_id,
+                    'product_name' => $cartItem->product_name,
+                    'sku' => $cartItem->sku,
+                    'item_type' => $cartItem->item_type,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'line_total' => $lineTotal,
+                    'discount_total' => (float) ($cartItem->discount_total ?? 0),
+                    'tax_total' => (float) ($cartItem->tax_total ?? 0),
+                    'options' => $cartItem->options,
+                    'notes' => $cartItem->notes,
+                    'sort_order' => $cartItem->sort_order ?? 0,
+                ]);
             }
 
-            $this->createInvoiceForOrder($order);
+            $this->createPendingPaymentIfPossible($order, $customer, $cart, $data, $grandTotal);
 
-            $cart->update([
-                'status' => CartStatus::Converted,
+            $cart->forceFill($this->filterColumns('carts', [
+                'status' => CartStatus::Converted->value,
                 'converted_at' => now(),
                 'is_active' => false,
-            ]);
+            ]))->save();
 
             return $order->refresh();
         });
     }
 
-    private function createOrderFromCart(Cart $cart): Order
+    private function findOrCreateCustomer(array $data, ?int $userId = null): ?Customer
     {
-        return Order::query()->create([
-            'customer_id' => $cart->customer_id,
-            'user_id' => $cart->user_id,
-            'currency_id' => $cart->currency_id,
-            'shipping_method_id' => $cart->shipping_method_id,
-            'coupon_id' => $cart->coupon_id,
-            'coupon_code' => $cart->coupon_code,
-            'coupon_discount_type' => $cart->coupon_discount_type,
-            'coupon_discount_value' => $cart->coupon_discount_value,
-            'status' => OrderStatus::Pending,
-            'payment_status' => PaymentStatus::Unpaid,
-            'payment_method' => null,
-            'subtotal' => $cart->subtotal,
-            'discount_total' => $cart->discount_total,
-            'tax_total' => $cart->tax_total,
-            'shipping_total' => $cart->shipping_total,
-            'grand_total' => $cart->grand_total,
-            'paid_total' => 0,
-            'billing_address' => $this->buildAddressFromCart($cart),
-            'shipping_address' => $this->buildAddressFromCart($cart),
-            'customer_notes' => $cart->customer_notes,
-            'internal_notes' => trim(
-                ($cart->internal_notes ? $cart->internal_notes . PHP_EOL : '') .
-                'Converted from cart: ' . $cart->cart_number
-            ),
-            'ordered_at' => now(),
-            'is_active' => true,
-            'sort_order' => 0,
-        ]);
-    }
-
-    private function createOrderItemsFromCart(Cart $cart, Order $order): void
-    {
-        foreach ($cart->items as $cartItem) {
-            OrderItem::query()->create([
-                'order_id' => $order->id,
-                'product_id' => $cartItem->product_id,
-                'product_variant_id' => $cartItem->product_variant_id,
-                'product_name' => $cartItem->product_name,
-                'sku' => $cartItem->sku,
-                'item_type' => $cartItem->item_type,
-                'quantity' => $cartItem->quantity,
-                'unit_price' => $cartItem->unit_price,
-                'discount_total' => $cartItem->discount_total,
-                'tax_total' => $cartItem->tax_total,
-                'options' => $cartItem->options,
-                'digital_code_id' => null,
-                'notes' => $cartItem->notes,
-            ]);
-        }
-    }
-
-    private function processInventoryAndDigitalCodes(Order $order): void
-    {
-        $inventoryService = app(InventoryService::class);
-
-        foreach ($order->items as $orderItem) {
-            $inventoryService->processOrderItem($orderItem);
-        }
-    }
-
-    private function createPaymentForOrder(Order $order, string $paymentMethod, ?string $transactionId = null): Payment
-    {
-        return Payment::query()->create([
-            'order_id' => $order->id,
-            'customer_id' => $order->customer_id,
-            'currency_id' => $order->currency_id,
-            'payment_method' => $paymentMethod,
-            'status' => PaymentTransactionStatus::Paid,
-            'amount' => $order->grand_total,
-            'refunded_amount' => 0,
-            'transaction_id' => $transactionId ?? 'CHECKOUT-' . $order->order_number,
-            'provider' => $paymentMethod,
-            'provider_reference' => null,
-            'provider_payload' => [
-                'source' => 'checkout_finalization',
-                'order_number' => $order->order_number,
-            ],
-            'paid_at' => now(),
-            'internal_notes' => 'Payment created automatically during checkout finalization.',
-            'is_active' => true,
-            'sort_order' => 0,
-        ]);
-    }
-
-    private function createInvoiceForOrder(Order $order): Invoice
-    {
-        $order->refresh();
-        $order->load(['items', 'customer', 'currency']);
-
-        $invoice = Invoice::query()->create([
-            'order_id' => $order->id,
-            'customer_id' => $order->customer_id,
-            'currency_id' => $order->currency_id,
-            'status' => $order->payment_status === PaymentStatus::Paid
-                ? InvoiceStatus::Paid
-                : InvoiceStatus::Issued,
-            'discount_total' => $order->discount_total,
-            'tax_total' => $order->tax_total,
-            'shipping_total' => $order->shipping_total,
-            'paid_total' => $order->paid_total,
-            'billing_address' => $order->billing_address,
-            'seller_details' => [
-                'name' => 'Smart Commerce Platform',
-                'email' => 'info@example.com',
-                'phone' => '+972000000000',
-                'tax_number' => '000000000',
-            ],
-            'issued_at' => now()->toDateString(),
-            'due_at' => now()->addDays(14)->toDateString(),
-            'paid_at' => $order->payment_status === PaymentStatus::Paid
-                ? now()->toDateString()
-                : null,
-            'customer_notes' => $order->customer_notes,
-            'internal_notes' => 'Invoice created automatically from checkout finalization.',
-            'is_active' => true,
-            'sort_order' => 0,
-        ]);
-
-        foreach ($order->items as $orderItem) {
-            InvoiceItem::query()->create([
-                'invoice_id' => $invoice->id,
-                'order_item_id' => $orderItem->id,
-                'product_id' => $orderItem->product_id,
-                'product_variant_id' => $orderItem->product_variant_id,
-                'item_name' => $orderItem->product_name,
-                'sku' => $orderItem->sku,
-                'quantity' => $orderItem->quantity,
-                'unit_price' => $orderItem->unit_price,
-                'discount_total' => $orderItem->discount_total,
-                'tax_total' => $orderItem->tax_total,
-                'options' => $orderItem->options,
-                'notes' => $orderItem->notes,
-            ]);
-        }
-
-        $invoice->refresh();
-        $invoice->recalculateTotals();
-
-        return $invoice;
-    }
-
-    private function buildAddressFromCart(Cart $cart): ?array
-    {
-        $customer = $cart->customer;
-
-        if (! $customer) {
+        if (! Schema::hasTable('customers')) {
             return null;
         }
 
-        return [
-            'name' => $customer->getDisplayName(),
-            'email' => $customer->email,
-            'phone' => $customer->phone,
-            'whatsapp' => $customer->whatsapp,
-            'country' => $customer->country?->getName('ar'),
-            'city' => $customer->city,
-            'area' => $customer->area,
-            'street' => $customer->street,
-            'building' => $customer->building,
-            'apartment' => $customer->apartment,
-            'postal_code' => $customer->postal_code,
-            'address' => $customer->getFullAddress(),
-        ];
+        $email = trim((string) ($data['customer_email'] ?? ''));
+        $phone = trim((string) ($data['customer_phone'] ?? ''));
+        $fullName = trim((string) ($data['customer_name'] ?? ''));
+
+        $existingCustomer = Customer::query()
+            ->when($email !== '', function ($query) use ($email) {
+                $query->where('email', $email);
+            })
+            ->when($email === '' && $phone !== '', function ($query) use ($phone) {
+                $query->where('phone', $phone);
+            })
+            ->first();
+
+        if ($existingCustomer) {
+            $existingCustomer->forceFill($this->filterColumns('customers', [
+                'user_id' => $existingCustomer->user_id ?? $userId,
+                'name' => $fullName,
+                'full_name' => $fullName,
+                'email' => $email ?: $existingCustomer->email,
+                'phone' => $phone ?: $existingCustomer->phone,
+                'mobile' => $phone ?: ($existingCustomer->mobile ?? null),
+                'city' => $data['city'] ?? ($existingCustomer->city ?? null),
+                'address' => $data['address'] ?? ($existingCustomer->address ?? null),
+            ]))->save();
+
+            return $existingCustomer;
+        }
+
+        [$firstName, $lastName] = $this->splitName($fullName);
+
+        return $this->createModel(Customer::class, 'customers', [
+            'user_id' => $userId,
+            'type' => 'individual',
+            'status' => 'active',
+            'name' => $fullName,
+            'full_name' => $fullName,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'company_name' => null,
+            'email' => $email ?: null,
+            'phone' => $phone ?: null,
+            'mobile' => $phone ?: null,
+            'city' => $data['city'] ?? null,
+            'address' => $data['address'] ?? null,
+            'country' => 'Israel',
+            'notes' => 'Created from storefront checkout.',
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    private function splitName(string $fullName): array
+    {
+        $fullName = trim($fullName);
+
+        if ($fullName === '') {
+            return ['Customer', ''];
+        }
+
+        $parts = preg_split('/\s+/', $fullName);
+
+        $firstName = $parts[0] ?? $fullName;
+        $lastName = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
+
+        return [$firstName, $lastName];
+    }
+
+    private function resolveShippingTotal(?int $shippingMethodId): float
+    {
+        if (! $shippingMethodId || ! Schema::hasTable('shipping_methods')) {
+            return 0;
+        }
+
+        $shippingMethod = ShippingMethod::query()->find($shippingMethodId);
+
+        if (! $shippingMethod) {
+            return 0;
+        }
+
+        foreach (['price', 'cost', 'amount', 'shipping_cost'] as $column) {
+            if (Schema::hasColumn('shipping_methods', $column) && $shippingMethod->{$column} !== null) {
+                return (float) $shippingMethod->{$column};
+            }
+        }
+
+        return 0;
+    }
+
+    private function createPendingPaymentIfPossible(
+        Order $order,
+        ?Customer $customer,
+        Cart $cart,
+        array $data,
+        float $amount
+    ): void {
+        if (! class_exists(Payment::class) || ! Schema::hasTable('payments')) {
+            return;
+        }
+
+        $this->createModel(Payment::class, 'payments', [
+            'payment_number' => $this->generatePaymentNumber(),
+            'order_id' => $order->id,
+            'customer_id' => $customer?->id,
+            'currency_id' => $cart->currency_id,
+            'payment_method' => $data['payment_method'] ?? 'cash',
+            'method' => $data['payment_method'] ?? 'cash',
+            'status' => 'pending',
+            'amount' => $amount,
+            'paid_at' => null,
+            'notes' => 'Created automatically from storefront checkout.',
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    private function createModel(string $modelClass, string $table, array $attributes): Model
+    {
+        /** @var Model $model */
+        $model = new $modelClass();
+
+        $model->forceFill($this->filterColumns($table, $attributes));
+        $model->save();
+
+        return $model;
+    }
+
+    private function filterColumns(string $table, array $attributes): array
+    {
+        if (! Schema::hasTable($table)) {
+            return [];
+        }
+
+        return collect($attributes)
+            ->filter(function ($value, string $column) use ($table) {
+                return Schema::hasColumn($table, $column);
+            })
+            ->toArray();
+    }
+
+    private function generateOrderNumber(): string
+    {
+        do {
+            $number = 'ORD-' . now()->format('Ymd') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+        } while (Order::query()->where('order_number', $number)->exists());
+
+        return $number;
+    }
+
+    private function generatePaymentNumber(): string
+    {
+        if (! Schema::hasTable('payments')) {
+            return 'PAY-' . strtoupper(Str::random(8));
+        }
+
+        do {
+            $number = 'PAY-' . now()->format('Ymd') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+        } while (Payment::query()->where('payment_number', $number)->exists());
+
+        return $number;
     }
 }

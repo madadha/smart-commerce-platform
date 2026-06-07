@@ -72,7 +72,7 @@
                 <div class="scp-checkout-grid">
 
                     <div class="scp-checkout-main">
-                        <form method="POST" action="#" class="scp-checkout-form">
+                        <form method="POST" action="{{ route('storefront.checkout.place') }}" class="scp-checkout-form">
                             @csrf
 
                             <input type="hidden" name="lang" value="{{ $locale }}">
@@ -89,22 +89,45 @@
                                 <div class="scp-checkout-form-grid">
                                     <div class="scp-field">
                                         <label>{{ __('storefront.checkout.full_name') }}</label>
-                                        <input type="text" name="customer_name" placeholder="{{ __('storefront.checkout.full_name_placeholder') }}">
+                                        <input
+                                            type="text"
+                                            name="customer_name"
+                                            value="{{ old('customer_name') }}"
+                                            placeholder="{{ __('storefront.checkout.full_name_placeholder') }}"
+                                            required
+                                        >
                                     </div>
 
                                     <div class="scp-field">
                                         <label>{{ __('storefront.checkout.email') }}</label>
-                                        <input type="email" name="customer_email" placeholder="example@email.com">
+                                        <input
+                                            type="email"
+                                            name="customer_email"
+                                            value="{{ old('customer_email') }}"
+                                            placeholder="example@email.com"
+                                        >
                                     </div>
 
                                     <div class="scp-field">
                                         <label>{{ __('storefront.checkout.phone') }}</label>
-                                        <input type="text" name="customer_phone" placeholder="05x-xxxxxxx">
+                                        <input
+                                            type="text"
+                                            name="customer_phone"
+                                            value="{{ old('customer_phone') }}"
+                                            placeholder="05x-xxxxxxx"
+                                            required
+                                        >
                                     </div>
 
                                     <div class="scp-field">
                                         <label>{{ __('storefront.checkout.city') }}</label>
-                                        <input type="text" name="city" placeholder="{{ __('storefront.checkout.city_placeholder') }}">
+                                        <input
+                                            type="text"
+                                            name="city"
+                                            value="{{ old('city') }}"
+                                            placeholder="{{ __('storefront.checkout.city_placeholder') }}"
+                                            required
+                                        >
                                     </div>
                                 </div>
                             </div>
@@ -121,7 +144,13 @@
                                 <div class="scp-checkout-form-grid">
                                     <div class="scp-field full">
                                         <label>{{ __('storefront.checkout.address') }}</label>
-                                        <input type="text" name="address" placeholder="{{ __('storefront.checkout.address_placeholder') }}">
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            value="{{ old('address') }}"
+                                            placeholder="{{ __('storefront.checkout.address_placeholder') }}"
+                                            required
+                                        >
                                     </div>
 
                                     <div class="scp-field">
@@ -130,7 +159,7 @@
                                             <option value="">{{ __('storefront.checkout.select_shipping_method') }}</option>
 
                                             @foreach($shippingMethods as $shippingMethod)
-                                                <option value="{{ $shippingMethod->id }}">
+                                                <option value="{{ $shippingMethod->id }}" @selected((string) old('shipping_method_id') === (string) $shippingMethod->id)>
                                                     @if(method_exists($shippingMethod, 'getName'))
                                                         {{ $shippingMethod->getName($locale) }}
                                                     @else
@@ -143,16 +172,26 @@
 
                                     <div class="scp-field">
                                         <label>{{ __('storefront.checkout.payment_method') }}</label>
-                                        <select name="payment_method">
-                                            <option value="cash">{{ __('storefront.checkout.cash') }}</option>
-                                            <option value="credit_card">{{ __('storefront.checkout.credit_card') }}</option>
-                                            <option value="bank_transfer">{{ __('storefront.checkout.bank_transfer') }}</option>
+                                        <select name="payment_method" required>
+                                            <option value="cash" @selected(old('payment_method', 'cash') === 'cash')>
+                                                {{ __('storefront.checkout.cash') }}
+                                            </option>
+                                            <option value="credit_card" @selected(old('payment_method') === 'credit_card')>
+                                                {{ __('storefront.checkout.credit_card') }}
+                                            </option>
+                                            <option value="bank_transfer" @selected(old('payment_method') === 'bank_transfer')>
+                                                {{ __('storefront.checkout.bank_transfer') }}
+                                            </option>
                                         </select>
                                     </div>
 
                                     <div class="scp-field full">
                                         <label>{{ __('storefront.checkout.notes') }}</label>
-                                        <textarea name="customer_notes" rows="4" placeholder="{{ __('storefront.checkout.notes_placeholder') }}"></textarea>
+                                        <textarea
+                                            name="customer_notes"
+                                            rows="4"
+                                            placeholder="{{ __('storefront.checkout.notes_placeholder') }}"
+                                        >{{ old('customer_notes') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -162,7 +201,7 @@
                                     {{ __('storefront.checkout.back_to_cart') }}
                                 </a>
 
-                                <button type="button" class="scp-checkout-submit">
+                                <button type="submit" class="scp-checkout-submit">
                                     {{ __('storefront.checkout.place_order') }}
                                 </button>
                             </div>
@@ -222,10 +261,6 @@
                         <div class="scp-checkout-total">
                             <span>{{ __('storefront.cart.grand_total') }}</span>
                             <strong>{{ $currencySymbol }} {{ number_format((float) $cart->grand_total, 2) }}</strong>
-                        </div>
-
-                        <div class="scp-checkout-note">
-                            {{ __('storefront.checkout.finalization_note') }}
                         </div>
                     </aside>
 

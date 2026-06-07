@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Storefront;
 use App\Enums\CartStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\Order;
 use App\Models\ShippingMethod;
+use App\Services\Checkout\CartCheckoutService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\View\View;
+use Throwable;
 
 class StorefrontCheckoutController extends Controller
 {
@@ -41,6 +45,73 @@ class StorefrontCheckoutController extends Controller
             'shippingMethods' => $shippingMethods,
             'pageTitle' => __('storefront.checkout.page_title') . ' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.page_description'),
+        ]);
+    }
+
+    public function placeOrder(Request $request, CartCheckoutService $checkoutService): RedirectResponse
+    {
+        $locale = $this->resolveLocale($request);
+
+        $cart = $this->getCurrentCart();
+
+        if (! $cart || $cart->items()->count() === 0) {
+            return redirect()
+                ->route('storefront.cart.index', ['lang' => $locale])
+                ->with('error', __('storefront.checkout.empty_cart_error'));
+        }
+
+        $validated = $request->validate([
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
+            'customer_phone' => ['required', 'string', 'max:50'],
+            'city' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string', 'max:500'],
+            'shipping_method_id' => ['nullable', 'integer', 'exists:shipping_methods,id'],
+            'payment_method' => ['required', 'string', 'max:50'],
+            'customer_notes' => ['nullable', 'string', 'max:1000'],
+            'lang' => ['nullable', 'string', 'max:5'],
+        ]);
+
+        try {
+            $order = $checkoutService->convertCartToOrder(
+                cart: $cart,
+                data: $validated,
+                userId: auth()->id()
+            );
+
+            session()->forget('storefront_cart_id');
+
+            return redirect()
+                ->route('storefront.checkout.success', [
+                    'order' => $order->id,
+                    'lang' => $locale,
+                ])
+                ->with('success', __('storefront.checkout.order_created_successfully'));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()
+                ->withInput()
+                ->with('error', __('storefront.checkout.order_failed'));
+        }
+    }
+
+    public function success(Request $request, Order $order): View
+    {
+        $locale = $this->resolveLocale($request);
+
+        $order->load([
+            'items.product',
+            'currency',
+            'customer',
+        ]);
+
+        return view('storefront.checkout.success', [
+            'locale' => $locale,
+            'direction' => $this->direction($locale),
+            'order' => $order,
+            'pageTitle' => __('storefront.checkout.success_title') . ' - Smart Commerce Platform',
+            'pageDescription' => __('storefront.checkout.success_text'),
         ]);
     }
 
