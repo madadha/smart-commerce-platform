@@ -120,4 +120,31 @@ return [
     'added_successfully' => 'تمت إضافة المنتج إلى السلة بنجاح.',
 ],
 
+
+'cart' => [
+    'badge' => 'سلة التسوق',
+    'page_title' => 'سلة التسوق',
+    'page_description' => 'راجع المنتجات التي أضفتها، حدّث الكميات، ثم تابع إلى الدفع.',
+    'quantity' => 'الكمية',
+    'added_successfully' => 'تمت إضافة المنتج إلى السلة بنجاح.',
+    'updated_successfully' => 'تم تحديث السلة بنجاح.',
+    'removed_successfully' => 'تم حذف المنتج من السلة.',
+    'items_count' => 'عدد العناصر',
+    'empty_title' => 'السلة فارغة',
+    'empty_text' => 'لم تقم بإضافة أي منتجات بعد. تصفح المنتجات وأضف ما تريد إلى السلة.',
+    'continue_shopping' => 'متابعة التسوق',
+    'unit_price' => 'سعر الوحدة',
+    'line_total' => 'المجموع',
+    'update' => 'تحديث',
+    'remove' => 'حذف',
+    'summary' => 'ملخص السلة',
+    'cart_number' => 'رقم السلة',
+    'subtotal' => 'المجموع الفرعي',
+    'discount' => 'الخصم',
+    'tax' => 'الضريبة',
+    'shipping' => 'الشحن',
+    'grand_total' => 'الإجمالي النهائي',
+    'checkout' => 'متابعة الدفع',
+],
+
 ];

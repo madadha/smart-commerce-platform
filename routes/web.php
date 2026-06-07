@@ -1,36 +1,72 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\InvoicePdfController;
-use App\Http\Controllers\Storefront\StorefrontController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Storefront\StorefrontCartController;
+use App\Http\Controllers\Storefront\StorefrontController;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+/*
+|--------------------------------------------------------------------------
+| Public Storefront Routes
+|--------------------------------------------------------------------------
+| هذه الصفحات مفتوحة للزوار بدون تسجيل دخول
+*/
+
+Route::get('/', [StorefrontController::class, 'home'])
+    ->name('storefront.home');
+
+Route::prefix('store')->name('storefront.')->group(function () {
+    Route::get('/', [StorefrontController::class, 'home'])
+        ->name('index');
+
+    Route::get('/products', [StorefrontController::class, 'products'])
+        ->name('products.index');
+
+    Route::get('/products/{slug}', [StorefrontController::class, 'productShow'])
+        ->name('products.show');
+
+    Route::get('/cart', [StorefrontCartController::class, 'index'])
+        ->name('cart.index');
+
+    Route::post('/cart/add', [StorefrontCartController::class, 'add'])
+        ->name('cart.add');
+
+    Route::patch('/cart/items/{item}', [StorefrontCartController::class, 'updateItem'])
+        ->name('cart.items.update');
+
+    Route::delete('/cart/items/{item}', [StorefrontCartController::class, 'removeItem'])
+        ->name('cart.items.remove');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+/*
+|--------------------------------------------------------------------------
+| Authenticated User Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::middleware(['auth'])->get('/admin/invoices/{invoice}/pdf', [InvoicePdfController::class, 'show'])
-    ->name('admin.invoices.pdf');
-    Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
-Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 
-Route::prefix('store')->name('storefront.')->group(function () {
-    Route::get('/', [StorefrontController::class, 'home'])->name('index');
-    Route::get('/products', [StorefrontController::class, 'products'])->name('products.index');
-    Route::get('/products/{slug}', [StorefrontController::class, 'productShow'])->name('products.show');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 
-    Route::post('/cart/add', [StorefrontCartController::class, 'add'])->name('cart.add');
-});
+    Route::get('/admin/invoices/{invoice}/pdf', [InvoicePdfController::class, 'show'])
+        ->name('admin.invoices.pdf');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

@@ -14,9 +14,34 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class StorefrontCartController extends Controller
 {
+    public function index(Request $request): View
+    {
+        $locale = $this->resolveLocale($request);
+
+        $cart = $this->getCurrentCart();
+
+        if ($cart) {
+            $cart->load([
+                'items.product.brand',
+                'items.product.currency',
+                'items.productVariant',
+                'currency',
+            ]);
+        }
+
+        return view('storefront.cart.index', [
+            'locale' => $locale,
+            'direction' => $this->direction($locale),
+            'cart' => $cart,
+            'pageTitle' => __('storefront.cart.page_title') . ' - Smart Commerce Platform',
+            'pageDescription' => __('storefront.cart.page_description'),
+        ]);
+    }
+
     public function add(Request $request): RedirectResponse
     {
         $locale = $this->resolveLocale($request);
@@ -54,20 +79,67 @@ class StorefrontCartController extends Controller
             ->with('cart_id', $cart->id);
     }
 
-    private function getOrCreateCart(Product $product): Cart
+    public function updateItem(Request $request, CartItem $item): RedirectResponse
+    {
+        $this->resolveLocale($request);
+
+        $cart = $this->getCurrentCart();
+
+        abort_if(! $cart || $item->cart_id !== $cart->id, 404);
+
+        $validated = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:99'],
+        ]);
+
+        $quantity = (int) $validated['quantity'];
+        $unitPrice = (float) $item->unit_price;
+
+        $item->update([
+            'quantity' => $quantity,
+            'line_total' => $unitPrice * $quantity,
+        ]);
+
+        $this->recalculateCartTotals($cart);
+
+        return back()->with('success', __('storefront.cart.updated_successfully'));
+    }
+
+    public function removeItem(Request $request, CartItem $item): RedirectResponse
+    {
+        $this->resolveLocale($request);
+
+        $cart = $this->getCurrentCart();
+
+        abort_if(! $cart || $item->cart_id !== $cart->id, 404);
+
+        $item->delete();
+
+        $this->recalculateCartTotals($cart);
+
+        return back()->with('success', __('storefront.cart.removed_successfully'));
+    }
+
+    private function getCurrentCart(): ?Cart
     {
         $cartId = session('storefront_cart_id');
 
-        if ($cartId) {
-            $existingCart = Cart::query()
-                ->where('id', $cartId)
-                ->where('status', CartStatus::Active->value)
-                ->where('is_active', true)
-                ->first();
+        if (! $cartId) {
+            return null;
+        }
 
-            if ($existingCart) {
-                return $existingCart;
-            }
+        return Cart::query()
+            ->where('id', $cartId)
+            ->where('status', CartStatus::Active->value)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    private function getOrCreateCart(Product $product): Cart
+    {
+        $existingCart = $this->getCurrentCart();
+
+        if ($existingCart) {
+            return $existingCart;
         }
 
         $currency = $product->currency
@@ -122,12 +194,11 @@ class StorefrontCartController extends Controller
 
         if ($existingItem) {
             $newQuantity = (int) $existingItem->quantity + $quantity;
-            $lineTotal = $unitPrice * $newQuantity;
 
             $existingItem->update([
                 'quantity' => $newQuantity,
                 'unit_price' => $unitPrice,
-                'line_total' => $lineTotal,
+                'line_total' => $unitPrice * $newQuantity,
                 'product_name' => $variant?->name ?? $product->name,
                 'sku' => $variant?->sku ?? $product->sku,
                 'item_type' => $itemType,
@@ -257,5 +328,10 @@ class StorefrontCartController extends Controller
         App::setLocale($locale);
 
         return $locale;
+    }
+
+    private function direction(string $locale): string
+    {
+        return in_array($locale, ['ar', 'he'], true) ? 'rtl' : 'ltr';
     }
 }

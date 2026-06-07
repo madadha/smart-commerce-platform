@@ -56,10 +56,10 @@
                     <small>{{ __('storefront.nav.wishlist') }}</small>
                 </a>
 
-                <a href="#" class="scp-header-action">
-                    <span>🛒</span>
-                    <small>{{ __('storefront.nav.cart') }}</small>
-                </a>
+             <a href="{{ route('storefront.cart.index', ['lang' => $locale ?? 'ar']) }}" class="scp-header-action">
+    <span>🛒</span>
+    <small>{{ __('storefront.nav.cart') }}</small>
+</a>
             </div>
         </div>
 
