@@ -147,4 +147,37 @@ return [
     'grand_total' => 'Grand Total',
     'checkout' => 'Checkout',
 ],
+
+
+'checkout' => [
+    'badge' => 'Secure Checkout',
+    'page_title' => 'Checkout',
+    'page_description' => 'Enter your details, choose shipping and payment, and review your order before finalizing.',
+    'customer_details' => 'Customer Details',
+    'customer_details_hint' => 'These details will be used to contact you about the order.',
+    'shipping_details' => 'Shipping & Payment Details',
+    'shipping_details_hint' => 'Choose the suitable shipping and payment method.',
+    'full_name' => 'Full Name',
+    'full_name_placeholder' => 'Enter full name',
+    'email' => 'Email',
+    'phone' => 'Phone Number',
+    'city' => 'City',
+    'city_placeholder' => 'Enter city name',
+    'address' => 'Full Address',
+    'address_placeholder' => 'Street, house number, and additional details',
+    'shipping_method' => 'Shipping Method',
+    'select_shipping_method' => 'Select shipping method',
+    'payment_method' => 'Payment Method',
+    'cash' => 'Cash on Delivery',
+    'credit_card' => 'Credit Card',
+    'bank_transfer' => 'Bank Transfer',
+    'notes' => 'Notes',
+    'notes_placeholder' => 'Write any additional order notes',
+    'back_to_cart' => 'Back to Cart',
+    'place_order' => 'Place Order',
+    'order_summary' => 'Order Summary',
+    'finalization_note' => 'The Place Order button will be connected in the next step to convert the cart into a real order.',
+],
+
+
 ];

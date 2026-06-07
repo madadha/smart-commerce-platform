@@ -257,9 +257,9 @@
                             <strong>{{ $currencySymbol }} {{ number_format((float) $cart->grand_total, 2) }}</strong>
                         </div>
 
-                        <a href="#" class="scp-cart-checkout-button">
-                            {{ __('storefront.cart.checkout') }}
-                        </a>
+                      <a href="{{ route('storefront.checkout.index', ['lang' => $locale]) }}" class="scp-cart-checkout-button">
+    {{ __('storefront.cart.checkout') }}
+</a>
 
                         <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-cart-continue-button">
                             {{ __('storefront.cart.continue_shopping') }}

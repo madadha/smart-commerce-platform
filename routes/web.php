@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\InvoicePdfController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Storefront\StorefrontCartController;
+use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,7 +11,6 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Public Storefront Routes
 |--------------------------------------------------------------------------
-| هذه الصفحات مفتوحة للزوار بدون تسجيل دخول
 */
 
 Route::get('/', [StorefrontController::class, 'home'])
@@ -37,6 +37,9 @@ Route::prefix('store')->name('storefront.')->group(function () {
 
     Route::delete('/cart/items/{item}', [StorefrontCartController::class, 'removeItem'])
         ->name('cart.items.remove');
+
+    Route::get('/checkout', [StorefrontCheckoutController::class, 'index'])
+        ->name('checkout.index');
 });
 
 /*

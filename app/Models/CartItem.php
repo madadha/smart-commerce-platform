@@ -86,4 +86,6 @@ class CartItem extends Model
             ?? $name['ar']
             ?? 'Product';
     }
+
+    
 }
