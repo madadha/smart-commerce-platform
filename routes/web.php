@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Storefront\StorefrontCartController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontController;
+use App\Http\Controllers\Storefront\StorefrontOrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,6 +47,10 @@ Route::prefix('store')->name('storefront.')->group(function () {
 
     Route::get('/checkout/success/{order}', [StorefrontCheckoutController::class, 'success'])
         ->name('checkout.success');
+
+    Route::get('/orders/{order}', [StorefrontOrderController::class, 'show'])
+        ->middleware('signed')
+        ->name('orders.show');
 });
 
 /*

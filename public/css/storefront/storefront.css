@@ -2684,3 +2684,480 @@ select {
     font-weight: 900;
     box-shadow: 0 12px 28px rgba(220, 38, 38, 0.12);
 }
+
+
+/* =========================================
+   Storefront Order Details Page
+========================================= */
+
+.scp-order-details-page {
+    padding: 42px 0 82px;
+    background:
+        radial-gradient(circle at top left, rgba(22, 163, 74, 0.08), transparent 30%),
+        radial-gradient(circle at top right, rgba(79, 70, 229, 0.07), transparent 32%),
+        var(--scp-bg);
+}
+
+.scp-order-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: stretch;
+    padding: 34px;
+    border-radius: 32px;
+    color: white;
+    background: linear-gradient(135deg, #052e16 0%, #111827 48%, #312e81 100%);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+    margin-bottom: 24px;
+}
+
+.scp-order-badge {
+    display: inline-grid;
+    place-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 14px;
+}
+
+.scp-order-hero h1 {
+    margin: 0;
+    font-size: clamp(30px, 4vw, 50px);
+    font-weight: 950;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+}
+
+.scp-order-hero p {
+    margin: 12px 0 0;
+    max-width: 760px;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.85;
+}
+
+.scp-order-number-card {
+    width: 260px;
+    min-width: 260px;
+    border-radius: 26px;
+    padding: 22px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.scp-order-number-card span {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 13px;
+    font-weight: 850;
+    margin-bottom: 8px;
+}
+
+.scp-order-number-card strong {
+    font-size: 19px;
+    font-weight: 950;
+    word-break: break-word;
+}
+
+.scp-order-status-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.scp-order-status-strip div {
+    background: white;
+    border: 1px solid var(--scp-border);
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.055);
+}
+
+.scp-order-status-strip span {
+    display: block;
+    color: var(--scp-muted);
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 7px;
+}
+
+.scp-order-status-strip strong {
+    color: var(--scp-primary);
+    font-size: 17px;
+    font-weight: 950;
+    word-break: break-word;
+}
+
+.scp-order-details-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 24px;
+    align-items: start;
+}
+
+.scp-order-main {
+    min-width: 0;
+}
+
+.scp-order-card,
+.scp-order-summary-card {
+    background: white;
+    border: 1px solid var(--scp-border);
+    border-radius: 30px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+.scp-order-card {
+    padding: 22px;
+    margin-bottom: 22px;
+}
+
+.scp-order-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.scp-order-card-head h2,
+.scp-order-summary-card h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 950;
+    color: var(--scp-dark);
+}
+
+.scp-order-card-head span {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: #eef2ff;
+    color: var(--scp-primary);
+    font-size: 15px;
+    font-weight: 950;
+}
+
+.scp-order-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.scp-order-item {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) 210px;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #eef2f7;
+    border-radius: 24px;
+    background: #f8fafc;
+}
+
+.scp-order-item-image {
+    height: 118px;
+    border-radius: 20px;
+    background: white;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid #eef2f7;
+}
+
+.scp-order-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 10px;
+}
+
+.scp-order-item-placeholder {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    background: #e0e7ff;
+    color: var(--scp-primary);
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    font-weight: 950;
+}
+
+.scp-order-item-type {
+    display: inline-flex;
+    width: fit-content;
+    min-height: 28px;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: var(--scp-primary);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.scp-order-item-info h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 950;
+    color: var(--scp-dark);
+    line-height: 1.45;
+}
+
+.scp-order-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-top: 8px;
+}
+
+.scp-order-item-meta span {
+    color: var(--scp-muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.scp-order-item-notes {
+    margin-top: 12px;
+    border-radius: 16px;
+    background: #ecfdf5;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 850;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.scp-order-digital-codes {
+    margin-top: 12px;
+    border-radius: 16px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    padding: 12px;
+}
+
+.scp-order-digital-codes > strong {
+    display: block;
+    color: #9a3412;
+    font-size: 13px;
+    font-weight: 950;
+    margin-bottom: 8px;
+}
+
+.scp-order-digital-codes div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-top: 1px solid #fed7aa;
+}
+
+.scp-order-digital-codes span {
+    color: #7c2d12;
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.scp-order-digital-codes small {
+    color: #9a3412;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.scp-order-item-numbers {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+}
+
+.scp-order-item-numbers div {
+    background: white;
+    border: 1px solid #eef2f7;
+    border-radius: 17px;
+    padding: 11px;
+}
+
+.scp-order-item-numbers span {
+    display: block;
+    color: var(--scp-muted);
+    font-size: 11px;
+    font-weight: 850;
+    margin-bottom: 5px;
+}
+
+.scp-order-item-numbers strong {
+    color: var(--scp-dark);
+    font-size: 14px;
+    font-weight: 950;
+}
+
+.scp-order-notes-text {
+    margin: 0;
+    color: #374151;
+    line-height: 1.9;
+    font-weight: 750;
+}
+
+.scp-order-sidebar {
+    position: sticky;
+    top: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.scp-order-summary-card {
+    padding: 24px;
+}
+
+.scp-order-summary-line,
+.scp-order-info-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid #eef2f7;
+    padding: 12px 0;
+}
+
+.scp-order-summary-line span,
+.scp-order-info-line span {
+    color: var(--scp-muted);
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.scp-order-summary-line strong,
+.scp-order-info-line strong {
+    color: var(--scp-text);
+    font-size: 13px;
+    font-weight: 950;
+    text-align: end;
+    word-break: break-word;
+}
+
+.scp-order-summary-total {
+    margin-top: 14px;
+    border-radius: 22px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.scp-order-summary-total span {
+    color: var(--scp-muted);
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.scp-order-summary-total strong {
+    color: var(--scp-primary);
+    font-size: 24px;
+    font-weight: 950;
+}
+
+.scp-order-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.scp-order-primary-btn,
+.scp-order-secondary-btn {
+    min-height: 50px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 950;
+}
+
+.scp-order-primary-btn {
+    background: var(--scp-dark);
+    color: white;
+}
+
+.scp-order-secondary-btn {
+    background: #eef2ff;
+    color: var(--scp-primary);
+}
+
+@media (max-width: 1150px) {
+    .scp-order-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .scp-order-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 900px) {
+    .scp-order-hero {
+        flex-direction: column;
+    }
+
+    .scp-order-number-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .scp-order-status-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .scp-order-item {
+        grid-template-columns: 100px minmax(0, 1fr);
+    }
+
+    .scp-order-item-numbers {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .scp-order-details-page {
+        padding: 26px 0 58px;
+    }
+
+    .scp-order-hero {
+        padding: 24px 18px;
+        border-radius: 24px;
+    }
+
+    .scp-order-status-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .scp-order-card,
+    .scp-order-summary-card {
+        padding: 18px;
+        border-radius: 24px;
+    }
+
+    .scp-order-item {
+        grid-template-columns: 1fr;
+    }
+
+    .scp-order-item-image {
+        height: 210px;
+    }
+
+    .scp-order-item-numbers {
+        grid-template-columns: 1fr;
+    }
+}

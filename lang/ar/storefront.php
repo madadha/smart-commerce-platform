@@ -185,4 +185,21 @@ return [
 'order_status' => 'حالة الطلب',
 ],
 
+
+'order_details' => [
+    'badge' => 'تفاصيل الطلب',
+    'page_title' => 'تم استلام طلبك بنجاح',
+    'page_description' => 'هذه الصفحة تعرض تفاصيل الطلب، حالة الدفع، عناصر الطلب، والإجمالي النهائي.',
+    'order_number' => 'رقم الطلب',
+    'order_status' => 'حالة الطلب',
+    'payment_status' => 'حالة الدفع',
+    'ordered_at' => 'تاريخ الطلب',
+    'items' => 'عناصر الطلب',
+    'summary' => 'ملخص الطلب',
+    'customer_details' => 'بيانات الزبون',
+    'customer_notes' => 'ملاحظات الزبون',
+    'digital_codes' => 'الأكواد الرقمية',
+],
 ];
+
+

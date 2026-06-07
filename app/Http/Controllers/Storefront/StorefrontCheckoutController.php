@@ -11,6 +11,7 @@ use App\Services\Checkout\CartCheckoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 use Throwable;
 
@@ -82,10 +83,10 @@ class StorefrontCheckoutController extends Controller
             session()->forget('storefront_cart_id');
 
             return redirect()
-                ->route('storefront.checkout.success', [
+                ->to(URL::signedRoute('storefront.orders.show', [
                     'order' => $order->id,
                     'lang' => $locale,
-                ])
+                ]))
                 ->with('success', __('storefront.checkout.order_created_successfully'));
         } catch (Throwable $exception) {
             report($exception);

@@ -187,4 +187,19 @@ return [
 ],
 
 
+'order_details' => [
+    'badge' => 'Order Details',
+    'page_title' => 'Your Order Has Been Received',
+    'page_description' => 'This page shows your order details, payment status, order items, and final total.',
+    'order_number' => 'Order Number',
+    'order_status' => 'Order Status',
+    'payment_status' => 'Payment Status',
+    'ordered_at' => 'Ordered At',
+    'items' => 'Order Items',
+    'summary' => 'Order Summary',
+    'customer_details' => 'Customer Details',
+    'customer_notes' => 'Customer Notes',
+    'digital_codes' => 'Digital Codes',
+],
+
 ];

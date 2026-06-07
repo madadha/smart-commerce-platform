@@ -185,4 +185,20 @@ return [
 'order_number' => 'מספר הזמנה',
 'order_status' => 'סטטוס הזמנה',
 ],
+
+
+'order_details' => [
+    'badge' => 'פרטי הזמנה',
+    'page_title' => 'ההזמנה התקבלה בהצלחה',
+    'page_description' => 'עמוד זה מציג את פרטי ההזמנה, סטטוס התשלום, פריטי ההזמנה והסכום הסופי.',
+    'order_number' => 'מספר הזמנה',
+    'order_status' => 'סטטוס הזמנה',
+    'payment_status' => 'סטטוס תשלום',
+    'ordered_at' => 'תאריך הזמנה',
+    'items' => 'פריטי הזמנה',
+    'summary' => 'סיכום הזמנה',
+    'customer_details' => 'פרטי לקוח',
+    'customer_notes' => 'הערות לקוח',
+    'digital_codes' => 'קודים דיגיטליים',
+],
 ];
