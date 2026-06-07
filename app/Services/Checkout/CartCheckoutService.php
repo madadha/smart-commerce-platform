@@ -59,6 +59,7 @@ class CartCheckoutService
                 'user_id' => $userId,
                 'currency_id' => $cart->currency_id,
                 'shipping_method_id' => $data['shipping_method_id'] ?? null,
+
                 'coupon_id' => $cart->coupon_id ?? null,
                 'coupon_code' => $cart->coupon_code ?? null,
                 'coupon_discount_type' => $cart->coupon_discount_type ?? null,
@@ -70,6 +71,7 @@ class CartCheckoutService
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_email' => $data['customer_email'] ?? null,
                 'customer_phone' => $data['customer_phone'] ?? null,
+
                 'shipping_city' => $data['city'] ?? null,
                 'shipping_address' => $data['address'] ?? null,
                 'billing_city' => $data['city'] ?? null,
@@ -105,7 +107,7 @@ class CartCheckoutService
                     'line_total' => $lineTotal,
                     'discount_total' => (float) ($cartItem->discount_total ?? 0),
                     'tax_total' => (float) ($cartItem->tax_total ?? 0),
-                    'options' => $cartItem->options,
+                    'options' => $this->normalizeArray($cartItem->options),
                     'notes' => $cartItem->notes,
                     'sort_order' => $cartItem->sort_order ?? 0,
                 ]);
@@ -266,6 +268,23 @@ class CartCheckoutService
                 return Schema::hasColumn($table, $column);
             })
             ->toArray();
+    }
+
+    private function normalizeArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [];
     }
 
     private function generateOrderNumber(): string

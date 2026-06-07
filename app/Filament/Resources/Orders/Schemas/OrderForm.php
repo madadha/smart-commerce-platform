@@ -13,7 +13,6 @@ use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -247,10 +246,12 @@ class OrderForm
                                     ->numeric()
                                     ->default(0),
 
-                                KeyValue::make('options')
-                                    ->label('Options')
-                                    ->keyLabel('Option')
-                                    ->valueLabel('Value')
+                                Textarea::make('options')
+                                    ->label('Options JSON')
+                                    ->rows(3)
+                                    ->formatStateUsing(fn (mixed $state): string => self::formatJsonForTextarea($state))
+                                    ->dehydrateStateUsing(fn (mixed $state): array => self::decodeJsonTextarea($state))
+                                    ->helperText('Use JSON format, for example: {"color":"black","storage":"256GB"}')
                                     ->columnSpanFull(),
 
                                 Textarea::make('notes')
@@ -306,16 +307,18 @@ class OrderForm
 
                 Section::make('Addresses')
                     ->schema([
-                        KeyValue::make('billing_address')
+                        Textarea::make('billing_address')
                             ->label('Billing Address')
-                            ->keyLabel('Field')
-                            ->valueLabel('Value')
+                            ->rows(3)
+                            ->formatStateUsing(fn (mixed $state): string => self::formatTextForTextarea($state))
+                            ->dehydrateStateUsing(fn (mixed $state): ?string => self::normalizeText($state))
                             ->columnSpanFull(),
 
-                        KeyValue::make('shipping_address')
+                        Textarea::make('shipping_address')
                             ->label('Shipping Address')
-                            ->keyLabel('Field')
-                            ->valueLabel('Value')
+                            ->rows(3)
+                            ->formatStateUsing(fn (mixed $state): string => self::formatTextForTextarea($state))
+                            ->dehydrateStateUsing(fn (mixed $state): ?string => self::normalizeText($state))
                             ->columnSpanFull(),
                     ]),
 
@@ -360,5 +363,79 @@ class OrderForm
                     ])
                     ->columns(2),
             ]);
+    }
+
+    private static function formatJsonForTextarea(mixed $state): string
+    {
+        if (is_array($state)) {
+            return json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        }
+
+        if (is_string($state)) {
+            $decoded = json_decode($state, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            }
+
+            return $state;
+        }
+
+        return '{}';
+    }
+
+    private static function decodeJsonTextarea(mixed $state): array
+    {
+        if (is_array($state)) {
+            return $state;
+        }
+
+        if (is_string($state)) {
+            $state = trim($state);
+
+            if ($state === '') {
+                return [];
+            }
+
+            $decoded = json_decode($state, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [];
+    }
+
+    private static function formatTextForTextarea(mixed $state): string
+    {
+        if (is_array($state)) {
+            return collect($state)
+                ->map(fn ($value, $key) => $key . ': ' . $value)
+                ->implode(PHP_EOL);
+        }
+
+        if (is_string($state)) {
+            return $state;
+        }
+
+        return '';
+    }
+
+    private static function normalizeText(mixed $state): ?string
+    {
+        if (is_string($state)) {
+            $state = trim($state);
+
+            return $state === '' ? null : $state;
+        }
+
+        if (is_array($state)) {
+            return collect($state)
+                ->map(fn ($value, $key) => $key . ': ' . $value)
+                ->implode(PHP_EOL);
+        }
+
+        return null;
     }
 }
