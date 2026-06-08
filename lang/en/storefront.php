@@ -224,6 +224,18 @@ return [
     'track_another' => 'Track Another Order',
 ],
 
-
+'order_history' => [
+    'my_orders' => 'My Orders',
+    'badge' => 'My Account',
+    'page_title' => 'My Order History',
+    'page_description' => 'Here you can view all your previous orders, track their status, and open each order details page.',
+    'total_orders' => 'Total Orders',
+    'orders_list' => 'Orders List',
+    'items_count' => 'Items',
+    'actions' => 'Actions',
+    'view_details' => 'View Details',
+    'empty_title' => 'No Orders Yet',
+    'empty_text' => 'When you place a new order, it will appear here in your order history.',
+],
 
 ];

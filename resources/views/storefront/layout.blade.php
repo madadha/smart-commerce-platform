@@ -87,6 +87,12 @@
             <a href="{{ route('storefront.orders.track', ['lang' => $locale ?? 'ar']) }}">
     {{ __('storefront.order_tracking.track_order') }}
 </a>
+
+@if(auth()->check())
+    <a href="{{ route('storefront.orders.history', ['lang' => $locale ?? 'ar']) }}">
+        {{ __('storefront.order_history.my_orders') }}
+    </a>
+@endif
         </nav>
 
     </div>

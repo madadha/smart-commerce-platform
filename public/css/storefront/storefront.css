@@ -3325,3 +3325,259 @@ select {
         grid-template-columns: 1fr;
     }
 }
+
+/* =========================================
+   Customer Order History
+========================================= */
+
+.scp-history-page {
+    padding: 44px 0 82px;
+    background:
+        radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), transparent 30%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.07), transparent 32%),
+        var(--scp-bg);
+}
+
+.scp-history-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: stretch;
+    padding: 36px;
+    border-radius: 34px;
+    color: white;
+    background: linear-gradient(135deg, #111827 0%, #312e81 50%, #0f172a 100%);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+    margin-bottom: 24px;
+}
+
+.scp-history-badge {
+    display: inline-grid;
+    place-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 14px;
+}
+
+.scp-history-hero h1 {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 54px);
+    font-weight: 950;
+    letter-spacing: -0.05em;
+    line-height: 1.08;
+}
+
+.scp-history-hero p {
+    margin: 14px 0 0;
+    max-width: 760px;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.85;
+}
+
+.scp-history-count-card {
+    width: 220px;
+    min-width: 220px;
+    border-radius: 26px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.scp-history-count-card span {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 13px;
+    font-weight: 850;
+    margin-bottom: 8px;
+}
+
+.scp-history-count-card strong {
+    color: white;
+    font-size: 42px;
+    font-weight: 950;
+}
+
+.scp-history-table-card {
+    background: white;
+    border: 1px solid var(--scp-border);
+    border-radius: 30px;
+    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.07);
+    padding: 22px;
+}
+
+.scp-history-table-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.scp-history-table-head h2 {
+    margin: 0;
+    color: var(--scp-dark);
+    font-size: 24px;
+    font-weight: 950;
+}
+
+.scp-history-table-head a {
+    min-height: 42px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 16px;
+    padding: 0 15px;
+    background: #eef2ff;
+    color: var(--scp-primary);
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.scp-history-table-wrap {
+    overflow-x: auto;
+    border-radius: 22px;
+    border: 1px solid #eef2f7;
+}
+
+.scp-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+    background: white;
+}
+
+.scp-history-table th {
+    text-align: start;
+    padding: 16px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.scp-history-table td {
+    padding: 16px;
+    color: var(--scp-text);
+    font-size: 13px;
+    font-weight: 800;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.scp-history-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.scp-history-status,
+.scp-history-payment {
+    display: inline-grid;
+    place-items: center;
+    min-height: 30px;
+    border-radius: 999px;
+    padding: 0 11px;
+    font-size: 11px;
+    font-weight: 950;
+}
+
+.scp-history-status {
+    background: #eef2ff;
+    color: var(--scp-primary);
+}
+
+.scp-history-payment {
+    background: #ecfdf5;
+    color: #166534;
+}
+
+.scp-history-view-btn {
+    min-height: 38px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 14px;
+    padding: 0 13px;
+    background: var(--scp-dark);
+    color: white;
+    font-size: 12px;
+    font-weight: 950;
+}
+
+.scp-history-pagination {
+    margin-top: 18px;
+}
+
+.scp-history-empty {
+    background: white;
+    border: 1px solid var(--scp-border);
+    border-radius: 30px;
+    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.07);
+    padding: 46px 24px;
+    text-align: center;
+}
+
+.scp-history-empty-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 26px;
+    background: #eef2ff;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    font-size: 34px;
+}
+
+.scp-history-empty h2 {
+    margin: 0;
+    color: var(--scp-dark);
+    font-size: 26px;
+    font-weight: 950;
+}
+
+.scp-history-empty p {
+    max-width: 560px;
+    margin: 12px auto 22px;
+    color: var(--scp-muted);
+    line-height: 1.8;
+}
+
+.scp-history-empty a {
+    min-height: 48px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 18px;
+    padding: 0 20px;
+    background: var(--scp-dark);
+    color: white;
+    font-size: 14px;
+    font-weight: 950;
+}
+
+@media (max-width: 800px) {
+    .scp-history-hero {
+        flex-direction: column;
+        padding: 26px 18px;
+        border-radius: 26px;
+    }
+
+    .scp-history-count-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .scp-history-table-card {
+        padding: 16px;
+        border-radius: 24px;
+    }
+
+    .scp-history-table-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+

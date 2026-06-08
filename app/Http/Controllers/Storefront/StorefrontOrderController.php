@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class StorefrontOrderController extends Controller
@@ -100,6 +101,52 @@ class StorefrontOrderController extends Controller
             'digitalCodesByItem' => $digitalCodesByItem,
             'pageTitle' => __('storefront.order_tracking.result_title') . ' - ' . $order->order_number,
             'pageDescription' => __('storefront.order_tracking.result_description'),
+        ]);
+    }
+
+    public function history(Request $request): View
+    {
+        $locale = $this->resolveLocale($request);
+        $user = $request->user();
+
+        $ordersQuery = Order::query()
+            ->with([
+                'items',
+                'currency',
+                'customer',
+            ])
+            ->latest();
+
+        $ordersQuery->where(function (Builder $query) use ($user) {
+            if (Schema::hasColumn('orders', 'user_id')) {
+                $query->where('user_id', $user->id);
+            }
+
+            if (Schema::hasColumn('orders', 'customer_id') && Schema::hasTable('customers')) {
+                $query->orWhereHas('customer', function (Builder $customerQuery) use ($user) {
+                    if (Schema::hasColumn('customers', 'user_id')) {
+                        $customerQuery->where('user_id', $user->id);
+                    }
+
+                    if (! empty($user->email) && Schema::hasColumn('customers', 'email')) {
+                        $customerQuery->orWhere('email', $user->email);
+                    }
+                });
+            }
+
+            if (! empty($user->email) && Schema::hasColumn('orders', 'customer_email')) {
+                $query->orWhere('customer_email', $user->email);
+            }
+        });
+
+        $orders = $ordersQuery->paginate(12)->withQueryString();
+
+        return view('storefront.orders.history', [
+            'locale' => $locale,
+            'direction' => $this->direction($locale),
+            'orders' => $orders,
+            'pageTitle' => __('storefront.order_history.page_title') . ' - Smart Commerce Platform',
+            'pageDescription' => __('storefront.order_history.page_description'),
         ]);
     }
 

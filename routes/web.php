@@ -54,6 +54,10 @@ Route::prefix('store')->name('storefront.')->group(function () {
     Route::post('/track-order/result', [StorefrontOrderController::class, 'trackingResult'])
         ->name('orders.track.result');
 
+    Route::get('/account/orders', [StorefrontOrderController::class, 'history'])
+        ->middleware('auth')
+        ->name('orders.history');
+
     Route::get('/orders/{order}', [StorefrontOrderController::class, 'show'])
         ->middleware('signed')
         ->name('orders.show');
@@ -82,8 +86,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])
         ->name('profile.update');
 
-    Route::delete('/profile', [ProfileController::class, 'destroy'])
-        ->name('profile.destroy');
+    Route::delete('/profile', [ProfileController::class, 'destroy']);
 
     Route::get('/admin/invoices/{invoice}/pdf', [InvoicePdfController::class, 'show'])
         ->name('admin.invoices.pdf');
