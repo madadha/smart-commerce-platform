@@ -8,6 +8,7 @@ use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\StorefrontOrderController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Storefront\StorefrontWishlistController;
+use App\Http\Controllers\Storefront\StorefrontProductReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,7 +78,11 @@ Route::prefix('store')->name('storefront.')->group(function () {
 
      Route::delete('/wishlist/{product}', [StorefrontWishlistController::class, 'destroy'])
     ->middleware('auth')
-    ->name('wishlist.destroy');    
+    ->name('wishlist.destroy');
+    
+    Route::post('/products/{product}/reviews', [StorefrontProductReviewController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('products.reviews.store');
 
     Route::get('/orders/{order}', [StorefrontOrderController::class, 'show'])
         ->middleware('signed')

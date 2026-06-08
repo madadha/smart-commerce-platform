@@ -286,5 +286,24 @@ return [
     'add_to_cart' => 'Add to Cart',
 ],
 
+'reviews' => [
+    'badge' => 'Customer Reviews',
+    'title' => 'Product Reviews & Ratings',
+    'subtitle' => 'Share your experience with this product and help others make a better decision.',
+    'reviews_count' => 'reviews',
+    'write_review' => 'Write a Review',
+    'approval_notice' => 'Your review will be submitted for moderation and displayed after approval.',
+    'name' => 'Name',
+    'email' => 'Email',
+    'rating' => 'Rating',
+    'comment' => 'Comment',
+    'comment_placeholder' => 'Write your opinion about this product...',
+    'submit' => 'Submit Review',
+    'approved_reviews' => 'Approved Reviews',
+    'empty_title' => 'No Reviews Yet',
+    'empty_text' => 'Be the first to share your opinion about this product.',
+    'submitted_successfully' => 'Your review has been submitted successfully and will appear after approval.',
+],
+
 
 ];

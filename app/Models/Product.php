@@ -14,6 +14,7 @@ use App\Models\ProductMedia;
 
 
 
+
 class Product extends Model
 {
     protected $fillable = [
@@ -265,6 +266,18 @@ public function media(): HasMany
     return $this->hasMany(ProductMedia::class)
         ->orderBy('sort_order')
         ->orderBy('id');
+}
+
+public function reviews(): HasMany
+{
+    return $this->hasMany(ProductReview::class);
+}
+
+public function approvedReviews(): HasMany
+{
+    return $this->hasMany(ProductReview::class)
+        ->approved()
+        ->latest();
 }
 
 }

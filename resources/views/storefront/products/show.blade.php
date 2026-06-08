@@ -373,4 +373,11 @@
 
         </div>
     </section>
+
+    @include('storefront.products.partials.reviews', [
+    'product' => $product,
+    'locale' => $locale,
+])
+
+
 @endsection

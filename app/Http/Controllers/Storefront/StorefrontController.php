@@ -30,7 +30,10 @@ class StorefrontController extends Controller
             ->get();
 
         $featuredProductsQuery = Product::query()
-            ->with(['brand', 'currency'])
+            ->with([
+                'brand',
+                'currency',
+            ])
             ->where('is_active', true);
 
         if (Schema::hasColumn('products', 'is_featured')) {
@@ -47,7 +50,10 @@ class StorefrontController extends Controller
             ->get();
 
         $latestProducts = Product::query()
-            ->with(['brand', 'currency'])
+            ->with([
+                'brand',
+                'currency',
+            ])
             ->where('is_active', true)
             ->latest()
             ->limit(8)
@@ -81,7 +87,10 @@ class StorefrontController extends Controller
         $sort = $request->query('sort', 'latest');
 
         $productsQuery = Product::query()
-            ->with(['brand', 'currency'])
+            ->with([
+                'brand',
+                'currency',
+            ])
             ->where('is_active', true);
 
         if ($search !== '') {
@@ -151,47 +160,55 @@ class StorefrontController extends Controller
     }
 
     public function productShow(Request $request, string $slug)
-{
-    $locale = $this->resolveLocale($request);
+    {
+        $locale = $this->resolveLocale($request);
 
-    $product = Product::query()
-        ->with([
-            'brand',
-            'currency',
-            'categories',
-            'variants',
-            'media',
-        ])
-        ->where('is_active', true)
-        ->where('slug', $slug)
-        ->firstOrFail();
+        $product = Product::query()
+            ->with([
+                'brand',
+                'currency',
+                'categories',
+                'variants',
+                'media',
+                'approvedReviews',
+            ])
+            ->where('is_active', true)
+            ->where('slug', $slug)
+            ->firstOrFail();
 
-    $relatedProducts = Product::query()
-        ->with(['brand', 'currency'])
-        ->where('is_active', true)
-        ->where('id', '!=', $product->id)
-        ->when(method_exists($product, 'categories') && $product->categories->isNotEmpty(), function (Builder $query) use ($product) {
-            $query->whereHas('categories', function (Builder $categoryQuery) use ($product) {
-                $categoryQuery->whereIn('categories.id', $product->categories->pluck('id')->toArray());
-            });
-        })
-        ->latest()
-        ->limit(4)
-        ->get();
+        $relatedProducts = Product::query()
+            ->with([
+                'brand',
+                'currency',
+            ])
+            ->where('is_active', true)
+            ->where('id', '!=', $product->id)
+            ->when(
+                method_exists($product, 'categories') && $product->categories->isNotEmpty(),
+                function (Builder $query) use ($product) {
+                    $query->whereHas('categories', function (Builder $categoryQuery) use ($product) {
+                        $categoryQuery->whereIn(
+                            'categories.id',
+                            $product->categories->pluck('id')->toArray()
+                        );
+                    });
+                }
+            )
+            ->latest()
+            ->limit(4)
+            ->get();
 
-    return view('storefront.products.show', [
-        'locale' => $locale,
-        'direction' => $this->direction($locale),
-        'product' => $product,
-        'relatedProducts' => $relatedProducts,
-        'pageTitle' => $product->getName($locale) . ' - Smart Commerce Platform',
-        'pageDescription' => method_exists($product, 'getShortDescription')
-            ? $product->getShortDescription($locale)
-            : $product->getName($locale),
-    ]);
-}
-
-
+        return view('storefront.products.show', [
+            'locale' => $locale,
+            'direction' => $this->direction($locale),
+            'product' => $product,
+            'relatedProducts' => $relatedProducts,
+            'pageTitle' => $product->getName($locale) . ' - Smart Commerce Platform',
+            'pageDescription' => method_exists($product, 'getShortDescription')
+                ? $product->getShortDescription($locale)
+                : $product->getName($locale),
+        ]);
+    }
 
     private function applyPriceSort(Builder $query, string $direction): Builder
     {
@@ -210,7 +227,8 @@ class StorefrontController extends Controller
     {
         $allowedLocales = ['ar', 'he', 'en'];
 
-        $locale = $request->query('lang')
+        $locale = $request->input('lang')
+            ?? $request->query('lang')
             ?? session('storefront_locale')
             ?? app()->getLocale()
             ?? 'ar';
