@@ -224,6 +224,25 @@
         </button>
     </form>
 
+    @if(auth()->check())
+        <form
+            method="POST"
+            action="{{ route('storefront.wishlist.toggle', ['product' => $product->id, 'lang' => $locale]) }}"
+            class="scp-product-details-wishlist-form"
+        >
+            @csrf
+
+            <button type="submit">
+                ♥ {{ __('storefront.wishlist.toggle') }}
+            </button>
+        </form>
+    @else
+        <a href="{{ route('login') }}" class="scp-product-details-wishlist-link">
+            ♡ {{ __('storefront.wishlist.login_required') }}
+        </a>
+    @endif
+
+
     <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-detail-secondary-btn">
         {{ __('storefront.product_details.back_to_products') }}
     </a>
@@ -293,6 +312,26 @@
                 <div class="scp-product-grid">
                     @forelse($relatedProducts as $relatedProduct)
                         <article class="scp-product-card">
+                            @if(auth()->check())
+                                <form
+                                    method="POST"
+                                    action="{{ route('storefront.wishlist.toggle', ['product' => $relatedProduct->id, 'lang' => $locale]) }}"
+                                    class="scp-product-wishlist-form"
+                                >
+                                    @csrf
+
+                                    <button type="submit" title="{{ __('storefront.wishlist.toggle') }}">
+                                        ♥
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}" class="scp-product-wishlist-form">
+                                    <button type="button" title="{{ __('storefront.wishlist.login_required') }}">
+                                        ♡
+                                    </button>
+                                </a>
+                            @endif
+
                             <div class="scp-product-image">
                                 @if($productImage($relatedProduct))
                                     <img src="{{ $productImage($relatedProduct) }}" alt="{{ $relatedProduct->getName($locale) }}">

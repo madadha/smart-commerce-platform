@@ -266,4 +266,25 @@ return [
     'profile_settings' => 'Profile Settings',
 ],
 
+
+
+'wishlist' => [
+    'my_wishlist' => 'Wishlist',
+    'badge' => 'Wishlist',
+    'page_title' => 'My Favorite Products',
+    'page_description' => 'Save products you like and come back later to complete your purchase easily.',
+    'total_items' => 'Total Items',
+    'saved_item' => 'Saved Product',
+    'remove' => 'Remove from Wishlist',
+    'toggle' => 'Add / Remove from Wishlist',
+    'login_required' => 'Log in to add this product to your wishlist',
+    'added_successfully' => 'Product added to wishlist successfully.',
+    'removed_successfully' => 'Product removed from wishlist successfully.',
+    'empty_title' => 'Your Wishlist Is Empty',
+    'empty_text' => 'Start adding products you like and they will appear here in one place.',
+    'browse_products' => 'Browse Products',
+    'add_to_cart' => 'Add to Cart',
+],
+
+
 ];

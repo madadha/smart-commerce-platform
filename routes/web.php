@@ -7,6 +7,7 @@ use App\Http\Controllers\Storefront\StorefrontCheckoutController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\StorefrontOrderController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Storefront\StorefrontWishlistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +62,22 @@ Route::prefix('store')->name('storefront.')->group(function () {
     Route::get('/account/orders', [StorefrontOrderController::class, 'history'])
         ->middleware('auth')
         ->name('orders.history');
+
+    Route::get('/wishlist', [StorefrontWishlistController::class, 'index'])
+    ->middleware('auth')
+    ->name('wishlist.index');
+
+    Route::post('/wishlist', [StorefrontWishlistController::class, 'store'])
+    ->middleware('auth')
+    ->name('wishlist.store');
+
+     Route::post('/wishlist/{product}/toggle', [StorefrontWishlistController::class, 'toggle'])
+    ->middleware('auth')
+    ->name('wishlist.toggle');
+
+     Route::delete('/wishlist/{product}', [StorefrontWishlistController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('wishlist.destroy');    
 
     Route::get('/orders/{order}', [StorefrontOrderController::class, 'show'])
         ->middleware('signed')

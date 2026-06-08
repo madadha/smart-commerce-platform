@@ -99,6 +99,12 @@
         {{ __('storefront.account_dashboard.my_account') }}
     </a>
 @endif
+
+@if(auth()->check())
+    <a href="{{ route('storefront.wishlist.index', ['lang' => $locale ?? 'ar']) }}">
+        {{ __('storefront.wishlist.my_wishlist') }}
+    </a>
+@endif
         </nav>
 
     </div>

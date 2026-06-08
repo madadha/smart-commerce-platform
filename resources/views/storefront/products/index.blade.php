@@ -195,6 +195,26 @@
                     <div class="scp-product-grid">
                         @forelse($products as $product)
                             <article class="scp-product-card">
+                                @if(auth()->check())
+                                    <form
+                                        method="POST"
+                                        action="{{ route('storefront.wishlist.toggle', ['product' => $product->id, 'lang' => $locale]) }}"
+                                        class="scp-product-wishlist-form"
+                                    >
+                                        @csrf
+
+                                        <button type="submit" title="{{ __('storefront.wishlist.toggle') }}">
+                                            ♥
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login') }}" class="scp-product-wishlist-form">
+                                        <button type="button" title="{{ __('storefront.wishlist.login_required') }}">
+                                            ♡
+                                        </button>
+                                    </a>
+                                @endif
+
                                 <div class="scp-product-image">
                                     @if($productImage($product))
                                         <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
