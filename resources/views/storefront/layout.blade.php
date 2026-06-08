@@ -83,6 +83,10 @@
             <a href="#">
                 {{ __('storefront.nav.brands') }}
             </a>
+
+            <a href="{{ route('storefront.orders.track', ['lang' => $locale ?? 'ar']) }}">
+    {{ __('storefront.order_tracking.track_order') }}
+</a>
         </nav>
 
     </div>

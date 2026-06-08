@@ -48,6 +48,12 @@ Route::prefix('store')->name('storefront.')->group(function () {
     Route::get('/checkout/success/{order}', [StorefrontCheckoutController::class, 'success'])
         ->name('checkout.success');
 
+    Route::get('/track-order', [StorefrontOrderController::class, 'trackingForm'])
+        ->name('orders.track');
+
+    Route::post('/track-order/result', [StorefrontOrderController::class, 'trackingResult'])
+        ->name('orders.track.result');
+
     Route::get('/orders/{order}', [StorefrontOrderController::class, 'show'])
         ->middleware('signed')
         ->name('orders.show');

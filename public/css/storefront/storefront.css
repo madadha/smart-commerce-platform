@@ -3161,3 +3161,167 @@ select {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* =========================================
+   Order Tracking Page
+========================================= */
+
+.scp-track-page {
+    padding: 44px 0 82px;
+    background:
+        radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), transparent 30%),
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.07), transparent 32%),
+        var(--scp-bg);
+}
+
+.scp-track-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) 440px;
+    gap: 26px;
+    align-items: stretch;
+}
+
+.scp-track-hero {
+    padding: 44px;
+    border-radius: 34px;
+    color: white;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.12), transparent 28%),
+        linear-gradient(135deg, #111827 0%, #312e81 52%, #052e16 100%);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+}
+
+.scp-track-badge {
+    display: inline-grid;
+    place-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 16px;
+}
+
+.scp-track-hero h1 {
+    margin: 0;
+    font-size: clamp(34px, 4vw, 56px);
+    font-weight: 950;
+    line-height: 1.05;
+    letter-spacing: -0.05em;
+}
+
+.scp-track-hero p {
+    max-width: 720px;
+    margin: 16px 0 0;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.9;
+    font-size: 15px;
+}
+
+.scp-track-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 36px;
+}
+
+.scp-track-steps div {
+    padding: 16px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.scp-track-steps strong {
+    width: 34px;
+    height: 34px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    background: white;
+    color: var(--scp-primary);
+    font-weight: 950;
+    margin-bottom: 10px;
+}
+
+.scp-track-steps span {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.scp-track-card {
+    background: white;
+    border: 1px solid var(--scp-border);
+    border-radius: 34px;
+    padding: 30px;
+    box-shadow: 0 22px 55px rgba(15, 23, 42, 0.08);
+}
+
+.scp-track-card h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 950;
+    color: var(--scp-dark);
+}
+
+.scp-track-card p {
+    margin: 10px 0 22px;
+    color: var(--scp-muted);
+    line-height: 1.8;
+}
+
+.scp-track-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.scp-track-submit {
+    min-height: 52px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--scp-dark), #312e81);
+    color: white;
+    font-size: 14px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
+}
+
+.scp-track-error {
+    margin-bottom: 16px;
+    border-radius: 18px;
+    padding: 13px 15px;
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.7;
+}
+
+@media (max-width: 1050px) {
+    .scp-track-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .scp-track-page {
+        padding: 28px 0 58px;
+    }
+
+    .scp-track-hero,
+    .scp-track-card {
+        padding: 24px 18px;
+        border-radius: 26px;
+    }
+
+    .scp-track-steps {
+        grid-template-columns: 1fr;
+    }
+}

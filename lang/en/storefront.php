@@ -202,4 +202,28 @@ return [
     'digital_codes' => 'Digital Codes',
 ],
 
+
+
+'order_tracking' => [
+    'track_order' => 'Track Order',
+    'badge' => 'Order Tracking',
+    'page_title' => 'Track Your Order',
+    'page_description' => 'Enter your order number and phone number to view the order status and details.',
+    'form_title' => 'Tracking Details',
+    'form_hint' => 'Use the order number you received after completing your purchase.',
+    'order_number' => 'Order Number',
+    'phone' => 'Phone Number',
+    'submit' => 'View Order Status',
+    'not_found' => 'No matching order was found. Please check the order number and phone number.',
+    'step_1' => 'Enter Order Number',
+    'step_2' => 'Enter Phone Number',
+    'step_3' => 'View Order Status',
+    'result_badge' => 'Tracking Result',
+    'result_title' => 'Order Status',
+    'result_description' => 'Order found. You can view the order status and details here.',
+    'track_another' => 'Track Another Order',
+],
+
+
+
 ];
