@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class StorefrontOrderController extends Controller
@@ -104,6 +103,61 @@ class StorefrontOrderController extends Controller
         ]);
     }
 
+    public function dashboard(Request $request): View
+    {
+        $locale = $this->resolveLocale($request);
+        $user = $request->user();
+
+        $ordersBaseQuery = Order::query()
+            ->where(function (Builder $query) use ($user) {
+                $this->applyAuthenticatedUserOrderScope($query, $user);
+            });
+
+        $totalOrders = (clone $ordersBaseQuery)->count();
+
+        $totalSpent = Schema::hasColumn('orders', 'grand_total')
+            ? (float) (clone $ordersBaseQuery)->sum('grand_total')
+            : 0.0;
+
+        $pendingOrders = Schema::hasColumn('orders', 'status')
+            ? (clone $ordersBaseQuery)->whereIn('status', ['pending', 'processing'])->count()
+            : 0;
+
+        $completedOrders = Schema::hasColumn('orders', 'status')
+            ? (clone $ordersBaseQuery)->whereIn('status', ['completed', 'delivered'])->count()
+            : 0;
+
+        $unpaidOrders = Schema::hasColumn('orders', 'payment_status')
+            ? (clone $ordersBaseQuery)->whereIn('payment_status', ['unpaid', 'pending'])->count()
+            : 0;
+
+        $latestOrder = (clone $ordersBaseQuery)
+            ->with(['items', 'currency', 'customer'])
+            ->latest()
+            ->first();
+
+        $recentOrders = (clone $ordersBaseQuery)
+            ->with(['items', 'currency', 'customer'])
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('storefront.account.dashboard', [
+            'locale' => $locale,
+            'direction' => $this->direction($locale),
+            'user' => $user,
+            'totalOrders' => $totalOrders,
+            'totalSpent' => $totalSpent,
+            'pendingOrders' => $pendingOrders,
+            'completedOrders' => $completedOrders,
+            'unpaidOrders' => $unpaidOrders,
+            'latestOrder' => $latestOrder,
+            'recentOrders' => $recentOrders,
+            'pageTitle' => __('storefront.account_dashboard.page_title') . ' - Smart Commerce Platform',
+            'pageDescription' => __('storefront.account_dashboard.page_description'),
+        ]);
+    }
+
     public function history(Request $request): View
     {
         $locale = $this->resolveLocale($request);
@@ -115,29 +169,10 @@ class StorefrontOrderController extends Controller
                 'currency',
                 'customer',
             ])
+            ->where(function (Builder $query) use ($user) {
+                $this->applyAuthenticatedUserOrderScope($query, $user);
+            })
             ->latest();
-
-        $ordersQuery->where(function (Builder $query) use ($user) {
-            if (Schema::hasColumn('orders', 'user_id')) {
-                $query->where('user_id', $user->id);
-            }
-
-            if (Schema::hasColumn('orders', 'customer_id') && Schema::hasTable('customers')) {
-                $query->orWhereHas('customer', function (Builder $customerQuery) use ($user) {
-                    if (Schema::hasColumn('customers', 'user_id')) {
-                        $customerQuery->where('user_id', $user->id);
-                    }
-
-                    if (! empty($user->email) && Schema::hasColumn('customers', 'email')) {
-                        $customerQuery->orWhere('email', $user->email);
-                    }
-                });
-            }
-
-            if (! empty($user->email) && Schema::hasColumn('orders', 'customer_email')) {
-                $query->orWhere('customer_email', $user->email);
-            }
-        });
 
         $orders = $ordersQuery->paginate(12)->withQueryString();
 
@@ -148,6 +183,66 @@ class StorefrontOrderController extends Controller
             'pageTitle' => __('storefront.order_history.page_title') . ' - Smart Commerce Platform',
             'pageDescription' => __('storefront.order_history.page_description'),
         ]);
+    }
+
+    private function applyAuthenticatedUserOrderScope(Builder $query, object $user): void
+    {
+        $hasAnyCondition = false;
+
+        if (Schema::hasColumn('orders', 'user_id')) {
+            $query->where('user_id', $user->id);
+            $hasAnyCondition = true;
+        }
+
+        if (! empty($user->email) && Schema::hasColumn('orders', 'customer_email')) {
+            if ($hasAnyCondition) {
+                $query->orWhere('customer_email', $user->email);
+            } else {
+                $query->where('customer_email', $user->email);
+                $hasAnyCondition = true;
+            }
+        }
+
+        if (Schema::hasColumn('orders', 'customer_id') && Schema::hasTable('customers')) {
+            if ($hasAnyCondition) {
+                $query->orWhereHas('customer', function (Builder $customerQuery) use ($user) {
+                    $this->applyAuthenticatedUserCustomerScope($customerQuery, $user);
+                });
+            } else {
+                $query->whereHas('customer', function (Builder $customerQuery) use ($user) {
+                    $this->applyAuthenticatedUserCustomerScope($customerQuery, $user);
+                });
+
+                $hasAnyCondition = true;
+            }
+        }
+
+        if (! $hasAnyCondition) {
+            $query->whereRaw('1 = 0');
+        }
+    }
+
+    private function applyAuthenticatedUserCustomerScope(Builder $query, object $user): void
+    {
+        $hasAnyCondition = false;
+
+        if (Schema::hasColumn('customers', 'user_id')) {
+            $query->where('user_id', $user->id);
+            $hasAnyCondition = true;
+        }
+
+        if (! empty($user->email) && Schema::hasColumn('customers', 'email')) {
+            if ($hasAnyCondition) {
+                $query->orWhere('email', $user->email);
+            } else {
+                $query->where('email', $user->email);
+                $hasAnyCondition = true;
+            }
+        }
+
+        if (! $hasAnyCondition) {
+            $query->whereRaw('1 = 0');
+        }
     }
 
     private function applyPhoneSearch(Builder $query, string $phone): void
@@ -174,7 +269,13 @@ class StorefrontOrderController extends Controller
                 $query->whereHas('customer', function (Builder $customerQuery) use ($phone) {
                     $this->applyCustomerPhoneSearch($customerQuery, $phone);
                 });
+
+                $hasAnyCondition = true;
             }
+        }
+
+        if (! $hasAnyCondition) {
+            $query->whereRaw('1 = 0');
         }
     }
 

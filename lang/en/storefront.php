@@ -238,4 +238,32 @@ return [
     'empty_text' => 'When you place a new order, it will appear here in your order history.',
 ],
 
+
+'account_dashboard' => [
+    'my_account' => 'My Account',
+    'badge' => 'Account Dashboard',
+    'page_title' => 'Customer Account Dashboard',
+    'page_description' => 'Track your orders, monitor payment status, view recent purchases, and quickly access your store services.',
+    'welcome' => 'Welcome',
+    'shop_now' => 'Shop Now',
+    'total_orders' => 'Total Orders',
+    'total_spent' => 'Total Spent',
+    'pending_orders' => 'Pending Orders',
+    'completed_orders' => 'Completed Orders',
+    'unpaid_orders' => 'Unpaid Orders',
+    'recent_orders' => 'Recent Orders',
+    'recent_orders_hint' => 'A quick look at your latest purchases.',
+    'view_all' => 'View All',
+    'latest_order' => 'Latest Order',
+    'latest_order_hint' => 'The most recent purchase made from your account.',
+    'quick_actions' => 'Quick Actions',
+    'quick_actions_hint' => 'Shortcuts to manage your shopping experience.',
+    'no_orders_title' => 'No Orders Yet',
+    'no_orders_text' => 'Start shopping now and your order history will appear here.',
+    'start_shopping' => 'Start Shopping',
+    'no_latest_order' => 'There is no latest order to display right now.',
+    'browse_products' => 'Browse Products',
+    'profile_settings' => 'Profile Settings',
+],
+
 ];

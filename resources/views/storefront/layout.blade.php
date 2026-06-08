@@ -93,6 +93,12 @@
         {{ __('storefront.order_history.my_orders') }}
     </a>
 @endif
+
+@if(auth()->check())
+    <a href="{{ route('storefront.account.dashboard', ['lang' => $locale ?? 'ar']) }}">
+        {{ __('storefront.account_dashboard.my_account') }}
+    </a>
+@endif
         </nav>
 
     </div>
