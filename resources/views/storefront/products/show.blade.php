@@ -129,6 +129,10 @@
 
                     <h1>{{ $product->getName($locale) }}</h1>
 
+                    @include('storefront.products.partials.rating-summary', [
+                        'product' => $product,
+                    ])
+
                     @if($shortDescription)
                         <p class="scp-product-short-description">
                             {{ $shortDescription }}
@@ -349,6 +353,10 @@
 
                                 <h3>{{ $relatedProduct->getName($locale) }}</h3>
 
+                                @include('storefront.products.partials.rating-summary', [
+                                    'product' => $relatedProduct,
+                                ])
+
                                 <div class="scp-product-price">
                                     <strong>
                                         {{ $relatedProduct->currency?->symbol ?? '₪' }}
@@ -375,9 +383,9 @@
     </section>
 
     @include('storefront.products.partials.reviews', [
-    'product' => $product,
-    'locale' => $locale,
-])
+        'product' => $product,
+        'locale' => $locale,
+    ])
 
 
 @endsection

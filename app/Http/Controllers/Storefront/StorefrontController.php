@@ -33,6 +33,7 @@ class StorefrontController extends Controller
             ->with([
                 'brand',
                 'currency',
+                'approvedReviews',
             ])
             ->where('is_active', true);
 
@@ -53,6 +54,7 @@ class StorefrontController extends Controller
             ->with([
                 'brand',
                 'currency',
+                'approvedReviews',
             ])
             ->where('is_active', true)
             ->latest()
@@ -90,6 +92,7 @@ class StorefrontController extends Controller
             ->with([
                 'brand',
                 'currency',
+                'approvedReviews',
             ])
             ->where('is_active', true);
 
@@ -180,6 +183,7 @@ class StorefrontController extends Controller
             ->with([
                 'brand',
                 'currency',
+                'approvedReviews',
             ])
             ->where('is_active', true)
             ->where('id', '!=', $product->id)

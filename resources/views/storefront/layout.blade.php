@@ -7,7 +7,9 @@
 
     <meta name="description" content="{{ $pageDescription ?? 'Smart Commerce Platform - Modern dynamic e-commerce platform.' }}">
 
-   <link rel="stylesheet" href="{{ asset('css/storefront/storefront.css') }}?v={{ filemtime(public_path('css/storefront/storefront.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/storefront/storefront.css') }}?v={{ filemtime(public_path('css/storefront/storefront.css')) }}">
+
+<link rel="stylesheet" href="{{ asset('css/storefront/design-overrides.css') }}?v={{ filemtime(public_path('css/storefront/design-overrides.css')) }}">
 </head>
 
 <body class="scp-storefront {{ ($direction ?? 'rtl') === 'rtl' ? 'is-rtl' : 'is-ltr' }}">

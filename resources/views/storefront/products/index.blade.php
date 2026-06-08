@@ -244,6 +244,10 @@
 
                                     <h3>{{ $product->getName($locale) }}</h3>
 
+                            @include('storefront.products.partials.rating-summary', [
+                                'product' => $product,
+                            ])
+
                                     <div class="scp-product-price">
                                         <strong>
                                             {{ $product->currency?->symbol ?? '₪' }}
