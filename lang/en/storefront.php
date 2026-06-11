@@ -336,5 +336,32 @@ return [
     'product_not_available' => 'This product is currently unavailable.',
 ],
 
+'recently_viewed' => [
+    'title' => 'Recently Viewed',
+    'subtitle' => 'Products you recently visited so you can return to them quickly.',
+    'browse_more' => 'Browse More',
+],
+
+
+'questions' => [
+    'badge' => 'Product Questions',
+    'title' => 'Product Questions & Answers',
+    'subtitle' => 'Ask about this product and we will reply after store moderation.',
+    'questions_count' => 'questions',
+    'ask_question' => 'Ask About Product',
+    'approval_notice' => 'Your question will be submitted for moderation and displayed after approval.',
+    'name' => 'Name',
+    'email' => 'Email',
+    'question' => 'Question',
+    'question_placeholder' => 'Write your question about this product...',
+    'submit' => 'Submit Question',
+    'approved_questions' => 'Approved Questions',
+    'question_label' => 'Question',
+    'answer_label' => 'Answer',
+    'answer_pending' => 'Waiting for store management answer.',
+    'empty_title' => 'No Questions Yet',
+    'empty_text' => 'Be the first to ask about this product.',
+    'submitted_successfully' => 'Your question has been submitted successfully and will appear after approval.',
+],
 
 ];

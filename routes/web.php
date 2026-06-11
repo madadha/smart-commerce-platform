@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Storefront\StorefrontWishlistController;
 use App\Http\Controllers\Storefront\StorefrontProductReviewController;
 use App\Http\Controllers\Storefront\StorefrontCompareController;
+use App\Http\Controllers\Storefront\StorefrontProductQuestionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,10 @@ Route::get('/', [StorefrontController::class, 'home'])
     ->name('storefront.home');
 
 Route::prefix('store')->name('storefront.')->group(function () {
+
+Route::post('/products/{product}/questions', [StorefrontProductQuestionController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('products.questions.store');
 
 Route::get('/compare', [StorefrontCompareController::class, 'index'])
     ->name('compare.index');

@@ -331,5 +331,30 @@ return [
     'product_not_available' => 'מוצר זה אינו זמין כעת.',
 ],
 
+'recently_viewed' => [
+    'title' => 'נצפו לאחרונה',
+    'subtitle' => 'מוצרים שביקרת בהם לאחרונה כדי שתוכל לחזור אליהם במהירות.',
+    'browse_more' => 'עיון נוסף',
+],
 
+'questions' => [
+    'badge' => 'שאלות מוצר',
+    'title' => 'שאלות ותשובות על המוצר',
+    'subtitle' => 'שאל על המוצר ונענה לאחר בדיקת השאלה על ידי הנהלת החנות.',
+    'questions_count' => 'שאלות',
+    'ask_question' => 'שאל על המוצר',
+    'approval_notice' => 'השאלה תישלח לבדיקה ותופיע לאחר אישור הנהלת החנות.',
+    'name' => 'שם',
+    'email' => 'אימייל',
+    'question' => 'שאלה',
+    'question_placeholder' => 'כתוב את שאלתך על המוצר...',
+    'submit' => 'שלח שאלה',
+    'approved_questions' => 'שאלות מאושרות',
+    'question_label' => 'שאלה',
+    'answer_label' => 'תשובה',
+    'answer_pending' => 'ממתין לתשובת הנהלת החנות.',
+    'empty_title' => 'אין עדיין שאלות',
+    'empty_text' => 'היה הראשון לשאול על מוצר זה.',
+    'submitted_successfully' => 'השאלה נשלחה בהצלחה ותופיע לאחר אישור.',
+],
 ];

@@ -174,10 +174,15 @@ class StorefrontController extends Controller
                 'variants',
                 'media',
                 'approvedReviews',
+                'approvedQuestions',
             ])
             ->where('is_active', true)
             ->where('slug', $slug)
             ->firstOrFail();
+
+        $this->storeRecentlyViewedProduct($request, $product->id);
+
+        $recentlyViewedProducts = $this->getRecentlyViewedProducts($request, $product->id);
 
         $relatedProducts = Product::query()
             ->with([
@@ -207,11 +212,61 @@ class StorefrontController extends Controller
             'direction' => $this->direction($locale),
             'product' => $product,
             'relatedProducts' => $relatedProducts,
+            'recentlyViewedProducts' => $recentlyViewedProducts,
             'pageTitle' => $product->getName($locale) . ' - Smart Commerce Platform',
             'pageDescription' => method_exists($product, 'getShortDescription')
                 ? $product->getShortDescription($locale)
                 : $product->getName($locale),
         ]);
+    }
+
+    private function storeRecentlyViewedProduct(Request $request, int $productId): void
+    {
+        $recentlyViewed = collect(
+            $request->session()->get('storefront_recently_viewed_products', [])
+        );
+
+        $recentlyViewed = $recentlyViewed
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->reject(fn (int $id) => $id === $productId)
+            ->prepend($productId)
+            ->unique()
+            ->take(8)
+            ->values()
+            ->all();
+
+        $request->session()->put('storefront_recently_viewed_products', $recentlyViewed);
+    }
+
+    private function getRecentlyViewedProducts(Request $request, int $currentProductId)
+    {
+        $recentlyViewedIds = collect(
+            $request->session()->get('storefront_recently_viewed_products', [])
+        )
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->reject(fn (int $id) => $id === $currentProductId)
+            ->unique()
+            ->take(8)
+            ->values()
+            ->all();
+
+        if (empty($recentlyViewedIds)) {
+            return collect();
+        }
+
+        return Product::query()
+            ->with([
+                'brand',
+                'currency',
+                'approvedReviews',
+            ])
+            ->whereIn('id', $recentlyViewedIds)
+            ->where('is_active', true)
+            ->get()
+            ->sortBy(fn (Product $product) => array_search($product->id, $recentlyViewedIds, true))
+            ->values();
     }
 
     private function applyPriceSort(Builder $query, string $direction): Builder

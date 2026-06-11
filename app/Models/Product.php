@@ -15,6 +15,7 @@ use App\Models\ProductMedia;
 
 
 
+
 class Product extends Model
 {
     protected $fillable = [
@@ -277,6 +278,19 @@ public function approvedReviews(): HasMany
 {
     return $this->hasMany(ProductReview::class)
         ->approved()
+        ->latest();
+}
+
+public function questions(): HasMany
+{
+    return $this->hasMany(ProductQuestion::class);
+}
+
+public function approvedQuestions(): HasMany
+{
+    return $this->hasMany(ProductQuestion::class)
+        ->approved()
+        ->orderBy('sort_order')
         ->latest();
 }
 

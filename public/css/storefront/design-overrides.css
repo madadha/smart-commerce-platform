@@ -870,3 +870,342 @@ body.scp-storefront {
     }
 }
 
+
+/* =========================================
+   Product Questions & Answers
+========================================= */
+
+.scp-product-questions-section {
+    margin-top: 36px;
+    padding: 34px;
+    border-radius: 34px;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.07), transparent 30%),
+        radial-gradient(circle at top right, rgba(212, 162, 76, 0.055), transparent 28%),
+        #ffffff;
+    border: 1px solid var(--scp-border);
+    box-shadow: var(--scp-shadow-md);
+}
+
+.scp-product-questions-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.scp-product-questions-badge {
+    display: inline-grid;
+    place-items: center;
+    min-height: 32px;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: var(--scp-bg-soft);
+    color: var(--scp-primary);
+    border: 1px solid #bfdbfe;
+    font-size: 12px;
+    font-weight: 950;
+    margin-bottom: 12px;
+}
+
+.scp-product-questions-head h2 {
+    margin: 0;
+    color: var(--scp-dark);
+    font-size: clamp(26px, 3vw, 40px);
+    font-weight: 950;
+    letter-spacing: -0.045em;
+}
+
+.scp-product-questions-head p {
+    max-width: 680px;
+    margin: 10px 0 0;
+    color: var(--scp-muted);
+    line-height: 1.8;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.scp-product-questions-count {
+    min-width: 190px;
+    padding: 20px;
+    border-radius: 26px;
+    background: linear-gradient(135deg, var(--scp-dark), #172554);
+    color: white;
+    display: grid;
+    place-items: center;
+    text-align: center;
+}
+
+.scp-product-questions-count strong {
+    font-size: 42px;
+    font-weight: 950;
+    color: #f5b94c;
+}
+
+.scp-product-questions-count span {
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.scp-product-questions-grid {
+    display: grid;
+    grid-template-columns: 420px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.scp-product-question-form-card,
+.scp-product-approved-questions-card {
+    border-radius: 28px;
+    background: #ffffff;
+    border: 1px solid var(--scp-border);
+    padding: 24px;
+}
+
+.scp-product-question-form-card h3,
+.scp-product-approved-questions-card h3 {
+    margin: 0;
+    color: var(--scp-dark);
+    font-size: 22px;
+    font-weight: 950;
+}
+
+.scp-product-question-form-card p {
+    margin: 10px 0 20px;
+    color: var(--scp-muted);
+    line-height: 1.75;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.scp-product-question-form {
+    display: grid;
+    gap: 14px;
+}
+
+.scp-question-field {
+    display: grid;
+    gap: 7px;
+}
+
+.scp-question-field label {
+    color: #374151;
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.scp-question-field input,
+.scp-question-field textarea {
+    width: 100%;
+    border: 1px solid var(--scp-border);
+    background: #f8fafc;
+    border-radius: 17px;
+    padding: 13px 14px;
+    color: var(--scp-text);
+    font-size: 14px;
+    font-weight: 750;
+    outline: none;
+}
+
+.scp-question-field input:focus,
+.scp-question-field textarea:focus {
+    background: #ffffff;
+    border-color: var(--scp-primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
+}
+
+.scp-question-field textarea {
+    resize: vertical;
+}
+
+.scp-question-submit-btn {
+    min-height: 50px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--scp-primary), var(--scp-primary-hover));
+    color: white;
+    font-size: 14px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.18);
+}
+
+.scp-product-approved-questions-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.scp-product-approved-questions-head span {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--scp-dark), #172554);
+    color: #f5b94c;
+    font-size: 14px;
+    font-weight: 950;
+}
+
+.scp-approved-questions-list {
+    display: grid;
+    gap: 12px;
+}
+
+.scp-approved-question-item {
+    padding: 16px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid var(--scp-border);
+}
+
+.scp-approved-question-top {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.scp-question-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #f7d37a, #d4a24c);
+    color: #111827;
+    font-size: 20px;
+    font-weight: 950;
+}
+
+.scp-approved-question-top strong {
+    display: block;
+    color: var(--scp-dark);
+    font-size: 14px;
+    font-weight: 950;
+    margin-bottom: 4px;
+}
+
+.scp-approved-question-top small {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.scp-question-text,
+.scp-answer-text {
+    border-radius: 18px;
+    padding: 14px;
+    margin-top: 10px;
+}
+
+.scp-question-text {
+    background: #f8fafc;
+    border: 1px solid var(--scp-border);
+}
+
+.scp-answer-text {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.scp-question-text span,
+.scp-answer-text span {
+    display: block;
+    color: var(--scp-primary);
+    font-size: 11px;
+    font-weight: 950;
+    margin-bottom: 7px;
+}
+
+.scp-question-text p,
+.scp-answer-text p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.85;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.scp-answer-pending {
+    margin-top: 10px;
+    border-radius: 18px;
+    padding: 13px;
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.scp-questions-empty {
+    text-align: center;
+    border-radius: 24px;
+    padding: 34px 18px;
+    background: white;
+    border: 1px dashed #bfdbfe;
+}
+
+.scp-questions-empty div {
+    width: 62px;
+    height: 62px;
+    border-radius: 22px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 12px;
+    background: linear-gradient(135deg, var(--scp-dark), #172554);
+    color: #f5b94c;
+    font-size: 28px;
+    font-weight: 950;
+}
+
+.scp-questions-empty h4 {
+    margin: 0;
+    color: var(--scp-dark);
+    font-size: 20px;
+    font-weight: 950;
+}
+
+.scp-questions-empty p {
+    max-width: 430px;
+    margin: 10px auto 0;
+    color: var(--scp-muted);
+    line-height: 1.8;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+@media (max-width: 980px) {
+    .scp-product-questions-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .scp-product-questions-count {
+        width: 100%;
+    }
+
+    .scp-product-questions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 620px) {
+    .scp-product-questions-section {
+        padding: 22px 16px;
+        border-radius: 26px;
+    }
+
+    .scp-product-question-form-card,
+    .scp-product-approved-questions-card {
+        padding: 18px;
+        border-radius: 24px;
+    }
+}
+
