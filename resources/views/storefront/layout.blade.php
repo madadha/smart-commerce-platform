@@ -107,6 +107,10 @@
         {{ __('storefront.wishlist.my_wishlist') }}
     </a>
 @endif
+
+<a href="{{ route('storefront.compare.index', ['lang' => $locale ?? 'ar']) }}">
+    {{ __('storefront.compare.compare') }}
+</a>
         </nav>
 
     </div>

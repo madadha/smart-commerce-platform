@@ -9,6 +9,7 @@ use App\Http\Controllers\Storefront\StorefrontOrderController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Storefront\StorefrontWishlistController;
 use App\Http\Controllers\Storefront\StorefrontProductReviewController;
+use App\Http\Controllers\Storefront\StorefrontCompareController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,19 @@ Route::get('/', [StorefrontController::class, 'home'])
     ->name('storefront.home');
 
 Route::prefix('store')->name('storefront.')->group(function () {
+
+Route::get('/compare', [StorefrontCompareController::class, 'index'])
+    ->name('compare.index');
+
+Route::post('/compare/{product}/add', [StorefrontCompareController::class, 'add'])
+    ->name('compare.add');
+
+Route::delete('/compare/{product}/remove', [StorefrontCompareController::class, 'remove'])
+    ->name('compare.remove');
+
+Route::delete('/compare/clear/all', [StorefrontCompareController::class, 'clear'])
+    ->name('compare.clear');
+    
     Route::get('/', [StorefrontController::class, 'home'])
         ->name('index');
 

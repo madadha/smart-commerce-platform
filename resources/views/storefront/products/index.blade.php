@@ -195,25 +195,17 @@
                     <div class="scp-product-grid">
                         @forelse($products as $product)
                             <article class="scp-product-card">
-                                @if(auth()->check())
-                                    <form
-                                        method="POST"
-                                        action="{{ route('storefront.wishlist.toggle', ['product' => $product->id, 'lang' => $locale]) }}"
-                                        class="scp-product-wishlist-form"
-                                    >
-                                        @csrf
+                                <form
+                                    method="POST"
+                                    action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
+                                    class="scp-product-compare-form"
+                                >
+                                    @csrf
 
-                                        <button type="submit" title="{{ __('storefront.wishlist.toggle') }}">
-                                            ♥
-                                        </button>
-                                    </form>
-                                @else
-                                    <a href="{{ route('login') }}" class="scp-product-wishlist-form">
-                                        <button type="button" title="{{ __('storefront.wishlist.login_required') }}">
-                                            ♡
-                                        </button>
-                                    </a>
-                                @endif
+                                    <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
+                                        ⇄
+                                    </button>
+                                </form>
 
                                 <div class="scp-product-image">
                                     @if($productImage($product))
@@ -244,9 +236,9 @@
 
                                     <h3>{{ $product->getName($locale) }}</h3>
 
-                            @include('storefront.products.partials.rating-summary', [
-                                'product' => $product,
-                            ])
+                                    @include('storefront.products.partials.rating-summary', [
+                                        'product' => $product,
+                                    ])
 
                                     <div class="scp-product-price">
                                         <strong>

@@ -129,10 +129,6 @@
 
                     <h1>{{ $product->getName($locale) }}</h1>
 
-                    @include('storefront.products.partials.rating-summary', [
-                        'product' => $product,
-                    ])
-
                     @if($shortDescription)
                         <p class="scp-product-short-description">
                             {{ $shortDescription }}
@@ -228,28 +224,21 @@
         </button>
     </form>
 
-    @if(auth()->check())
-        <form
-            method="POST"
-            action="{{ route('storefront.wishlist.toggle', ['product' => $product->id, 'lang' => $locale]) }}"
-            class="scp-product-details-wishlist-form"
-        >
-            @csrf
-
-            <button type="submit">
-                ♥ {{ __('storefront.wishlist.toggle') }}
-            </button>
-        </form>
-    @else
-        <a href="{{ route('login') }}" class="scp-product-details-wishlist-link">
-            ♡ {{ __('storefront.wishlist.login_required') }}
-        </a>
-    @endif
-
-
     <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-detail-secondary-btn">
         {{ __('storefront.product_details.back_to_products') }}
     </a>
+
+    <form
+        method="POST"
+        action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
+        class="scp-product-details-compare-form"
+    >
+        @csrf
+
+        <button type="submit">
+            ⇄ {{ __('storefront.compare.add_to_compare') }}
+        </button>
+    </form>
 </div>
                 </div>
 
@@ -316,25 +305,17 @@
                 <div class="scp-product-grid">
                     @forelse($relatedProducts as $relatedProduct)
                         <article class="scp-product-card">
-                            @if(auth()->check())
-                                <form
-                                    method="POST"
-                                    action="{{ route('storefront.wishlist.toggle', ['product' => $relatedProduct->id, 'lang' => $locale]) }}"
-                                    class="scp-product-wishlist-form"
-                                >
-                                    @csrf
+                            <form
+                                method="POST"
+                                action="{{ route('storefront.compare.add', ['product' => $relatedProduct->id, 'lang' => $locale]) }}"
+                                class="scp-product-compare-form"
+                            >
+                                @csrf
 
-                                    <button type="submit" title="{{ __('storefront.wishlist.toggle') }}">
-                                        ♥
-                                    </button>
-                                </form>
-                            @else
-                                <a href="{{ route('login') }}" class="scp-product-wishlist-form">
-                                    <button type="button" title="{{ __('storefront.wishlist.login_required') }}">
-                                        ♡
-                                    </button>
-                                </a>
-                            @endif
+                                <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
+                                    ⇄
+                                </button>
+                            </form>
 
                             <div class="scp-product-image">
                                 @if($productImage($relatedProduct))
@@ -381,11 +362,4 @@
 
         </div>
     </section>
-
-    @include('storefront.products.partials.reviews', [
-        'product' => $product,
-        'locale' => $locale,
-    ])
-
-
 @endsection

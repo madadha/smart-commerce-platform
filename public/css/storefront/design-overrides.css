@@ -485,3 +485,388 @@ body.scp-storefront {
     font-size: 11px;
     font-weight: 850;
 }
+
+/* =========================================
+   Product Compare System
+========================================= */
+
+.scp-compare-page {
+    padding: 44px 0 86px;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.07), transparent 30%),
+        radial-gradient(circle at top right, rgba(212, 162, 76, 0.06), transparent 30%),
+        var(--scp-bg);
+    min-height: 100vh;
+}
+
+.scp-compare-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: stretch;
+    padding: 38px;
+    border-radius: 34px;
+    color: white;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.14), transparent 28%),
+        radial-gradient(circle at 90% 20%, rgba(212, 162, 76, 0.18), transparent 34%),
+        linear-gradient(135deg, var(--scp-dark) 0%, #172554 46%, var(--scp-primary) 100%);
+    box-shadow: var(--scp-shadow-lg);
+    margin-bottom: 24px;
+}
+
+.scp-compare-badge {
+    display: inline-grid;
+    place-items: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #dbeafe;
+    font-size: 12px;
+    font-weight: 950;
+    margin-bottom: 14px;
+}
+
+.scp-compare-hero h1 {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 56px);
+    line-height: 1.08;
+    letter-spacing: -0.05em;
+    font-weight: 950;
+}
+
+.scp-compare-hero p {
+    max-width: 780px;
+    margin: 14px 0 0;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.85;
+    font-size: 15px;
+}
+
+.scp-compare-count-card {
+    width: 220px;
+    min-width: 220px;
+    border-radius: 26px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.scp-compare-count-card span {
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 13px;
+    font-weight: 850;
+    margin-bottom: 8px;
+}
+
+.scp-compare-count-card strong {
+    color: white;
+    font-size: 38px;
+    font-weight: 950;
+}
+
+.scp-compare-actions-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.scp-compare-actions-top a,
+.scp-compare-actions-top button {
+    min-height: 46px;
+    border-radius: 16px;
+    padding: 0 18px;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+.scp-compare-actions-top a {
+    background: var(--scp-bg-soft);
+    color: var(--scp-primary);
+    border: 1px solid #bfdbfe;
+}
+
+.scp-compare-actions-top button {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.scp-compare-table-card {
+    background: white;
+    border: 1px solid var(--scp-border);
+    border-radius: 30px;
+    box-shadow: var(--scp-shadow-md);
+    padding: 18px;
+}
+
+.scp-compare-table-wrap {
+    overflow-x: auto;
+    border-radius: 22px;
+    border: 1px solid var(--scp-border-soft);
+}
+
+.scp-compare-table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+    background: white;
+}
+
+.scp-compare-table th,
+.scp-compare-table td {
+    min-width: 210px;
+    padding: 16px;
+    border-bottom: 1px solid var(--scp-border-soft);
+    border-inline-end: 1px solid var(--scp-border-soft);
+    vertical-align: top;
+    text-align: center;
+}
+
+.scp-compare-table th:first-child,
+.scp-compare-table td:first-child {
+    min-width: 180px;
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 2;
+    background: #f8fafc;
+    text-align: start;
+}
+
+.scp-compare-table thead th {
+    background: #f8fafc;
+}
+
+.scp-compare-feature-name {
+    color: var(--scp-text);
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.scp-compare-product-head {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+}
+
+.scp-compare-product-head form {
+    position: absolute;
+    top: 0;
+    inset-inline-end: 0;
+}
+
+.scp-compare-product-head button {
+    width: 34px;
+    height: 34px;
+    border-radius: 13px;
+    border: 0;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 20px;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+.scp-compare-product-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #ffffff, #eff6ff);
+    border: 1px solid var(--scp-border);
+    overflow: hidden;
+    margin: 0 auto 10px;
+}
+
+.scp-compare-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 14px;
+}
+
+.scp-compare-product-image span {
+    width: 70px;
+    height: 70px;
+    border-radius: 22px;
+    display: grid;
+    place-items: center;
+    background: var(--scp-primary);
+    color: white;
+    font-size: 30px;
+    font-weight: 950;
+}
+
+.scp-compare-product-head strong {
+    display: block;
+    color: var(--scp-dark);
+    font-size: 15px;
+    font-weight: 950;
+    line-height: 1.45;
+}
+
+.scp-compare-categories {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+.scp-compare-categories span {
+    display: inline-grid;
+    place-items: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 0 10px;
+    background: var(--scp-bg-soft);
+    color: var(--scp-primary);
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.scp-compare-row-actions {
+    display: grid;
+    gap: 8px;
+}
+
+.scp-compare-row-actions a,
+.scp-compare-row-actions button {
+    min-height: 42px;
+    border-radius: 15px;
+    display: grid;
+    place-items: center;
+    padding: 0 12px;
+    border: 0;
+    font-size: 12px;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+.scp-compare-row-actions a {
+    background: var(--scp-bg-soft);
+    color: var(--scp-primary);
+    border: 1px solid #bfdbfe;
+}
+
+.scp-compare-row-actions button {
+    background: linear-gradient(135deg, var(--scp-primary), var(--scp-primary-hover));
+    color: white;
+}
+
+.scp-compare-empty {
+    background: white;
+    border: 1px solid var(--scp-border);
+    border-radius: 30px;
+    padding: 54px 24px;
+    text-align: center;
+    box-shadow: var(--scp-shadow-md);
+}
+
+.scp-compare-empty div {
+    width: 82px;
+    height: 82px;
+    border-radius: 28px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    background: var(--scp-bg-soft);
+    color: var(--scp-primary);
+    font-size: 38px;
+    font-weight: 950;
+}
+
+.scp-compare-empty h2 {
+    margin: 0;
+    color: var(--scp-dark);
+    font-size: 28px;
+    font-weight: 950;
+}
+
+.scp-compare-empty p {
+    max-width: 560px;
+    margin: 12px auto 24px;
+    color: var(--scp-muted);
+    line-height: 1.8;
+    font-weight: 800;
+}
+
+.scp-compare-empty a {
+    min-height: 48px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 17px;
+    padding: 0 20px;
+    background: linear-gradient(135deg, var(--scp-primary), var(--scp-primary-hover));
+    color: white;
+    font-size: 14px;
+    font-weight: 950;
+}
+
+.scp-product-compare-form {
+    position: absolute;
+    top: 64px;
+    inset-inline-end: 14px;
+    z-index: 5;
+}
+
+.scp-product-compare-form button {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    border: 0;
+    display: grid;
+    place-items: center;
+    background: white;
+    color: var(--scp-primary);
+    border: 1px solid #bfdbfe;
+    font-size: 19px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: var(--scp-shadow-sm);
+}
+
+.scp-product-details-compare-form button {
+    min-height: 52px;
+    border-radius: 18px;
+    padding: 0 18px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid #bfdbfe;
+    background: var(--scp-bg-soft);
+    color: var(--scp-primary);
+    font-size: 14px;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+@media (max-width: 800px) {
+    .scp-compare-hero {
+        flex-direction: column;
+        padding: 26px 18px;
+        border-radius: 26px;
+    }
+
+    .scp-compare-count-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .scp-compare-table-card {
+        padding: 12px;
+        border-radius: 24px;
+    }
+}
+

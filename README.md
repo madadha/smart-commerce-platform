@@ -854,3 +854,787 @@ GitHub: https://github.com/madadha
 License
 
 This project is currently private/internal unless a license is added later.
+
+
+# Smart Commerce Platform
+
+Smart Commerce Platform is a modern Laravel-based e-commerce system designed to support dynamic products, multilingual storefronts, customer accounts, carts, checkout, orders, digital codes, inventory deduction, product reviews, wishlist, and a premium customer experience.
+
+The platform is built with a clean modular structure, Laravel best practices, Filament Admin Panel, responsive Blade storefront pages, multilingual support, and a scalable database-driven architecture.
+
+---
+
+## Project Status
+
+Current development stage:
+
+```text
+✅ Storefront Home Page
+✅ Product Listing Page
+✅ Product Details Page
+✅ Cart System
+✅ Checkout System
+✅ Convert Cart To Order
+✅ Stock Deduction After Checkout
+✅ Digital Codes Assignment
+✅ Signed Order Details Page
+✅ Order Tracking Page
+✅ Customer Order History Page
+✅ Premium Customer Account Dashboard
+✅ Customer Wishlist Page
+✅ Product Reviews & Ratings
+✅ Product Rating Stars On Product Cards
+✅ Unified Storefront Design Direction
+```
+
+---
+
+## Main Technologies
+
+- Laravel 13
+- PHP 8.4
+- MySQL
+- Blade Templates
+- Filament Admin Panel
+- Laravel Authentication
+- Eloquent ORM
+- Laravel Migrations
+- Laravel Routes
+- Responsive CSS
+- Multilingual UI
+- RTL / LTR Support
+
+---
+
+## Core Features
+
+### 1. Dynamic Storefront
+
+The storefront is fully dynamic and database-driven.
+
+It includes:
+
+- Homepage
+- Featured categories
+- Featured products
+- Latest products
+- Product listing
+- Product filtering
+- Product search
+- Product sorting
+- Product details
+- Related products
+- Product media
+- Product variants
+- Brand display
+- Currency display
+
+---
+
+### 2. Multilingual Support
+
+The system supports:
+
+```text
+Arabic
+Hebrew
+English
+```
+
+The storefront detects and stores the selected language using:
+
+```php
+lang=ar
+lang=he
+lang=en
+```
+
+RTL support is enabled for Arabic and Hebrew.
+
+LTR support is enabled for English.
+
+---
+
+### 3. Cart System
+
+The cart module supports:
+
+- Add product to cart
+- Update quantity
+- Remove cart item
+- Cart totals
+- Cart status
+- Active cart session
+- Product image display
+- Product name localization
+- Product price calculation
+
+---
+
+### 4. Checkout System
+
+The checkout page supports:
+
+- Customer name
+- Email
+- Phone
+- City
+- Address
+- Shipping method
+- Payment method
+- Customer notes
+- Order summary
+- Validation
+- Error handling
+- Success redirection
+
+---
+
+### 5. Convert Cart To Order
+
+When the customer places an order, the system converts the active cart into a real order.
+
+The process includes:
+
+- Creating or updating customer
+- Creating order
+- Creating order items
+- Saving totals
+- Saving customer notes
+- Saving shipping information
+- Creating pending payment
+- Marking cart as converted
+
+---
+
+### 6. Inventory Deduction
+
+After checkout, the system automatically handles inventory.
+
+Supported behavior:
+
+```text
+✅ Deduct product stock
+✅ Deduct variant stock
+✅ Validate stock before checkout
+✅ Prevent checkout if stock is not enough
+✅ Add inventory notes to order items
+```
+
+Example order item note:
+
+```text
+Stock deducted from product. Quantity: 1
+```
+
+---
+
+### 7. Digital Codes
+
+The system supports digital products and digital codes.
+
+When a digital product is ordered:
+
+```text
+✅ Available digital codes are assigned
+✅ Code status is changed to sold
+✅ Order ID is attached if supported
+✅ Order Item ID is attached if supported
+✅ Sold date is saved if supported
+```
+
+---
+
+### 8. Signed Order Details Page
+
+After successful checkout, the customer is redirected to a secure signed order details page.
+
+Route example:
+
+```text
+/store/orders/{order}?signature=...
+```
+
+The page displays:
+
+- Order number
+- Order status
+- Payment status
+- Ordered date
+- Customer details
+- Shipping method
+- Order items
+- Totals
+- Digital codes if available
+
+The page is protected using Laravel signed URLs.
+
+---
+
+### 9. Order Tracking Page
+
+Customers can track their order without logging in.
+
+Tracking requires:
+
+```text
+Order Number
+Phone Number
+```
+
+Routes:
+
+```text
+GET  /store/track-order
+POST /store/track-order/result
+```
+
+The tracking system searches the order safely using available database columns and customer relation.
+
+---
+
+### 10. Customer Order History
+
+Logged-in customers can view their order history.
+
+Route:
+
+```text
+/store/account/orders
+```
+
+The page displays:
+
+- Order number
+- Order date
+- Order status
+- Payment status
+- Items count
+- Grand total
+- View details button
+
+---
+
+### 11. Customer Account Dashboard
+
+A premium customer dashboard was added.
+
+Route:
+
+```text
+/store/account
+```
+
+Dashboard includes:
+
+- Welcome section
+- Customer profile card
+- Total orders
+- Total spent
+- Pending orders
+- Completed orders
+- Unpaid orders
+- Latest order
+- Recent orders
+- Quick actions
+- Links to order history, tracking page, products, and profile settings
+
+---
+
+### 12. Wishlist System
+
+A customer wishlist module was added.
+
+Routes:
+
+```text
+GET     /store/wishlist
+POST    /store/wishlist
+POST    /store/wishlist/{product}/toggle
+DELETE  /store/wishlist/{product}
+```
+
+Features:
+
+```text
+✅ Add product to wishlist
+✅ Remove product from wishlist
+✅ Toggle wishlist item
+✅ Wishlist page
+✅ Heart button on product cards
+✅ Heart button on product details page
+✅ Auth protection
+```
+
+Database table:
+
+```text
+customer_wishlists
+```
+
+Main fields:
+
+```text
+id
+user_id
+product_id
+created_at
+updated_at
+```
+
+---
+
+### 13. Product Reviews & Ratings
+
+A moderated product reviews system was added.
+
+Features:
+
+```text
+✅ Customer can submit review
+✅ Guest can submit review
+✅ Name field
+✅ Email field
+✅ Star rating from 1 to 5
+✅ Optional comment
+✅ Review status is pending by default
+✅ Admin can approve review
+✅ Admin can reject review
+✅ Only approved reviews appear publicly
+✅ Reviews appear on product details page
+✅ Rating summary appears on product cards
+```
+
+Database table:
+
+```text
+product_reviews
+```
+
+Main fields:
+
+```text
+id
+product_id
+user_id
+reviewer_name
+reviewer_email
+rating
+comment
+status
+locale
+approved_by
+approved_at
+rejected_at
+ip_address
+user_agent
+is_active
+sort_order
+created_at
+updated_at
+```
+
+---
+
+### 14. Product Rating Stars On Cards
+
+Product cards now display:
+
+```text
+Star rating
+Average rating
+Reviews count
+```
+
+This appears in:
+
+- Product listing page
+- Homepage featured products
+- Homepage latest products
+- Related products
+
+Partial file:
+
+```text
+resources/views/storefront/products/partials/rating-summary.blade.php
+```
+
+---
+
+## Admin Panel Features
+
+The project uses Filament Admin Panel.
+
+Admin modules include:
+
+- Products
+- Categories
+- Brands
+- Orders
+- Customers
+- Payments
+- Shipping
+- Invoices
+- Coupons
+- Product Reviews
+- Digital Codes
+- Product Variants
+- Inventory-related data
+
+---
+
+## Product Reviews Admin
+
+A Filament resource was added for product reviews.
+
+Admin can:
+
+```text
+✅ View reviews
+✅ Create reviews
+✅ Edit reviews
+✅ Delete reviews
+✅ Approve reviews
+✅ Reject reviews
+```
+
+Resource path:
+
+```text
+app/Filament/Resources/ProductReviews
+```
+
+---
+
+## Design System
+
+The storefront uses a unified design direction.
+
+### Storefront Public Pages
+
+Style direction:
+
+```text
+Light UI
+Blue primary color
+White product cards
+Soft shadows
+Premium black/gold header and footer accents
+```
+
+### Customer Account Area
+
+Style direction:
+
+```text
+Dark premium UI
+Gold accent
+Blue secondary color
+Dashboard-style cards
+Luxury customer experience
+```
+
+### Important CSS Structure
+
+The main CSS file should stay as the base file:
+
+```text
+public/css/storefront/storefront.css
+```
+
+Design overrides should be placed separately:
+
+```text
+public/css/storefront/design-overrides.css
+```
+
+The correct order inside layout is:
+
+```blade
+<link rel="stylesheet" href="{{ asset('css/storefront/storefront.css') }}?v={{ filemtime(public_path('css/storefront/storefront.css')) }}">
+
+<link rel="stylesheet" href="{{ asset('css/storefront/design-overrides.css') }}?v={{ filemtime(public_path('css/storefront/design-overrides.css')) }}">
+```
+
+Do not replace the full storefront.css with override-only CSS.
+
+---
+
+## Important Routes
+
+### Storefront
+
+```text
+GET /store
+GET /store/products
+GET /store/products/{slug}
+GET /store/cart
+GET /store/checkout
+POST /store/checkout/place-order
+```
+
+### Orders
+
+```text
+GET /store/orders/{order}
+GET /store/track-order
+POST /store/track-order/result
+GET /store/account/orders
+```
+
+### Account
+
+```text
+GET /store/account
+```
+
+### Wishlist
+
+```text
+GET /store/wishlist
+POST /store/wishlist
+POST /store/wishlist/{product}/toggle
+DELETE /store/wishlist/{product}
+```
+
+### Reviews
+
+```text
+POST /store/products/{product}/reviews
+```
+
+---
+
+## Setup Instructions
+
+Clone the project:
+
+```bash
+git clone https://github.com/madadha/smart-commerce-platform.git
+```
+
+Enter project folder:
+
+```bash
+cd smart-commerce-platform
+```
+
+Install PHP dependencies:
+
+```bash
+composer install
+```
+
+Install frontend dependencies:
+
+```bash
+npm install
+```
+
+Create environment file:
+
+```bash
+cp .env.example .env
+```
+
+Generate app key:
+
+```bash
+php artisan key:generate
+```
+
+Run migrations:
+
+```bash
+php artisan migrate
+```
+
+Run seeders if available:
+
+```bash
+php artisan db:seed
+```
+
+Create storage link:
+
+```bash
+php artisan storage:link
+```
+
+Clear cache:
+
+```bash
+php artisan optimize:clear
+```
+
+Run the project:
+
+```bash
+php artisan serve
+```
+
+---
+
+## Useful Development Commands
+
+Clear all caches:
+
+```bash
+php artisan optimize:clear
+```
+
+Check routes:
+
+```bash
+php artisan route:list
+```
+
+Check wishlist routes:
+
+```bash
+php artisan route:list | findstr wishlist
+```
+
+Check review routes:
+
+```bash
+php artisan route:list | findstr reviews
+```
+
+Check account routes:
+
+```bash
+php artisan route:list | findstr account
+```
+
+Run tinker:
+
+```bash
+php artisan tinker
+```
+
+---
+
+## Testing Reviews Quickly
+
+Create a review from the storefront, then approve it using Tinker:
+
+```bash
+php artisan tinker
+```
+
+```php
+$review = \App\Models\ProductReview::latest()->first();
+$review->approve(1);
+exit
+```
+
+---
+
+## Testing Latest Order
+
+```bash
+php artisan tinker
+```
+
+```php
+$order = \App\Models\Order::latest()->first();
+
+$order->order_number;
+$order->items()->count();
+$order->items()->pluck('notes');
+$order->grand_total;
+
+exit
+```
+
+---
+
+## Testing Digital Codes
+
+```bash
+php artisan tinker
+```
+
+```php
+\DB::table('product_digital_codes')
+    ->select('status', \DB::raw('count(*) as total'))
+    ->groupBy('status')
+    ->get();
+
+exit
+```
+
+---
+
+## Latest Development Milestones
+
+### Stage 39
+
+Stock and digital codes deduction after checkout.
+
+### Stage 40
+
+Signed customer order details page.
+
+### Stage 41
+
+Order tracking page using order number and phone.
+
+### Stage 42
+
+Customer order history page.
+
+### Stage 43
+
+Premium customer account dashboard.
+
+### Stage 44
+
+Customer wishlist page and heart buttons.
+
+### Stage 45
+
+Moderated product reviews and ratings.
+
+### Stage 46
+
+Product rating summary displayed on product cards.
+
+---
+
+## Git Commands
+
+After any successful update:
+
+```bash
+git status
+git add .
+git commit -m "Update smart commerce storefront features"
+git push
+```
+
+Recommended commit for latest updates:
+
+```bash
+git add .
+git commit -m "Add wishlist reviews ratings and customer dashboard updates"
+git push
+```
+
+---
+
+## Project Goal
+
+The goal of Smart Commerce Platform is to become a powerful, scalable, multilingual, modern e-commerce platform that supports both physical and digital products while offering a premium customer experience and a clean management system for store owners.
+
+---
+
+## Author
+
+Developed by Alaa AlMadadha.
+
+```text
+Smart Commerce Platform
+Modern Laravel E-Commerce System
+```

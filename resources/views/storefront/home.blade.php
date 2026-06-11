@@ -136,6 +136,18 @@
             <div class="scp-product-grid">
                 @forelse($featuredProducts as $product)
                     <article class="scp-product-card">
+                        <form
+                            method="POST"
+                            action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
+                            class="scp-product-compare-form"
+                        >
+                            @csrf
+
+                            <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
+                                ⇄
+                            </button>
+                        </form>
+
                         <div class="scp-product-image">
                             @if($productImage($product))
                                 <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
@@ -217,6 +229,18 @@
             <div class="scp-product-grid compact">
                 @forelse($latestProducts as $product)
                     <article class="scp-product-card">
+                        <form
+                            method="POST"
+                            action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
+                            class="scp-product-compare-form"
+                        >
+                            @csrf
+
+                            <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
+                                ⇄
+                            </button>
+                        </form>
+
                         <div class="scp-product-image">
                             @if($productImage($product))
                                 <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
