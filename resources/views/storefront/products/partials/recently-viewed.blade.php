@@ -170,10 +170,10 @@
                             </div>
                         @endif
 
-                        @if(isset($product->product_type) && $product->product_type)
-                            <span class="scp-product-type-badge">
-                                {{ $product->product_type }}
-                            </span>
+                        @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.badges'))
+                            @include('storefront.products.partials.badges', [
+                                'product' => $product,
+                            ])
                         @endif
                     </a>
 

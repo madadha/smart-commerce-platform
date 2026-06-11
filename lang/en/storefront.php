@@ -370,7 +370,15 @@ return [
 ],
 
 
-
+'badges' => [
+    'sale' => 'Sale',
+    'new' => 'New',
+    'featured' => 'Featured',
+    'digital' => 'Digital',
+    'service' => 'Service',
+    'out_of_stock' => 'Out of Stock',
+    'top_rated' => 'Top Rated',
+],
 
 
 

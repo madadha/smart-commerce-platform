@@ -366,6 +366,16 @@ return [
     'submitted_successfully' => 'تم إرسال سؤالك بنجاح، وسيظهر بعد الموافقة عليه.',
 ],
 
+'badges' => [
+    'sale' => 'خصم',
+    'new' => 'جديد',
+    'featured' => 'مميز',
+    'digital' => 'رقمي',
+    'service' => 'خدمة',
+    'out_of_stock' => 'نفذ المخزون',
+    'top_rated' => 'الأعلى تقييمًا',
+],
+
 
 ];
 

@@ -1371,3 +1371,94 @@ body.scp-storefront {
     }
 }
 
+
+/* =========================================
+   Smart Product Badges
+========================================= */
+
+.scp-product-badges {
+    position: absolute;
+    top: 14px;
+    inset-inline-start: 14px;
+    z-index: 8;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    max-width: calc(100% - 28px);
+}
+
+.scp-smart-badge {
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 950;
+    line-height: 1;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.scp-smart-badge.sale {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.scp-smart-badge.new {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.scp-smart-badge.featured {
+    background: linear-gradient(135deg, #f5b94c, #b7791f);
+    color: #111827;
+}
+
+.scp-smart-badge.digital {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+
+.scp-smart-badge.service {
+    background: linear-gradient(135deg, #0891b2, #0e7490);
+}
+
+.scp-smart-badge.out-of-stock {
+    background: linear-gradient(135deg, #111827, #374151);
+}
+
+.scp-smart-badge.top-rated {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.scp-product-main-image,
+.scp-product-image {
+    position: relative;
+}
+
+.scp-product-main-image .scp-product-badges {
+    top: 18px;
+    inset-inline-start: 18px;
+}
+
+.scp-product-main-image .scp-smart-badge {
+    min-height: 32px;
+    padding: 0 13px;
+    font-size: 12px;
+}
+
+@media (max-width: 640px) {
+    .scp-product-badges {
+        top: 10px;
+        inset-inline-start: 10px;
+        gap: 5px;
+    }
+
+    .scp-smart-badge {
+        min-height: 24px;
+        padding: 0 8px;
+        font-size: 10px;
+    }
+}
+

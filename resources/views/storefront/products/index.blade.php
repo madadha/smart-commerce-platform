@@ -312,16 +312,10 @@
                                         </div>
                                     @endif
 
-                                    @if(! empty($product->sale_price))
-                                        <span class="scp-product-badge">
-                                            {{ __('storefront.product.sale') }}
-                                        </span>
-                                    @endif
-
-                                    @if($productTypeValue($product) === 'digital')
-                                        <span class="scp-product-type-badge">
-                                            {{ __('storefront.products_page.digital') }}
-                                        </span>
+                                    @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.badges'))
+                                        @include('storefront.products.partials.badges', [
+                                            'product' => $product,
+                                        ])
                                     @endif
                                 </div>
 
