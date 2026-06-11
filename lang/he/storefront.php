@@ -97,6 +97,14 @@ return [
     'products_found' => 'מוצרים נמצאו',
     'searching_for' => 'תוצאות חיפוש עבור',
     'no_products' => 'לא נמצאו מוצרים התואמים לסינון הנוכחי.',
+    'min_price' => 'מחיר מינימלי',
+'max_price' => 'מחיר מקסימלי',
+'all_ratings' => 'כל הדירוגים',
+'and_up' => 'ומעלה',
+'in_stock_only' => 'זמין במלאי בלבד',
+'on_sale_only' => 'מבצעים בלבד',
+'sort_rating_high' => 'דירוג גבוה קודם',
+'sort_rating_low' => 'דירוג נמוך קודם',
 ],
 
 
@@ -117,10 +125,7 @@ return [
     'no_related_products' => 'אין כרגע מוצרים דומים.',
 ],
 
-'cart' => [
-    'quantity' => 'כמות',
-    'added_successfully' => 'המוצר נוסף לעגלה בהצלחה.',
-],
+
 
 'cart' => [
     'badge' => 'Shopping Cart',

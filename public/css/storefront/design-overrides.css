@@ -1209,3 +1209,165 @@ body.scp-storefront {
     }
 }
 
+
+/* =========================================
+   Advanced Product Filters
+========================================= */
+
+.scp-products-toolbar {
+    align-items: stretch;
+}
+
+.scp-price-filter {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    min-width: 220px;
+}
+
+.scp-price-filter input {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--scp-border);
+    border-radius: 16px;
+    background: #ffffff;
+    color: var(--scp-text);
+    padding: 0 13px;
+    font-size: 13px;
+    font-weight: 850;
+    outline: none;
+}
+
+.scp-price-filter input:focus {
+    border-color: var(--scp-primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+}
+
+.scp-filter-check {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 14px;
+    border-radius: 16px;
+    border: 1px solid var(--scp-border);
+    background: #ffffff;
+    color: var(--scp-text);
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.scp-filter-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--scp-primary);
+}
+
+@media (max-width: 850px) {
+    .scp-price-filter {
+        grid-template-columns: 1fr;
+        min-width: 100%;
+    }
+
+    .scp-filter-check {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+
+/* =========================================
+   Active Filters Bar
+========================================= */
+
+.scp-active-filters {
+    margin-bottom: 18px;
+    padding: 16px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid var(--scp-border);
+    box-shadow: var(--scp-shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.scp-active-filters-title {
+    color: var(--scp-dark);
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.scp-active-filters-list {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+.scp-active-filter-chip {
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: var(--scp-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.scp-active-filter-chip strong {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--scp-primary);
+    color: #ffffff;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.scp-active-filter-clear {
+    min-height: 36px;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #c2410c;
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 950;
+    text-decoration: none;
+}
+
+.scp-active-filter-chip:hover,
+.scp-active-filter-clear:hover {
+    transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+    .scp-active-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .scp-active-filters-list {
+        width: 100%;
+    }
+
+    .scp-active-filter-chip,
+    .scp-active-filter-clear {
+        flex: 1;
+        justify-content: center;
+    }
+}
+

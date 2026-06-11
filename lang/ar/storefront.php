@@ -96,6 +96,14 @@ return [
     'products_found' => 'منتج موجود',
     'searching_for' => 'نتائج البحث عن',
     'no_products' => 'لا توجد منتجات مطابقة للفلاتر الحالية.',
+    'min_price' => 'أقل سعر',
+'max_price' => 'أعلى سعر',
+'all_ratings' => 'كل التقييمات',
+'and_up' => 'فما فوق',
+'in_stock_only' => 'المتوفر فقط',
+'on_sale_only' => 'العروض فقط',
+'sort_rating_high' => 'الأعلى تقييمًا',
+'sort_rating_low' => 'الأقل تقييمًا',
 ],
 
 'product_details' => [
@@ -115,10 +123,7 @@ return [
     'no_related_products' => 'لا توجد منتجات مشابهة حاليًا.',
 ],
 
-'cart' => [
-    'quantity' => 'الكمية',
-    'added_successfully' => 'تمت إضافة المنتج إلى السلة بنجاح.',
-],
+
 
 
 'cart' => [

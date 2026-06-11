@@ -88,6 +88,12 @@ class StorefrontController extends Controller
         $productType = $request->query('type');
         $sort = $request->query('sort', 'latest');
 
+        $minPrice = $request->query('min_price');
+        $maxPrice = $request->query('max_price');
+        $rating = $request->query('rating');
+        $inStock = $request->boolean('in_stock');
+        $onSale = $request->boolean('on_sale');
+
         $productsQuery = Product::query()
             ->with([
                 'brand',
@@ -123,10 +129,56 @@ class StorefrontController extends Controller
             $productsQuery->where('product_type', $productType);
         }
 
+        if ($minPrice !== null && $minPrice !== '' && is_numeric($minPrice) && Schema::hasColumn('products', 'price')) {
+            $productsQuery->where(function (Builder $query) use ($minPrice) {
+                if (Schema::hasColumn('products', 'sale_price')) {
+                    $query->whereRaw('COALESCE(NULLIF(sale_price, 0), price) >= ?', [(float) $minPrice]);
+                } else {
+                    $query->where('price', '>=', (float) $minPrice);
+                }
+            });
+        }
+
+        if ($maxPrice !== null && $maxPrice !== '' && is_numeric($maxPrice) && Schema::hasColumn('products', 'price')) {
+            $productsQuery->where(function (Builder $query) use ($maxPrice) {
+                if (Schema::hasColumn('products', 'sale_price')) {
+                    $query->whereRaw('COALESCE(NULLIF(sale_price, 0), price) <= ?', [(float) $maxPrice]);
+                } else {
+                    $query->where('price', '<=', (float) $maxPrice);
+                }
+            });
+        }
+
+        if ($inStock) {
+            $this->applyStockFilter($productsQuery);
+        }
+
+        if ($onSale && Schema::hasColumn('products', 'sale_price') && Schema::hasColumn('products', 'price')) {
+            $productsQuery
+                ->whereNotNull('sale_price')
+                ->where('sale_price', '>', 0)
+                ->whereColumn('sale_price', '<', 'price');
+        }
+
+        $needsRatingAverage = ($rating !== null && $rating !== '')
+            || in_array($sort, ['rating_high', 'rating_low'], true);
+
+        if ($needsRatingAverage) {
+            $productsQuery->withAvg('approvedReviews as approved_reviews_avg_rating', 'rating');
+        }
+
+        if ($rating !== null && $rating !== '' && is_numeric($rating)) {
+            $productsQuery
+                ->whereHas('approvedReviews')
+                ->having('approved_reviews_avg_rating', '>=', (float) $rating);
+        }
+
         match ($sort) {
             'name_asc' => $productsQuery->orderBy("name->{$locale}"),
             'price_low' => $this->applyPriceSort($productsQuery, 'asc'),
             'price_high' => $this->applyPriceSort($productsQuery, 'desc'),
+            'rating_high' => $this->applyRatingSort($productsQuery, 'desc'),
+            'rating_low' => $this->applyRatingSort($productsQuery, 'asc'),
             default => $productsQuery->latest(),
         };
 
@@ -158,6 +210,11 @@ class StorefrontController extends Controller
                 'brand' => $brandId,
                 'type' => $productType,
                 'sort' => $sort,
+                'min_price' => $minPrice,
+                'max_price' => $maxPrice,
+                'rating' => $rating,
+                'in_stock' => $inStock,
+                'on_sale' => $onSale,
             ],
         ]);
     }
@@ -267,6 +324,30 @@ class StorefrontController extends Controller
             ->get()
             ->sortBy(fn (Product $product) => array_search($product->id, $recentlyViewedIds, true))
             ->values();
+    }
+
+    private function applyStockFilter(Builder $query): Builder
+    {
+        foreach ([
+            'stock_quantity',
+            'quantity',
+            'stock',
+            'inventory_quantity',
+            'available_quantity',
+        ] as $column) {
+            if (Schema::hasColumn('products', $column)) {
+                return $query->where($column, '>', 0);
+            }
+        }
+
+        return $query;
+    }
+
+    private function applyRatingSort(Builder $query, string $direction): Builder
+    {
+        return $query
+            ->orderBy('approved_reviews_avg_rating', $direction)
+            ->orderByDesc('id');
     }
 
     private function applyPriceSort(Builder $query, string $direction): Builder

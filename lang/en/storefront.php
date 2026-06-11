@@ -97,6 +97,14 @@ return [
     'products_found' => 'products found',
     'searching_for' => 'Searching for',
     'no_products' => 'No products match the current filters.',
+    'min_price' => 'Min Price',
+'max_price' => 'Max Price',
+'all_ratings' => 'All Ratings',
+'and_up' => '& up',
+'in_stock_only' => 'In Stock Only',
+'on_sale_only' => 'On Sale Only',
+'sort_rating_high' => 'Highest Rated',
+'sort_rating_low' => 'Lowest Rated',
 ],
 
 
@@ -117,10 +125,7 @@ return [
     'no_related_products' => 'No related products available right now.',
 ],
 
-'cart' => [
-    'quantity' => 'Quantity',
-    'added_successfully' => 'Product added to cart successfully.',
-],
+
 
 'cart' => [
     'badge' => 'Shopping Cart',
@@ -363,5 +368,10 @@ return [
     'empty_text' => 'Be the first to ask about this product.',
     'submitted_successfully' => 'Your question has been submitted successfully and will appear after approval.',
 ],
+
+
+
+
+
 
 ];
