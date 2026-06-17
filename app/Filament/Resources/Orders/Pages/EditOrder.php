@@ -7,9 +7,14 @@ use App\Mail\StorefrontOrderCompletedMail;
 use App\Models\OrderAttachment;
 use App\Models\OrderNote;
 use App\Models\OrderStatusHistory;
+use App\Models\OrderTask;
+use App\Models\OrderReminder;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -28,6 +33,27 @@ class EditOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('followup_board')
+                ->label('Follow-up Board')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->color('gray')
+                ->modalHeading(fn () => 'Follow-up Board - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close')
+                ->modalWidth('5xl')
+                ->modalContent(fn () => view('filament.orders.followup-board-modal', [
+                    'order' => $this->record->fresh([
+                        'orderActivities.user',
+                        'statusHistories.user',
+                        'orderNotes.user',
+                        'attachments.user',
+                        'orderTasks.user',
+                        'orderTasks.assignedTo',
+                        'orderReminders.user',
+                        'orderReminders.assignedTo',
+                    ]),
+                ])),
+
             Action::make('order_activity')
                 ->label('Order Activity')
                 ->icon('heroicon-o-list-bullet')
@@ -41,9 +67,195 @@ class EditOrder extends EditRecord
                         'orderActivities.user',
                         'statusHistories.user',
                         'orderNotes.user',
-                        'orderAttachments.user',
+                        'attachments.user',
+                        'orderTasks.user',
+                        'orderTasks.assignedTo',
+                        'orderReminders.user',
+                        'orderReminders.assignedTo',
                     ]),
                 ])),
+
+            Action::make('order_tasks')
+                ->label('Order Tasks')
+                ->icon('heroicon-o-check-circle')
+                ->color('primary')
+                ->modalHeading(fn () => 'Order Tasks - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
+                ->modalSubmitActionLabel('Add Task')
+                ->modalCancelActionLabel('Close')
+                ->modalWidth('4xl')
+                ->schema([
+                    TextInput::make('title')
+                        ->label('Task Title')
+                        ->required()
+                        ->maxLength(255)
+                        ->placeholder('Call customer, verify payment, prepare order...'),
+
+                    Textarea::make('description')
+                        ->label('Description / Notes')
+                        ->rows(3)
+                        ->maxLength(2000),
+
+                    Select::make('status')
+                        ->label('Status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'in_progress' => 'In Progress',
+                            'done' => 'Done',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default('pending')
+                        ->required(),
+
+                    Select::make('priority')
+                        ->label('Priority')
+                        ->options([
+                            'low' => 'Low',
+                            'normal' => 'Normal',
+                            'high' => 'High',
+                            'urgent' => 'Urgent',
+                        ])
+                        ->default('normal')
+                        ->required(),
+
+                    Select::make('assigned_to_user_id')
+                        ->label('Assigned To')
+                        ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id')->toArray())
+                        ->searchable()
+                        ->preload()
+                        ->default(fn () => auth()->id()),
+
+                    DateTimePicker::make('due_at')
+                        ->label('Due Date')
+                        ->seconds(false),
+
+                    Toggle::make('is_private')
+                        ->label('Private admin task')
+                        ->default(true),
+                ])
+                ->modalContent(fn () => view('filament.orders.tasks-modal', [
+                    'order' => $this->record->fresh(['orderTasks.user', 'orderTasks.assignedTo']),
+                ]))
+                ->action(function (array $data): void {
+                    $status = (string) ($data['status'] ?? 'pending');
+
+                    $task = $this->record->orderTasks()->create([
+                        'user_id' => auth()->id(),
+                        'assigned_to_user_id' => $data['assigned_to_user_id'] ?? null,
+                        'title' => $data['title'],
+                        'description' => $data['description'] ?? null,
+                        'status' => $status,
+                        'priority' => $data['priority'] ?? 'normal',
+                        'due_at' => $data['due_at'] ?? null,
+                        'completed_at' => $status === 'done' ? now() : null,
+                        'is_private' => (bool) ($data['is_private'] ?? true),
+                    ]);
+
+                    $this->record->orderActivities()->create([
+                        'user_id' => auth()->id(),
+                        'type' => 'task_created',
+                        'title' => 'Task created',
+                        'description' => $task->title,
+                        'subject_type' => OrderTask::class,
+                        'subject_id' => $task->id,
+                        'metadata' => [
+                            'status' => $task->status,
+                            'priority' => $task->priority,
+                            'assigned_to_user_id' => $task->assigned_to_user_id,
+                            'due_at' => $task->due_at?->toDateTimeString(),
+                        ],
+                        'occurred_at' => now(),
+                    ]);
+
+                    Notification::make()
+                        ->title('Order task added')
+                        ->success()
+                        ->send();
+                }),
+
+
+            Action::make('order_reminders')
+                ->label('Order Reminders')
+                ->icon('heroicon-o-bell-alert')
+                ->color('danger')
+                ->modalHeading(fn () => 'Order Reminders - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
+                ->modalSubmitActionLabel('Add Reminder')
+                ->modalCancelActionLabel('Close')
+                ->modalWidth('4xl')
+                ->schema([
+                    TextInput::make('title')
+                        ->label('Reminder Title')
+                        ->required()
+                        ->maxLength(255)
+                        ->placeholder('Call customer, review payment, send invoice...'),
+
+                    Textarea::make('notes')
+                        ->label('Notes')
+                        ->rows(3)
+                        ->maxLength(2000),
+
+                    Select::make('status')
+                        ->label('Status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'done' => 'Done',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default('pending')
+                        ->required(),
+
+                    Select::make('assigned_to_user_id')
+                        ->label('Assigned To')
+                        ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id')->toArray())
+                        ->searchable()
+                        ->preload()
+                        ->default(fn () => auth()->id()),
+
+                    DateTimePicker::make('remind_at')
+                        ->label('Reminder Time')
+                        ->seconds(false)
+                        ->required(),
+
+                    Toggle::make('is_private')
+                        ->label('Private admin reminder')
+                        ->default(true),
+                ])
+                ->modalContent(fn () => view('filament.orders.reminders-modal', [
+                    'order' => $this->record->fresh(['orderReminders.user', 'orderReminders.assignedTo']),
+                ]))
+                ->action(function (array $data): void {
+                    $status = (string) ($data['status'] ?? 'pending');
+
+                    $reminder = $this->record->orderReminders()->create([
+                        'user_id' => auth()->id(),
+                        'assigned_to_user_id' => $data['assigned_to_user_id'] ?? null,
+                        'title' => $data['title'],
+                        'notes' => $data['notes'] ?? null,
+                        'status' => $status,
+                        'remind_at' => $data['remind_at'] ?? null,
+                        'completed_at' => $status === 'done' ? now() : null,
+                        'is_private' => (bool) ($data['is_private'] ?? true),
+                    ]);
+
+                    $this->record->orderActivities()->create([
+                        'user_id' => auth()->id(),
+                        'type' => 'reminder_created',
+                        'title' => 'Reminder created',
+                        'description' => $reminder->title,
+                        'subject_type' => OrderReminder::class,
+                        'subject_id' => $reminder->id,
+                        'metadata' => [
+                            'status' => $reminder->status,
+                            'assigned_to_user_id' => $reminder->assigned_to_user_id,
+                            'remind_at' => $reminder->remind_at?->toDateTimeString(),
+                        ],
+                        'occurred_at' => now(),
+                    ]);
+
+                    Notification::make()
+                        ->title('Order reminder added')
+                        ->success()
+                        ->send();
+                }),
 
             Action::make('status_history')
                 ->label('Status History')
@@ -91,12 +303,12 @@ class EditOrder extends EditRecord
                     $this->record->orderActivities()->create([
                         'user_id' => auth()->id(),
                         'type' => 'note_added',
-                        'title' => 'Internal note added',
-                        'description' => (string) ($data['note'] ?? ''),
+                        'title' => 'Note added',
+                        'description' => $note->note,
                         'subject_type' => OrderNote::class,
                         'subject_id' => $note->id,
                         'metadata' => [
-                            'is_pinned' => (bool) ($data['is_pinned'] ?? false),
+                            'is_pinned' => (bool) $note->is_pinned,
                         ],
                         'occurred_at' => now(),
                     ]);
@@ -128,24 +340,26 @@ class EditOrder extends EditRecord
                         ->preserveFilenames()
                         ->downloadable()
                         ->openable()
-                        ->required(),
+                        ->required()
+                        ->maxSize(10240),
 
                     Textarea::make('notes')
-                        ->label('Attachment Notes')
+                        ->label('Notes')
                         ->rows(3)
-                        ->maxLength(1000),
+                        ->maxLength(2000),
 
                     Toggle::make('is_private')
                         ->label('Private admin file')
-                        ->default(true),
+                        ->default(true)
+                        ->helperText('Attachments are for admin use only and are not shown to customers.'),
                 ])
                 ->modalContent(fn () => view('filament.orders.attachments-modal', [
-                    'order' => $this->record->fresh(['orderAttachments.user']),
+                    'order' => $this->record->fresh(['attachments.user']),
                 ]))
                 ->action(function (array $data): void {
                     $filePath = $this->normalizeUploadedFilePath($data['file'] ?? null);
 
-                    if (! $filePath) {
+                    if (blank($filePath)) {
                         Notification::make()
                             ->title('No file selected')
                             ->danger()
@@ -155,25 +369,22 @@ class EditOrder extends EditRecord
                     }
 
                     $disk = 'public';
-                    $originalName = basename($filePath);
+                    $originalName = basename((string) $filePath);
                     $mimeType = null;
                     $sizeBytes = null;
 
                     try {
-                        $mimeType = Storage::disk($disk)->mimeType($filePath);
-                    } catch (Throwable) {
-                        $mimeType = null;
+                        if (Storage::disk($disk)->exists($filePath)) {
+                            $mimeType = Storage::disk($disk)->mimeType($filePath);
+                            $sizeBytes = Storage::disk($disk)->size($filePath);
+                        }
+                    } catch (Throwable $exception) {
+                        report($exception);
                     }
 
-                    try {
-                        $sizeBytes = Storage::disk($disk)->size($filePath);
-                    } catch (Throwable) {
-                        $sizeBytes = null;
-                    }
-
-                    $attachment = $this->record->orderAttachments()->create([
+                    $attachment = $this->record->attachments()->create([
                         'user_id' => auth()->id(),
-                        'title' => $data['title'] ?? null,
+                        'title' => $data['title'] ?: $originalName,
                         'original_name' => $originalName,
                         'file_path' => $filePath,
                         'disk' => $disk,
@@ -232,7 +443,7 @@ class EditOrder extends EditRecord
             $this->record->orderActivities()->create([
                 'user_id' => auth()->id(),
                 'type' => 'status_changed',
-                'title' => 'Order status changed',
+                'title' => 'Status changed',
                 'description' => $oldStatus . ' → ' . $newStatus,
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
@@ -281,6 +492,19 @@ class EditOrder extends EditRecord
         }
     }
 
+    private function normalizeUploadedFilePath(mixed $file): ?string
+    {
+        if (is_array($file)) {
+            $file = reset($file) ?: null;
+        }
+
+        if ($file === null || $file === '') {
+            return null;
+        }
+
+        return (string) $file;
+    }
+
     private function normalizeStatusValue(mixed $status): ?string
     {
         if ($status instanceof \BackedEnum) {
@@ -292,20 +516,5 @@ class EditOrder extends EditRecord
         }
 
         return (string) $status;
-    }
-
-    private function normalizeUploadedFilePath(mixed $file): ?string
-    {
-        if (is_array($file)) {
-            $first = reset($file);
-
-            if (is_array($first)) {
-                return $first['path'] ?? $first['file'] ?? null;
-            }
-
-            return $first ?: null;
-        }
-
-        return $file ? (string) $file : null;
     }
 }

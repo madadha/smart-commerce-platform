@@ -177,7 +177,7 @@ class Order extends Model
     }
 
 
-    public function orderAttachments(): HasMany
+    public function attachments(): HasMany
     {
         return $this->hasMany(OrderAttachment::class)
             ->with('user')
@@ -185,11 +185,39 @@ class Order extends Model
             ->orderByDesc('id');
     }
 
+    public function orderAttachments(): HasMany
+    {
+        return $this->attachments();
+    }
+
     public function orderActivities(): HasMany
     {
         return $this->hasMany(OrderActivity::class)
             ->with('user')
             ->orderByDesc('occurred_at')
+            ->orderByDesc('id');
+    }
+
+    public function orderTasks(): HasMany
+    {
+        return $this->hasMany(OrderTask::class)
+            ->with(['user', 'assignedTo'])
+            ->orderByRaw("FIELD(status, 'pending', 'in_progress', 'done', 'cancelled')")
+            ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+            ->orderByRaw('due_at IS NULL')
+            ->orderBy('due_at')
+            ->orderByDesc('id');
+    }
+
+
+
+    public function orderReminders(): HasMany
+    {
+        return $this->hasMany(OrderReminder::class)
+            ->with(['user', 'assignedTo'])
+            ->orderByRaw("FIELD(status, 'pending', 'done', 'cancelled')")
+            ->orderByRaw('remind_at IS NULL')
+            ->orderBy('remind_at')
             ->orderByDesc('id');
     }
 

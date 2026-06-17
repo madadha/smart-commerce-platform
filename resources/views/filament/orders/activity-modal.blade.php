@@ -1,113 +1,128 @@
 @php
-    $order = $order ?? null;
-
     $activities = collect();
 
-    if ($order) {
-        foreach (($order->orderActivities ?? collect()) as $activity) {
-            $activities->push([
-                'type' => $activity->type ?? 'activity',
-                'title' => $activity->title ?? 'Activity',
-                'description' => $activity->description,
-                'user' => $activity->user?->name ?? 'System',
-                'date' => $activity->occurred_at ?? $activity->created_at,
-                'color' => match ($activity->type) {
-                    'status_changed' => 'blue',
-                    'note_added' => 'amber',
-                    'attachment_uploaded' => 'emerald',
-                    default => 'gray',
-                },
-            ]);
-        }
+    foreach (($order?->orderActivities ?? collect()) as $activity) {
+        $activities->push((object) [
+            'time' => $activity->occurred_at ?? $activity->created_at,
+            'type' => $activity->type,
+            'title' => $activity->title ?? 'Activity',
+            'description' => $activity->description,
+            'user' => $activity->user?->name ?? 'System',
+            'url' => data_get($activity->metadata, 'file_path') ? \Illuminate\Support\Facades\Storage::disk('public')->url(data_get($activity->metadata, 'file_path')) : null,
+        ]);
+    }
 
-        foreach (($order->statusHistories ?? collect()) as $history) {
-            $activities->push([
-                'type' => 'status_changed',
-                'title' => 'Status changed',
-                'description' => ($history->old_status ?: '-') . ' → ' . ($history->new_status ?: '-'),
-                'user' => $history->user?->name ?? 'System',
-                'date' => $history->changed_at ?? $history->created_at,
-                'color' => 'blue',
-            ]);
-        }
+    foreach (($order?->statusHistories ?? collect()) as $history) {
+        $activities->push((object) [
+            'time' => $history->changed_at ?? $history->created_at,
+            'type' => 'status_changed',
+            'title' => 'Status changed',
+            'description' => trim(($history->old_status ?? '-') . ' → ' . ($history->new_status ?? '-')),
+            'user' => $history->user?->name ?? 'System',
+            'url' => null,
+        ]);
+    }
 
-        foreach (($order->orderNotes ?? collect()) as $note) {
-            $activities->push([
-                'type' => 'note_added',
-                'title' => ($note->is_pinned ? 'Pinned note' : 'Internal note'),
-                'description' => $note->note,
-                'user' => $note->user?->name ?? 'System',
-                'date' => $note->created_at,
-                'color' => 'amber',
-            ]);
-        }
+    foreach (($order?->orderNotes ?? collect()) as $note) {
+        $activities->push((object) [
+            'time' => $note->created_at,
+            'type' => 'note_added',
+            'title' => $note->is_pinned ? 'Pinned note added' : 'Note added',
+            'description' => $note->note,
+            'user' => $note->user?->name ?? 'System',
+            'url' => null,
+        ]);
+    }
 
-        foreach (($order->orderAttachments ?? collect()) as $attachment) {
-            $activities->push([
-                'type' => 'attachment_uploaded',
-                'title' => 'Attachment uploaded',
-                'description' => $attachment->title ?: ($attachment->original_name ?? basename((string) $attachment->file_path)),
-                'user' => $attachment->user?->name ?? 'System',
-                'date' => $attachment->created_at,
-                'color' => 'emerald',
-                'url' => $attachment->url ?? null,
-            ]);
-        }
+    foreach (($order?->attachments ?? collect()) as $attachment) {
+        $activities->push((object) [
+            'time' => $attachment->created_at,
+            'type' => 'attachment_uploaded',
+            'title' => 'Attachment uploaded',
+            'description' => $attachment->title ?: $attachment->original_name,
+            'user' => $attachment->user?->name ?? 'System',
+            'url' => $attachment->url ?? null,
+        ]);
+    }
+
+    foreach (($order?->orderTasks ?? collect()) as $task) {
+        $activities->push((object) [
+            'time' => $task->created_at,
+            'type' => 'task_created',
+            'title' => 'Task created',
+            'description' => ($task->title ?? '') . ' — ' . ucfirst(str_replace('_', ' ', $task->status ?? 'pending')) . ' / ' . ucfirst($task->priority ?? 'normal'),
+            'user' => $task->user?->name ?? 'System',
+            'url' => null,
+        ]);
+    }
+
+
+
+    foreach (($order?->orderReminders ?? collect()) as $reminder) {
+        $activities->push((object) [
+            'time' => $reminder->remind_at ?? $reminder->created_at,
+            'type' => 'reminder_created',
+            'title' => 'Reminder created',
+            'description' => ($reminder->title ?? '') . ' — ' . ucfirst($reminder->status ?? 'pending') . ($reminder->remind_at ? ' / ' . $reminder->remind_at->format('Y-m-d H:i') : ''),
+            'user' => $reminder->user?->name ?? 'System',
+            'url' => null,
+        ]);
     }
 
     $activities = $activities
-        ->sortByDesc(fn ($item) => optional($item['date'])->timestamp ?? 0)
+        ->filter(fn ($item) => $item->time !== null)
+        ->sortByDesc(fn ($item) => $item->time?->timestamp ?? 0)
         ->values();
+
+    $typeStyles = [
+        'status_changed' => ['icon' => '↔', 'bg' => '#dbeafe', 'color' => '#1e40af'],
+        'note_added' => ['icon' => '✎', 'bg' => '#fef3c7', 'color' => '#92400e'],
+        'attachment_uploaded' => ['icon' => '📎', 'bg' => '#dcfce7', 'color' => '#166534'],
+        'task_created' => ['icon' => '✓', 'bg' => '#ede9fe', 'color' => '#5b21b6'],
+        'reminder_created' => ['icon' => '⏰', 'bg' => '#fee2e2', 'color' => '#991b1b'],
+    ];
 @endphp
 
-<div class="space-y-4">
-    @if($activities->isEmpty())
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-            No activity recorded yet for this order.
-        </div>
-    @else
-        <div class="space-y-3">
-            @foreach($activities as $activity)
-                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div class="flex gap-3">
-                            <div class="mt-1 h-3 w-3 rounded-full
-                                @if($activity['color'] === 'blue') bg-blue-500
-                                @elseif($activity['color'] === 'amber') bg-amber-500
-                                @elseif($activity['color'] === 'emerald') bg-emerald-500
-                                @else bg-gray-400
-                                @endif
-                            "></div>
+<div style="display:flex;flex-direction:column;gap:12px;">
+    @forelse ($activities as $item)
+        @php($style = $typeStyles[$item->type] ?? ['icon' => '•', 'bg' => '#f3f4f6', 'color' => '#374151'])
 
-                            <div>
-                                <div class="text-sm font-semibold text-gray-900">
-                                    {{ $activity['title'] }}
-                                </div>
+        <div style="display:flex;gap:12px;border:1px solid #e5e7eb;border-radius:14px;padding:14px;background:#fff;">
+            <div style="width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;background:{{ $style['bg'] }};color:{{ $style['color'] }};flex-shrink:0;">
+                {{ $style['icon'] }}
+            </div>
 
-                                @if(! empty($activity['description']))
-                                    <div class="mt-1 text-sm text-gray-700">
-                                        {{ $activity['description'] }}
-                                    </div>
-                                @endif
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                    <div style="font-weight:700;color:#111827;">
+                        {{ $item->title }}
+                    </div>
 
-                                @if(! empty($activity['url']))
-                                    <a href="{{ $activity['url'] }}" target="_blank" class="mt-2 inline-block text-xs font-medium text-primary-600 hover:underline">
-                                        Open attachment
-                                    </a>
-                                @endif
-
-                                <div class="mt-2 text-xs text-gray-500">
-                                    By {{ $activity['user'] }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="text-xs text-gray-500">
-                            {{ optional($activity['date'])->format('Y-m-d H:i') }}
-                        </div>
+                    <div style="font-size:12px;color:#6b7280;">
+                        {{ $item->time?->format('Y-m-d H:i') }}
                     </div>
                 </div>
-            @endforeach
+
+                @if (! blank($item->description))
+                    <div style="margin-top:5px;color:#4b5563;font-size:13px;line-height:1.6;white-space:pre-line;">
+                        {{ $item->description }}
+                    </div>
+                @endif
+
+                <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#6b7280;font-size:12px;">
+                    <span>By: {{ $item->user }}</span>
+
+                    @if ($item->url)
+                        <a href="{{ $item->url }}" target="_blank" style="font-weight:700;color:#2563eb;text-decoration:none;">
+                            Open file
+                        </a>
+                    @endif
+                </div>
+            </div>
         </div>
-    @endif
+    @empty
+        <div style="border:1px dashed #d1d5db;border-radius:14px;padding:20px;text-align:center;color:#6b7280;background:#fafafa;">
+            No activity recorded yet.
+        </div>
+    @endforelse
 </div>
