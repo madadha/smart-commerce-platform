@@ -4,6 +4,9 @@ namespace App\Filament\Resources\Orders\Pages;
 
 use App\Filament\Resources\Orders\OrderResource;
 use App\Mail\StorefrontOrderCompletedMail;
+use App\Models\OrderAttachment;
+use App\Models\OrderNote;
+use App\Models\OrderStatusHistory;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\FileUpload;
@@ -25,6 +28,23 @@ class EditOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('order_activity')
+                ->label('Order Activity')
+                ->icon('heroicon-o-list-bullet')
+                ->color('success')
+                ->modalHeading(fn () => 'Order Activity - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close')
+                ->modalWidth('4xl')
+                ->modalContent(fn () => view('filament.orders.activity-modal', [
+                    'order' => $this->record->fresh([
+                        'orderActivities.user',
+                        'statusHistories.user',
+                        'orderNotes.user',
+                        'orderAttachments.user',
+                    ]),
+                ])),
+
             Action::make('status_history')
                 ->label('Status History')
                 ->icon('heroicon-o-clock')
@@ -61,11 +81,24 @@ class EditOrder extends EditRecord
                     'order' => $this->record->fresh(['orderNotes.user']),
                 ]))
                 ->action(function (array $data): void {
-                    $this->record->orderNotes()->create([
+                    $note = $this->record->orderNotes()->create([
                         'user_id' => auth()->id(),
                         'type' => 'internal',
                         'note' => $data['note'],
                         'is_pinned' => (bool) ($data['is_pinned'] ?? false),
+                    ]);
+
+                    $this->record->orderActivities()->create([
+                        'user_id' => auth()->id(),
+                        'type' => 'note_added',
+                        'title' => 'Internal note added',
+                        'description' => (string) ($data['note'] ?? ''),
+                        'subject_type' => OrderNote::class,
+                        'subject_id' => $note->id,
+                        'metadata' => [
+                            'is_pinned' => (bool) ($data['is_pinned'] ?? false),
+                        ],
+                        'occurred_at' => now(),
                     ]);
 
                     Notification::make()
@@ -95,30 +128,24 @@ class EditOrder extends EditRecord
                         ->preserveFilenames()
                         ->downloadable()
                         ->openable()
-                        ->required()
-                        ->maxSize(10240),
+                        ->required(),
 
                     Textarea::make('notes')
-                        ->label('Notes')
+                        ->label('Attachment Notes')
                         ->rows(3)
-                        ->maxLength(2000),
+                        ->maxLength(1000),
 
                     Toggle::make('is_private')
                         ->label('Private admin file')
-                        ->default(true)
-                        ->helperText('Attachments are for admin use only and are not shown to customers.'),
+                        ->default(true),
                 ])
                 ->modalContent(fn () => view('filament.orders.attachments-modal', [
-                    'order' => $this->record->fresh(['attachments.user']),
+                    'order' => $this->record->fresh(['orderAttachments.user']),
                 ]))
                 ->action(function (array $data): void {
-                    $filePath = $data['file'] ?? null;
+                    $filePath = $this->normalizeUploadedFilePath($data['file'] ?? null);
 
-                    if (is_array($filePath)) {
-                        $filePath = reset($filePath) ?: null;
-                    }
-
-                    if (blank($filePath)) {
+                    if (! $filePath) {
                         Notification::make()
                             ->title('No file selected')
                             ->danger()
@@ -128,22 +155,25 @@ class EditOrder extends EditRecord
                     }
 
                     $disk = 'public';
-                    $originalName = basename((string) $filePath);
+                    $originalName = basename($filePath);
                     $mimeType = null;
                     $sizeBytes = null;
 
                     try {
-                        if (Storage::disk($disk)->exists($filePath)) {
-                            $mimeType = Storage::disk($disk)->mimeType($filePath);
-                            $sizeBytes = Storage::disk($disk)->size($filePath);
-                        }
-                    } catch (Throwable $exception) {
-                        report($exception);
+                        $mimeType = Storage::disk($disk)->mimeType($filePath);
+                    } catch (Throwable) {
+                        $mimeType = null;
                     }
 
-                    $this->record->attachments()->create([
+                    try {
+                        $sizeBytes = Storage::disk($disk)->size($filePath);
+                    } catch (Throwable) {
+                        $sizeBytes = null;
+                    }
+
+                    $attachment = $this->record->orderAttachments()->create([
                         'user_id' => auth()->id(),
-                        'title' => $data['title'] ?: $originalName,
+                        'title' => $data['title'] ?? null,
                         'original_name' => $originalName,
                         'file_path' => $filePath,
                         'disk' => $disk,
@@ -151,6 +181,23 @@ class EditOrder extends EditRecord
                         'size_bytes' => $sizeBytes,
                         'notes' => $data['notes'] ?? null,
                         'is_private' => (bool) ($data['is_private'] ?? true),
+                    ]);
+
+                    $this->record->orderActivities()->create([
+                        'user_id' => auth()->id(),
+                        'type' => 'attachment_uploaded',
+                        'title' => 'Attachment uploaded',
+                        'description' => $data['title'] ?: $originalName,
+                        'subject_type' => OrderAttachment::class,
+                        'subject_id' => $attachment->id,
+                        'metadata' => [
+                            'original_name' => $originalName,
+                            'file_path' => $filePath,
+                            'mime_type' => $mimeType,
+                            'size_bytes' => $sizeBytes,
+                            'is_private' => (bool) ($data['is_private'] ?? true),
+                        ],
+                        'occurred_at' => now(),
                     ]);
 
                     Notification::make()
@@ -174,12 +221,28 @@ class EditOrder extends EditRecord
         $newStatus = $this->normalizeStatusValue($this->record->status);
 
         if ($oldStatus !== null && $newStatus !== null && $oldStatus !== $newStatus) {
-            $this->record->statusHistories()->create([
+            $history = $this->record->statusHistories()->create([
                 'user_id' => auth()->id(),
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
                 'note' => 'Order status changed from admin panel.',
                 'changed_at' => now(),
+            ]);
+
+            $this->record->orderActivities()->create([
+                'user_id' => auth()->id(),
+                'type' => 'status_changed',
+                'title' => 'Order status changed',
+                'description' => $oldStatus . ' → ' . $newStatus,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'subject_type' => OrderStatusHistory::class,
+                'subject_id' => $history->id,
+                'metadata' => [
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                ],
+                'occurred_at' => now(),
             ]);
 
             Notification::make()
@@ -229,5 +292,20 @@ class EditOrder extends EditRecord
         }
 
         return (string) $status;
+    }
+
+    private function normalizeUploadedFilePath(mixed $file): ?string
+    {
+        if (is_array($file)) {
+            $first = reset($file);
+
+            if (is_array($first)) {
+                return $first['path'] ?? $first['file'] ?? null;
+            }
+
+            return $first ?: null;
+        }
+
+        return $file ? (string) $file : null;
     }
 }

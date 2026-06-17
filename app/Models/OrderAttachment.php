@@ -17,12 +17,14 @@ class OrderAttachment extends Model
         'disk',
         'mime_type',
         'size_bytes',
+        'file_size',
         'notes',
         'is_private',
     ];
 
     protected $casts = [
         'size_bytes' => 'integer',
+        'file_size' => 'integer',
         'is_private' => 'boolean',
     ];
 
@@ -36,27 +38,19 @@ class OrderAttachment extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->title
+            ?: $this->original_name
+            ?: basename((string) $this->file_path);
+    }
+
     public function getUrlAttribute(): ?string
     {
-        if (blank($this->file_path)) {
+        if (empty($this->file_path)) {
             return null;
         }
 
         return Storage::disk($this->disk ?: 'public')->url($this->file_path);
-    }
-
-    public function getFormattedSizeAttribute(): string
-    {
-        $bytes = (int) ($this->size_bytes ?? 0);
-
-        if ($bytes <= 0) {
-            return '-';
-        }
-
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $power = min((int) floor(log($bytes, 1024)), count($units) - 1);
-        $size = $bytes / (1024 ** $power);
-
-        return number_format($size, $power === 0 ? 0 : 2) . ' ' . $units[$power];
     }
 }

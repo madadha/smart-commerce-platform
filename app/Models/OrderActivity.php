@@ -5,18 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class OrderNote extends Model
+class OrderActivity extends Model
 {
     protected $fillable = [
         'order_id',
         'user_id',
         'type',
-        'note',
-        'is_pinned',
+        'title',
+        'description',
+        'old_status',
+        'new_status',
+        'subject_type',
+        'subject_id',
+        'metadata',
+        'occurred_at',
     ];
 
     protected $casts = [
-        'is_pinned' => 'boolean',
+        'metadata' => 'array',
+        'occurred_at' => 'datetime',
     ];
 
     public function order(): BelongsTo

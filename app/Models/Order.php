@@ -177,11 +177,19 @@ class Order extends Model
     }
 
 
-    public function attachments(): HasMany
+    public function orderAttachments(): HasMany
     {
         return $this->hasMany(OrderAttachment::class)
             ->with('user')
             ->orderByDesc('created_at')
+            ->orderByDesc('id');
+    }
+
+    public function orderActivities(): HasMany
+    {
+        return $this->hasMany(OrderActivity::class)
+            ->with('user')
+            ->orderByDesc('occurred_at')
             ->orderByDesc('id');
     }
 
