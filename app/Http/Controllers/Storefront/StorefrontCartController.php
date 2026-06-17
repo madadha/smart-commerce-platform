@@ -52,7 +52,7 @@ class StorefrontCartController extends Controller
             'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
         ]);
 
-        $quantity = (int) ($validated['quantity'] ?? 1);
+        $quantity = max(1, (int) ($validated['quantity'] ?? 1));
 
         $product = Product::query()
             ->with(['currency'])
@@ -66,6 +66,37 @@ class StorefrontCartController extends Controller
                 ->where('product_id', $product->id)
                 ->where('is_active', true)
                 ->findOrFail($validated['product_variant_id']);
+        }
+
+        $stockOwner = $variant ?: $product;
+        $stockValue = $this->resolveStockValue($stockOwner);
+
+        if (! $this->isDigitalOrService($product) && $stockValue !== null && $stockValue <= 0) {
+            return back()
+                ->withInput()
+                ->with('error', __('storefront.stock.cannot_add_out_of_stock'));
+        }
+
+        $currentCart = $this->getCurrentCart();
+
+        $existingQuantity = 0;
+
+        if ($currentCart) {
+            $existingQuantity = (int) CartItem::query()
+                ->where('cart_id', $currentCart->id)
+                ->where('product_id', $product->id)
+                ->where('product_variant_id', $variant?->id)
+                ->value('quantity');
+        }
+
+        $requestedTotalQuantity = $existingQuantity + $quantity;
+
+        if (! $this->isDigitalOrService($product) && $stockValue !== null && $requestedTotalQuantity > $stockValue) {
+            return back()
+                ->withInput()
+                ->with('error', __('storefront.stock.quantity_not_available', [
+                    'count' => $stockValue,
+                ]));
         }
 
         $cart = $this->getOrCreateCart($product);
@@ -91,7 +122,39 @@ class StorefrontCartController extends Controller
             'quantity' => ['required', 'integer', 'min:1', 'max:99'],
         ]);
 
-        $quantity = (int) $validated['quantity'];
+        $quantity = max(1, (int) $validated['quantity']);
+
+        $item->loadMissing([
+            'product',
+            'productVariant',
+        ]);
+
+        $product = $item->product ?: Product::query()->find($item->product_id);
+        $variant = $item->productVariant ?: (
+            $item->product_variant_id
+                ? ProductVariant::query()->find($item->product_variant_id)
+                : null
+        );
+
+        if ($product) {
+            $stockOwner = $variant ?: $product;
+            $stockValue = $this->resolveStockValue($stockOwner);
+
+            if (! $this->isDigitalOrService($product) && $stockValue !== null && $stockValue <= 0) {
+                return back()
+                    ->withInput()
+                    ->with('error', __('storefront.stock.cannot_add_out_of_stock'));
+            }
+
+            if (! $this->isDigitalOrService($product) && $stockValue !== null && $quantity > $stockValue) {
+                return back()
+                    ->withInput()
+                    ->with('error', __('storefront.stock.quantity_not_available', [
+                        'count' => $stockValue,
+                    ]));
+            }
+        }
+
         $unitPrice = (float) $item->unit_price;
 
         $item->update([
@@ -199,7 +262,7 @@ class StorefrontCartController extends Controller
                 'quantity' => $newQuantity,
                 'unit_price' => $unitPrice,
                 'line_total' => $unitPrice * $newQuantity,
-                'product_name' => $variant?->name ?? $product->name,
+                'product_name' => $variant?->name ?? $this->resolveProductName($product, $locale),
                 'sku' => $variant?->sku ?? $product->sku,
                 'item_type' => $itemType,
                 'discount_total' => 0,
@@ -214,7 +277,7 @@ class StorefrontCartController extends Controller
             'cart_id' => $cart->id,
             'product_id' => $product->id,
             'product_variant_id' => $variant?->id,
-            'product_name' => $variant?->name ?? $product->name,
+            'product_name' => $variant?->name ?? $this->resolveProductName($product, $locale),
             'sku' => $variant?->sku ?? $product->sku,
             'item_type' => $itemType,
             'quantity' => $quantity,
@@ -287,6 +350,53 @@ class StorefrontCartController extends Controller
             'service' => 'service',
             default => 'product',
         };
+    }
+
+    private function resolveStockValue(Product|ProductVariant $stockOwner): ?int
+    {
+        foreach (['stock_quantity', 'quantity', 'stock'] as $stockColumn) {
+            if (isset($stockOwner->{$stockColumn}) && $stockOwner->{$stockColumn} !== null) {
+                return (int) $stockOwner->{$stockColumn};
+            }
+        }
+
+        return null;
+    }
+
+    private function isDigitalOrService(Product $product): bool
+    {
+        $type = $product->product_type ?? null;
+
+        if ($type instanceof \BackedEnum) {
+            $type = $type->value;
+        }
+
+        return in_array((string) $type, ['digital', 'digital_code', 'service'], true);
+    }
+
+    private function resolveProductName(Product $product, string $locale): string
+    {
+        if (method_exists($product, 'getName')) {
+            return (string) $product->getName($locale);
+        }
+
+        $name = $product->name ?? null;
+
+        if (is_array($name)) {
+            return (string) ($name[$locale] ?? $name['ar'] ?? $name['en'] ?? reset($name) ?? '');
+        }
+
+        if (is_string($name)) {
+            $decoded = json_decode($name, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return (string) ($decoded[$locale] ?? $decoded['ar'] ?? $decoded['en'] ?? reset($decoded) ?? '');
+            }
+
+            return $name;
+        }
+
+        return (string) ($product->sku ?? 'Product #' . $product->id);
     }
 
     private function resolveCustomer(): ?Customer

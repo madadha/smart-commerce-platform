@@ -6,13 +6,16 @@ use App\Enums\CartStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Services\Checkout\CartCheckoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
+use RuntimeException;
 use Throwable;
 
 class StorefrontCheckoutController extends Controller
@@ -74,11 +77,26 @@ class StorefrontCheckoutController extends Controller
         ]);
 
         try {
-            $order = $checkoutService->convertCartToOrder(
-                cart: $cart,
-                data: $validated,
-                userId: auth()->id()
-            );
+            $order = DB::transaction(function () use ($cart, $validated, $checkoutService) {
+                $cart->load([
+                    'items.product',
+                    'items.productVariant',
+                    'currency',
+                    'shippingMethod',
+                ]);
+
+                $this->validateCartStockBeforeOrder($cart);
+
+                $order = $checkoutService->convertCartToOrder(
+                    cart: $cart,
+                    data: $validated,
+                    userId: auth()->id()
+                );
+
+                $this->decreaseStockAfterOrder($cart);
+
+                return $order;
+            });
 
             session()->forget('storefront_cart_id');
 
@@ -89,7 +107,9 @@ class StorefrontCheckoutController extends Controller
                 ]))
                 ->with('success', __('storefront.checkout.order_created_successfully'));
         } catch (Throwable $exception) {
-            report($exception);
+            if (! $exception instanceof RuntimeException) {
+                report($exception);
+            }
 
             return back()
                 ->withInput()
@@ -114,6 +134,123 @@ class StorefrontCheckoutController extends Controller
             'pageTitle' => __('storefront.checkout.success_title') . ' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.success_text'),
         ]);
+    }
+
+    private function validateCartStockBeforeOrder(Cart $cart): void
+    {
+        $productIds = $cart->items
+            ->pluck('product_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($productIds->isEmpty()) {
+            throw new RuntimeException(__('storefront.checkout.empty_cart_error'));
+        }
+
+        $lockedProducts = Product::query()
+            ->whereIn('id', $productIds)
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        foreach ($cart->items as $item) {
+            $product = $lockedProducts->get($item->product_id);
+
+            if (! $product) {
+                throw new RuntimeException(__('storefront.stock.product_not_available'));
+            }
+
+            $quantity = max(1, (int) ($item->quantity ?? 1));
+
+            $stockInfo = $this->resolveStockInfo($product);
+
+            if ($this->isDigitalOrService($product) && $stockInfo === null) {
+                continue;
+            }
+
+            if ($stockInfo === null) {
+                continue;
+            }
+
+            if ($stockInfo['value'] <= 0) {
+                throw new RuntimeException(__('storefront.stock.cannot_add_out_of_stock'));
+            }
+
+            if ($quantity > $stockInfo['value']) {
+                throw new RuntimeException(__('storefront.stock.quantity_not_available', [
+                    'count' => $stockInfo['value'],
+                ]));
+            }
+        }
+    }
+
+    private function decreaseStockAfterOrder(Cart $cart): void
+    {
+        $productIds = $cart->items
+            ->pluck('product_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $products = Product::query()
+            ->whereIn('id', $productIds)
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        foreach ($cart->items as $item) {
+            $product = $products->get($item->product_id);
+
+            if (! $product) {
+                continue;
+            }
+
+            $quantity = max(1, (int) ($item->quantity ?? 1));
+
+            $stockInfo = $this->resolveStockInfo($product);
+
+            if ($this->isDigitalOrService($product) && $stockInfo === null) {
+                continue;
+            }
+
+            if ($stockInfo === null) {
+                continue;
+            }
+
+            if ($stockInfo['value'] < $quantity) {
+                throw new RuntimeException(__('storefront.stock.quantity_not_available', [
+                    'count' => $stockInfo['value'],
+                ]));
+            }
+
+            $product->decrement($stockInfo['column'], $quantity);
+        }
+    }
+
+    private function resolveStockInfo(Product $product): ?array
+    {
+        foreach (['stock_quantity', 'quantity', 'stock'] as $stockColumn) {
+            if (array_key_exists($stockColumn, $product->getAttributes()) && $product->{$stockColumn} !== null) {
+                return [
+                    'column' => $stockColumn,
+                    'value' => (int) $product->{$stockColumn},
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    private function isDigitalOrService(Product $product): bool
+    {
+        $type = $product->product_type ?? null;
+
+        if ($type instanceof \BackedEnum) {
+            $type = $type->value;
+        }
+
+        return in_array((string) $type, ['digital', 'service'], true);
     }
 
     private function getCurrentCart(): ?Cart

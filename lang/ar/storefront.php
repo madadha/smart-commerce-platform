@@ -381,6 +381,11 @@ return [
     'available' => 'متوفر',
     'low_stock' => 'كمية قليلة: :count فقط',
     'out_of_stock' => 'نفذ المخزون',
+    'cannot_add_out_of_stock' => 'لا يمكن إضافة هذا المنتج للسلة لأنه غير متوفر حاليًا.',
+'quantity_not_available' => 'الكمية المطلوبة غير متوفرة. المتوفر حاليًا: :count فقط.',
+'product_not_available' => 'أحد المنتجات في السلة لم يعد متوفرًا.',
+'cannot_add_out_of_stock' => 'لا يمكن إضافة هذا المنتج للسلة لأنه غير متوفر حاليًا.',
+'quantity_not_available' => 'الكمية المطلوبة غير متوفرة. المتوفر حاليًا: :count فقط.',
 ],
 
 

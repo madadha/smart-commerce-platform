@@ -386,6 +386,7 @@ return [
     'out_of_stock' => 'Out of Stock',
 ],
 
-
+'cannot_add_out_of_stock' => 'This product cannot be added to the cart because it is currently out of stock.',
+'quantity_not_available' => 'The requested quantity is not available. Only :count left in stock.',
 
 ];

@@ -380,6 +380,8 @@ return [
     'available' => 'זמין במלאי',
     'low_stock' => 'מלאי נמוך: רק :count',
     'out_of_stock' => 'אזל מהמלאי',
+    'cannot_add_out_of_stock' => 'לא ניתן להוסיף מוצר זה לעגלה כי הוא אינו זמין כרגע.',
+'quantity_not_available' => 'הכמות המבוקשת אינה זמינה. כרגע זמינים רק :count.',
 ],
 
 
