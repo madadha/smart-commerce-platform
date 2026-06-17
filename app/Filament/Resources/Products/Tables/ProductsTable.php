@@ -10,6 +10,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 class ProductsTable
 {
@@ -75,7 +77,61 @@ class ProductsTable
 
                 Tables\Columns\TextColumn::make('stock_quantity')
                     ->label('Stock')
-                    ->sortable(),
+                    ->state(function (Product $record): string {
+                        $stockInfo = self::resolveStockInfo($record);
+
+                        if (! $stockInfo) {
+                            return '-';
+                        }
+
+                        return (string) $stockInfo['value'];
+                    })
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        $stockColumn = self::resolveStockColumn();
+
+                        if (! $stockColumn) {
+                            return $query;
+                        }
+
+                        return $query->orderBy($stockColumn, $direction);
+                    }),
+
+                Tables\Columns\TextColumn::make('stock_status')
+                    ->label('Stock Status')
+                    ->badge()
+                    ->state(function (Product $record): string {
+                        $stockInfo = self::resolveStockInfo($record);
+
+                        if (! $stockInfo) {
+                            return 'Not tracked';
+                        }
+
+                        if ($stockInfo['value'] <= 0) {
+                            return 'Out of stock';
+                        }
+
+                        if ($stockInfo['value'] <= 5) {
+                            return 'Low stock';
+                        }
+
+                        return 'In stock';
+                    })
+                    ->color(function (string $state): string {
+                        return match ($state) {
+                            'Out of stock' => 'danger',
+                            'Low stock' => 'warning',
+                            'In stock' => 'success',
+                            default => 'gray',
+                        };
+                    })
+                    ->icon(function (string $state): string {
+                        return match ($state) {
+                            'Out of stock' => 'heroicon-o-x-circle',
+                            'Low stock' => 'heroicon-o-exclamation-triangle',
+                            'In stock' => 'heroicon-o-check-circle',
+                            default => 'heroicon-o-minus-circle',
+                        };
+                    }),
 
                 Tables\Columns\IconColumn::make('is_featured')
                     ->label('Featured')
@@ -90,7 +146,68 @@ class ProductsTable
                     ->sortable(),
             ])
             ->defaultSort('sort_order')
-            ->filters([])
+            ->filters([
+                Tables\Filters\SelectFilter::make('stock_filter')
+                    ->label('Stock')
+                    ->options([
+                        'out_of_stock' => 'Out of Stock',
+                        'low_stock' => 'Low Stock',
+                        'in_stock' => 'In Stock',
+                        'tracked' => 'Tracked Stock',
+                        'not_tracked' => 'Not Tracked',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $value = $data['value'] ?? null;
+
+                        if (! $value) {
+                            return $query;
+                        }
+
+                        $stockColumn = self::resolveStockColumn();
+
+                        if (! $stockColumn) {
+                            return $query;
+                        }
+
+                        return match ($value) {
+                            'out_of_stock' => $query
+                                ->whereNotNull($stockColumn)
+                                ->where($stockColumn, '<=', 0),
+
+                            'low_stock' => $query
+                                ->whereNotNull($stockColumn)
+                                ->where($stockColumn, '>', 0)
+                                ->where($stockColumn, '<=', 5),
+
+                            'in_stock' => $query
+                                ->whereNotNull($stockColumn)
+                                ->where($stockColumn, '>', 5),
+
+                            'tracked' => $query
+                                ->whereNotNull($stockColumn),
+
+                            'not_tracked' => $query
+                                ->whereNull($stockColumn),
+
+                            default => $query,
+                        };
+                    }),
+
+                Tables\Filters\Filter::make('active_low_stock')
+                    ->label('Active low/out stock only')
+                    ->query(function (Builder $query): Builder {
+                        $stockColumn = self::resolveStockColumn();
+
+                        if (! $stockColumn) {
+                            return $query;
+                        }
+
+                        return $query
+                            ->where('is_active', true)
+                            ->whereNotNull($stockColumn)
+                            ->where($stockColumn, '<=', 5);
+                    }),
+            ])
             ->recordActions([
                 EditAction::make(),
             ])
@@ -99,5 +216,30 @@ class ProductsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    private static function resolveStockColumn(): ?string
+    {
+        foreach (['stock_quantity', 'quantity', 'stock'] as $column) {
+            if (Schema::hasColumn('products', $column)) {
+                return $column;
+            }
+        }
+
+        return null;
+    }
+
+    private static function resolveStockInfo(Product $product): ?array
+    {
+        foreach (['stock_quantity', 'quantity', 'stock'] as $column) {
+            if (array_key_exists($column, $product->getAttributes()) && $product->{$column} !== null) {
+                return [
+                    'column' => $column,
+                    'value' => (int) $product->{$column},
+                ];
+            }
+        }
+
+        return null;
     }
 }

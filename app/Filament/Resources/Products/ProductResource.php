@@ -11,6 +11,7 @@ use App\Models\Product;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductResource extends Resource
 {
@@ -34,6 +35,77 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return ProductsTable::configure($table);
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $stockColumn = static::resolveStockColumn();
+
+        if (! $stockColumn) {
+            return null;
+        }
+
+        $count = Product::query()
+            ->where('is_active', true)
+            ->where(function (Builder $query) use ($stockColumn) {
+                $query->where($stockColumn, '<=', 5)
+                    ->whereNotNull($stockColumn);
+            })
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        $stockColumn = static::resolveStockColumn();
+
+        if (! $stockColumn) {
+            return null;
+        }
+
+        $outOfStockCount = Product::query()
+            ->where('is_active', true)
+            ->whereNotNull($stockColumn)
+            ->where($stockColumn, '<=', 0)
+            ->count();
+
+        return $outOfStockCount > 0 ? 'danger' : 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        $stockColumn = static::resolveStockColumn();
+
+        if (! $stockColumn) {
+            return null;
+        }
+
+        $outOfStockCount = Product::query()
+            ->where('is_active', true)
+            ->whereNotNull($stockColumn)
+            ->where($stockColumn, '<=', 0)
+            ->count();
+
+        $lowStockCount = Product::query()
+            ->where('is_active', true)
+            ->whereNotNull($stockColumn)
+            ->where($stockColumn, '>', 0)
+            ->where($stockColumn, '<=', 5)
+            ->count();
+
+        return "Out of stock: {$outOfStockCount} | Low stock: {$lowStockCount}";
+    }
+
+    private static function resolveStockColumn(): ?string
+    {
+        foreach (['stock_quantity', 'quantity', 'stock'] as $column) {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('products', $column)) {
+                return $column;
+            }
+        }
+
+        return null;
     }
 
     public static function getRelations(): array
