@@ -1535,3 +1535,11 @@ body.scp-storefront {
     box-shadow: none !important;
 }
 
+
+.money-ltr {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+    white-space: nowrap;
+    font-family: dejavusans, sans-serif;
+}

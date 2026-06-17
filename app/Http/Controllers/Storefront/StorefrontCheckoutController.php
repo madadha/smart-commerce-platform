@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Enums\CartStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\StorefrontOrderCreatedMail;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
@@ -13,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 use RuntimeException;
@@ -100,6 +102,8 @@ class StorefrontCheckoutController extends Controller
 
             session()->forget('storefront_cart_id');
 
+            $this->sendOrderCreatedEmail($order, $locale);
+
             return redirect()
                 ->to(URL::signedRoute('storefront.orders.show', [
                     'order' => $order->id,
@@ -134,6 +138,32 @@ class StorefrontCheckoutController extends Controller
             'pageTitle' => __('storefront.checkout.success_title') . ' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.success_text'),
         ]);
+    }
+
+    private function sendOrderCreatedEmail(Order $order, string $locale): void
+    {
+        try {
+            $order->loadMissing([
+                'items.product.brand',
+                'items.product.currency',
+                'items.productVariant',
+                'currency',
+                'customer',
+                'shippingMethod',
+            ]);
+
+            $email = $order->customer_email
+                ?? $order->customer?->email
+                ?? null;
+
+            if (! $email) {
+                return;
+            }
+
+            Mail::to($email)->send(new StorefrontOrderCreatedMail($order, $locale));
+        } catch (Throwable $mailException) {
+            report($mailException);
+        }
     }
 
     private function validateCartStockBeforeOrder(Cart $cart): void

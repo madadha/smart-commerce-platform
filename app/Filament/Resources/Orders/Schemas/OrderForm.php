@@ -168,7 +168,11 @@ class OrderForm
                                         ])
                                         ->toArray())
                                     ->searchable()
-                                    ->preload(),
+                                    ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function (mixed $state, callable $set): void {
+                                        self::fillProductFields($state, $set);
+                                    }),
 
                                 Select::make('product_variant_id')
                                     ->label('Variant')
@@ -209,8 +213,8 @@ class OrderForm
 
                                 TextInput::make('product_name.ar')
                                     ->label('Product Name Arabic')
-                                    ->required()
-                                    ->maxLength(255),
+                                    ->maxLength(255)
+                                    ->helperText('Auto-filled from the selected product. You can leave it empty.'),
 
                                 TextInput::make('product_name.he')
                                     ->label('Product Name Hebrew')
@@ -363,6 +367,85 @@ class OrderForm
                     ])
                     ->columns(2),
             ]);
+    }
+
+    private static function fillProductFields(mixed $productId, callable $set): void
+    {
+        if (blank($productId)) {
+            return;
+        }
+
+        $product = Product::query()->find($productId);
+
+        if (! $product) {
+            return;
+        }
+
+        $set('product_name.ar', self::resolveProductName($product, 'ar'));
+        $set('product_name.he', self::resolveProductName($product, 'he'));
+        $set('product_name.en', self::resolveProductName($product, 'en'));
+
+        if (! blank($product->sku)) {
+            $set('sku', $product->sku);
+        }
+
+        $price = self::resolveProductPrice($product);
+
+        if ($price !== null) {
+            $set('unit_price', $price);
+        }
+
+        $type = $product->product_type ?? 'product';
+
+        if ($type instanceof \BackedEnum) {
+            $type = $type->value;
+        }
+
+        if (in_array((string) $type, ['digital', 'service'], true)) {
+            $set('item_type', (string) $type);
+        } else {
+            $set('item_type', 'product');
+        }
+    }
+
+    private static function resolveProductName(Product $product, string $locale): string
+    {
+        if (method_exists($product, 'getName')) {
+            $name = $product->getName($locale);
+
+            if (! blank($name)) {
+                return (string) $name;
+            }
+        }
+
+        $name = $product->name ?? $product->title ?? null;
+
+        if (is_array($name)) {
+            return (string) ($name[$locale] ?? $name['ar'] ?? $name['en'] ?? reset($name) ?? '');
+        }
+
+        if (is_string($name)) {
+            $decoded = json_decode($name, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return (string) ($decoded[$locale] ?? $decoded['ar'] ?? $decoded['en'] ?? reset($decoded) ?? '');
+            }
+
+            return $name;
+        }
+
+        return (string) ($product->sku ?? $product->slug ?? '');
+    }
+
+    private static function resolveProductPrice(Product $product): ?float
+    {
+        foreach (['price', 'sale_price', 'regular_price', 'unit_price'] as $column) {
+            if (array_key_exists($column, $product->getAttributes()) && $product->{$column} !== null) {
+                return (float) $product->{$column};
+            }
+        }
+
+        return null;
     }
 
     private static function formatJsonForTextarea(mixed $state): string

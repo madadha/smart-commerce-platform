@@ -4,13 +4,13 @@ use App\Http\Controllers\Admin\InvoicePdfController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Storefront\StorefrontCartController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
+use App\Http\Controllers\Storefront\StorefrontCompareController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Storefront\StorefrontOrderController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Storefront\StorefrontWishlistController;
-use App\Http\Controllers\Storefront\StorefrontProductReviewController;
-use App\Http\Controllers\Storefront\StorefrontCompareController;
 use App\Http\Controllers\Storefront\StorefrontProductQuestionController;
+use App\Http\Controllers\Storefront\StorefrontProductReviewController;
+use App\Http\Controllers\Storefront\StorefrontWishlistController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,23 +22,6 @@ Route::get('/', [StorefrontController::class, 'home'])
     ->name('storefront.home');
 
 Route::prefix('store')->name('storefront.')->group(function () {
-
-Route::post('/products/{product}/questions', [StorefrontProductQuestionController::class, 'store'])
-    ->middleware('throttle:6,1')
-    ->name('products.questions.store');
-
-Route::get('/compare', [StorefrontCompareController::class, 'index'])
-    ->name('compare.index');
-
-Route::post('/compare/{product}/add', [StorefrontCompareController::class, 'add'])
-    ->name('compare.add');
-
-Route::delete('/compare/{product}/remove', [StorefrontCompareController::class, 'remove'])
-    ->name('compare.remove');
-
-Route::delete('/compare/clear/all', [StorefrontCompareController::class, 'clear'])
-    ->name('compare.clear');
-    
     Route::get('/', [StorefrontController::class, 'home'])
         ->name('index');
 
@@ -47,6 +30,26 @@ Route::delete('/compare/clear/all', [StorefrontCompareController::class, 'clear'
 
     Route::get('/products/{slug}', [StorefrontController::class, 'productShow'])
         ->name('products.show');
+
+    Route::post('/products/{product}/reviews', [StorefrontProductReviewController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('products.reviews.store');
+
+    Route::post('/products/{product}/questions', [StorefrontProductQuestionController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('products.questions.store');
+
+    Route::get('/compare', [StorefrontCompareController::class, 'index'])
+        ->name('compare.index');
+
+    Route::post('/compare/{product}/add', [StorefrontCompareController::class, 'add'])
+        ->name('compare.add');
+
+    Route::delete('/compare/{product}/remove', [StorefrontCompareController::class, 'remove'])
+        ->name('compare.remove');
+
+    Route::delete('/compare/clear/all', [StorefrontCompareController::class, 'clear'])
+        ->name('compare.clear');
 
     Route::get('/cart', [StorefrontCartController::class, 'index'])
         ->name('cart.index');
@@ -84,28 +87,28 @@ Route::delete('/compare/clear/all', [StorefrontCompareController::class, 'clear'
         ->name('orders.history');
 
     Route::get('/wishlist', [StorefrontWishlistController::class, 'index'])
-    ->middleware('auth')
-    ->name('wishlist.index');
+        ->middleware('auth')
+        ->name('wishlist.index');
 
     Route::post('/wishlist', [StorefrontWishlistController::class, 'store'])
-    ->middleware('auth')
-    ->name('wishlist.store');
+        ->middleware('auth')
+        ->name('wishlist.store');
 
-     Route::post('/wishlist/{product}/toggle', [StorefrontWishlistController::class, 'toggle'])
-    ->middleware('auth')
-    ->name('wishlist.toggle');
+    Route::post('/wishlist/{product}/toggle', [StorefrontWishlistController::class, 'toggle'])
+        ->middleware('auth')
+        ->name('wishlist.toggle');
 
-     Route::delete('/wishlist/{product}', [StorefrontWishlistController::class, 'destroy'])
-    ->middleware('auth')
-    ->name('wishlist.destroy');
-    
-    Route::post('/products/{product}/reviews', [StorefrontProductReviewController::class, 'store'])
-    ->middleware('throttle:6,1')
-    ->name('products.reviews.store');
+    Route::delete('/wishlist/{product}', [StorefrontWishlistController::class, 'destroy'])
+        ->middleware('auth')
+        ->name('wishlist.destroy');
 
     Route::get('/orders/{order}', [StorefrontOrderController::class, 'show'])
         ->middleware('signed')
         ->name('orders.show');
+
+    Route::get('/orders/{order}/invoice', [StorefrontOrderController::class, 'invoice'])
+        ->middleware('signed')
+        ->name('orders.invoice');
 });
 
 /*

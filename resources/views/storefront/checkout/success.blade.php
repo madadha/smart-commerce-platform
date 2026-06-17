@@ -3,6 +3,16 @@
 @section('content')
     @php
         $currencySymbol = $order?->currency?->symbol ?? '₪';
+
+        $invoiceUrl = \Illuminate\Support\Facades\URL::signedRoute('storefront.orders.invoice', [
+            'order' => $order->id,
+            'lang' => $locale,
+        ]);
+
+        $orderUrl = \Illuminate\Support\Facades\URL::signedRoute('storefront.orders.show', [
+            'order' => $order->id,
+            'lang' => $locale,
+        ]);
     @endphp
 
     <section class="scp-checkout-success-page">
@@ -33,7 +43,15 @@
                 </div>
 
                 <div class="scp-success-actions">
-                    <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-success-primary">
+                    <a href="{{ $orderUrl }}" class="scp-success-primary">
+                        {{ __('storefront.orders.view_order') ?? 'عرض الطلب' }}
+                    </a>
+
+                    <a href="{{ $invoiceUrl }}" class="scp-success-secondary">
+                        {{ __('storefront.orders.download_invoice') ?? 'تحميل الفاتورة PDF' }}
+                    </a>
+
+                    <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-success-secondary">
                         {{ __('storefront.cart.continue_shopping') }}
                     </a>
 

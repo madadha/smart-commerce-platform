@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
+use Mpdf\Mpdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StorefrontOrderController extends Controller
 {
@@ -35,6 +40,76 @@ class StorefrontOrderController extends Controller
             'digitalCodesByItem' => $digitalCodesByItem,
             'pageTitle' => __('storefront.order_details.page_title') . ' - ' . $order->order_number,
             'pageDescription' => __('storefront.order_details.page_description'),
+        ]);
+    }
+
+    public function invoice(Request $request, Order $order): Response
+    {
+        $locale = $this->resolveLocale($request);
+        $direction = $this->direction($locale);
+
+        $order->load([
+            'items.product.brand',
+            'items.product.currency',
+            'items.productVariant',
+            'currency',
+            'customer',
+            'shippingMethod',
+        ]);
+
+        $orderUrl = URL::signedRoute('storefront.orders.show', [
+            'order' => $order->id,
+            'lang' => $locale,
+        ]);
+
+        $invoiceUrl = URL::signedRoute('storefront.orders.invoice', [
+            'order' => $order->id,
+            'lang' => $locale,
+        ]);
+
+        $qrSvg = QrCode::format('svg')
+            ->size(150)
+            ->margin(1)
+            ->generate($orderUrl);
+
+        $qrCodeDataUri = 'data:image/svg+xml;base64,' . base64_encode((string) $qrSvg);
+
+        $tempDir = storage_path('app/mpdf');
+
+        File::ensureDirectoryExists($tempDir);
+
+        $html = view('storefront.orders.invoice-pdf', [
+            'locale' => $locale,
+            'direction' => $direction,
+            'order' => $order,
+            'orderUrl' => $orderUrl,
+            'invoiceUrl' => $invoiceUrl,
+            'qrCodeDataUri' => $qrCodeDataUri,
+            'pageTitle' => 'Invoice - ' . $order->order_number,
+        ])->render();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'tempDir' => $tempDir,
+            'margin_top' => 11,
+            'margin_bottom' => 11,
+            'margin_left' => 11,
+            'margin_right' => 11,
+        ]);
+
+        $mpdf->SetDirectionality($direction);
+        $mpdf->SetTitle('Invoice - ' . $order->order_number);
+        $mpdf->WriteHTML($html);
+
+        $fileName = 'invoice-' . $order->order_number . '.pdf';
+
+        return response($mpdf->Output($fileName, 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
 
