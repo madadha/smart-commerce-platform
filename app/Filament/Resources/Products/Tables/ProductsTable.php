@@ -5,9 +5,11 @@ namespace App\Filament\Resources\Products\Tables;
 use App\Enums\ProductStatus;
 use App\Enums\ProductType;
 use App\Models\Product;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -210,6 +212,74 @@ class ProductsTable
             ])
             ->recordActions([
                 EditAction::make(),
+
+                Action::make('set_stock')
+                    ->label('Set Stock')
+                    ->icon('heroicon-o-cube')
+                    ->color('info')
+                    ->visible(fn (Product $record): bool => self::resolveStockInfo($record) !== null)
+                    ->schema([
+                        TextInput::make('stock_quantity')
+                            ->label('Stock Quantity')
+                            ->numeric()
+                            ->minValue(0)
+                            ->required(),
+                    ])
+                    ->fillForm(function (Product $record): array {
+                        $stockInfo = self::resolveStockInfo($record);
+
+                        return [
+                            'stock_quantity' => $stockInfo['value'] ?? 0,
+                        ];
+                    })
+                    ->action(function (Product $record, array $data): void {
+                        $stockInfo = self::resolveStockInfo($record);
+
+                        if (! $stockInfo) {
+                            return;
+                        }
+
+                        $record->forceFill([
+                            $stockInfo['column'] => max(0, (int) $data['stock_quantity']),
+                        ])->save();
+                    }),
+
+                Action::make('mark_out_of_stock')
+                    ->label('Out Stock')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(function (Product $record): bool {
+                        $stockInfo = self::resolveStockInfo($record);
+
+                        return $stockInfo !== null && $stockInfo['value'] > 0;
+                    })
+                    ->action(function (Product $record): void {
+                        $stockInfo = self::resolveStockInfo($record);
+
+                        if (! $stockInfo) {
+                            return;
+                        }
+
+                        $record->forceFill([
+                            $stockInfo['column'] => 0,
+                        ])->save();
+                    }),
+
+                Action::make('quick_restock')
+                    ->label('Restock +10')
+                    ->icon('heroicon-o-arrow-up-circle')
+                    ->color('success')
+                    ->visible(fn (Product $record): bool => self::resolveStockInfo($record) !== null)
+                    ->action(function (Product $record): void {
+                        $stockInfo = self::resolveStockInfo($record);
+
+                        if (! $stockInfo) {
+                            return;
+                        }
+
+                        $record->increment($stockInfo['column'], 10);
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
