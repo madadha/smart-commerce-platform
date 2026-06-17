@@ -1,8 +1,8 @@
 # Smart Commerce Platform
 
-Smart Commerce Platform is a modern Laravel-based e-commerce management system for physical products, digital products, digital codes, customers, orders, invoices, payments, shipping, product reviews, wishlists, comparison, stock control, and multilingual storefront pages.
+Smart Commerce Platform is a modern Laravel-based e-commerce management system for physical products, digital products, digital codes, customers, orders, invoices, payments, shipping, stock control, product reviews, wishlists, product comparison, customer communication, and multilingual storefront pages.
 
-The project is designed as an admin-driven commerce platform using Laravel, MySQL, Filament Admin Panel, Livewire, Breeze Authentication, Spatie Roles & Permissions, and a responsive public storefront.
+The project is designed as an admin-driven commerce platform using Laravel, MySQL, Filament Admin Panel, Livewire, Breeze Authentication, Spatie Roles & Permissions, Blade, Tailwind CSS, and a responsive public storefront.
 
 ---
 
@@ -86,6 +86,12 @@ The project is designed as an admin-driven commerce platform using Laravel, MySQ
 - Order status history in admin panel.
 - Automatic status history logging when order status changes.
 - Status history modal in Filament order edit page.
+- Admin order notes system.
+- Admin order attachments system.
+- Admin order activity log.
+- Admin internal order tasks.
+- Admin order reminders.
+- Admin follow-up board.
 
 Supported order statuses:
 
@@ -143,6 +149,12 @@ Supported order statuses:
 - Shipping method management.
 - Invoice and order tools.
 - Status history button inside order edit page.
+- Order notes button inside order edit page.
+- Order attachments button inside order edit page.
+- Order activity button inside order edit page.
+- Order tasks button inside order edit page.
+- Order reminders button inside order edit page.
+- Follow-up board button inside order edit page.
 - Low stock navigation badge.
 - Quick restock actions.
 
@@ -369,6 +381,144 @@ Each email includes:
 
 ---
 
+### 13. Admin Order Notes
+
+Admins can add internal notes to orders.
+
+Features:
+
+- Add internal order notes.
+- Show note author.
+- Show note date.
+- Pin important notes.
+- Display notes inside the order edit page.
+- Log notes into the order activity timeline.
+
+---
+
+### 14. Admin Order Attachments
+
+Admins can upload private attachments to an order.
+
+Examples:
+
+- Proof of payment.
+- Bank transfer file.
+- Shipping label.
+- WhatsApp conversation screenshot.
+- Any internal order-related file.
+
+Features:
+
+- Upload attachment files.
+- Store original file name.
+- Store MIME type and file size.
+- Show uploader name.
+- Open uploaded file from the admin panel.
+- Keep attachments internal to the admin panel.
+- Log attachment uploads into the order activity timeline.
+
+---
+
+### 15. Admin Order Activity Log
+
+Orders include a unified activity log that combines order events.
+
+Tracked activities:
+
+- Status changes.
+- Notes.
+- Attachments.
+- Internal tasks.
+- Reminders.
+
+Each activity can include:
+
+- User ID.
+- Activity type.
+- Title.
+- Description.
+- Old value.
+- New value.
+- Related model.
+- Properties JSON.
+- Occurrence date.
+
+---
+
+### 16. Admin Order Internal Tasks
+
+Admins can create internal tasks for an order.
+
+Task fields:
+
+- Title.
+- Description.
+- Status.
+- Priority.
+- Assigned user.
+- Due date.
+
+Supported task statuses:
+
+- Pending.
+- In Progress.
+- Done.
+- Cancelled.
+
+Supported priorities:
+
+- Low.
+- Normal.
+- High.
+- Urgent.
+
+Tasks are shown in the order edit page and can be included in the order activity log.
+
+---
+
+### 17. Admin Order Reminders
+
+Admins can create reminders for order follow-up.
+
+Reminder fields:
+
+- Title.
+- Notes.
+- Reminder time.
+- Status.
+- Assigned user.
+
+Supported reminder statuses:
+
+- Pending.
+- Done.
+- Cancelled.
+
+The system can highlight overdue reminders in the admin panel.
+
+---
+
+### 18. Admin Follow-up Board
+
+The follow-up board gives admins a quick summary of the order.
+
+Displayed information:
+
+- Current order status.
+- Payment status.
+- Open tasks count.
+- Urgent tasks count.
+- Overdue reminders count.
+- Attachments count.
+- Latest status change.
+- Latest note.
+- Latest attachment.
+- Latest activity.
+- Upcoming tasks and reminders.
+
+---
+
 ## Important Routes
 
 ```php
@@ -380,6 +530,30 @@ Route::get('/store/orders/{order}/invoice', [StorefrontOrderController::class, '
     ->middleware('signed')
     ->name('storefront.orders.invoice');
 ```
+
+---
+
+## Main Database Tables
+
+- `users`
+- `products`
+- `product_reviews`
+- `product_questions`
+- `wishlists`
+- `compare_items`
+- `carts`
+- `cart_items`
+- `orders`
+- `order_items`
+- `order_status_histories`
+- `order_notes`
+- `order_attachments`
+- `order_activities`
+- `order_tasks`
+- `order_reminders`
+- `customers`
+- `shipping_methods`
+- `currencies`
 
 ---
 
@@ -452,6 +626,12 @@ Run migrations:
 php artisan migrate
 ```
 
+Create storage symlink:
+
+```bash
+php artisan storage:link
+```
+
 Build assets:
 
 ```bash
@@ -493,6 +673,7 @@ php artisan view:clear
 composer dump-autoload
 php artisan route:list
 php artisan migrate
+php artisan storage:link
 npm run build
 ```
 
@@ -500,6 +681,12 @@ Check invoice route:
 
 ```bash
 php artisan route:list | findstr invoice
+```
+
+Check order-related migrations:
+
+```bash
+php artisan migrate:status | findstr order_
 ```
 
 Check Git status:
@@ -516,6 +703,7 @@ git status
 git status
 git add .
 git commit -m "Update smart commerce platform features"
+git pull --rebase origin main
 git push origin main
 ```
 
@@ -528,6 +716,7 @@ git push origin main
 - Signed routes are used for customer order and invoice links.
 - Digital codes should be masked in admin listings.
 - Customer emails should be sent safely without breaking order flow.
+- Internal order notes, attachments, tasks, reminders, and activity logs are admin-only features.
 
 ---
 
@@ -554,6 +743,12 @@ Completed major features:
 - Order-completed email.
 - Customer order status timeline.
 - Admin order status history.
+- Admin order notes system.
+- Admin order attachments system.
+- Admin order activity log.
+- Admin internal order tasks.
+- Admin order reminders.
+- Admin follow-up board.
 
 ---
 
