@@ -176,6 +176,15 @@ class Order extends Model
             ->orderByDesc('id');
     }
 
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(OrderAttachment::class)
+            ->with('user')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+    }
+
     public function recalculateTotals(): void
     {
         $subtotal = $this->items()->sum('line_total');
