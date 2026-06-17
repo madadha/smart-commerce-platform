@@ -177,114 +177,6 @@
                     </div>
                 </aside>
 
-                @php
-    $activeFilters = [];
-
-    $removeFilterUrl = function (string $key) use ($filters, $locale) {
-        $query = [
-            'lang' => $locale,
-            'q' => $filters['q'] ?? null,
-            'category' => $filters['category'] ?? null,
-            'brand' => $filters['brand'] ?? null,
-            'type' => $filters['type'] ?? null,
-            'sort' => $filters['sort'] ?? null,
-            'min_price' => $filters['min_price'] ?? null,
-            'max_price' => $filters['max_price'] ?? null,
-            'rating' => $filters['rating'] ?? null,
-            'in_stock' => ! empty($filters['in_stock']) ? 1 : null,
-            'on_sale' => ! empty($filters['on_sale']) ? 1 : null,
-        ];
-
-        unset($query[$key]);
-
-        return route('storefront.products.index', array_filter($query, fn ($value) => $value !== null && $value !== ''));
-    };
-
-    if (! empty($filters['q'])) {
-        $activeFilters[] = [
-            'key' => 'q',
-            'label' => 'بحث: ' . $filters['q'],
-            'url' => $removeFilterUrl('q'),
-        ];
-    }
-
-    if (! empty($filters['min_price'])) {
-        $activeFilters[] = [
-            'key' => 'min_price',
-            'label' => 'من سعر: ' . $filters['min_price'],
-            'url' => $removeFilterUrl('min_price'),
-        ];
-    }
-
-    if (! empty($filters['max_price'])) {
-        $activeFilters[] = [
-            'key' => 'max_price',
-            'label' => 'إلى سعر: ' . $filters['max_price'],
-            'url' => $removeFilterUrl('max_price'),
-        ];
-    }
-
-    if (! empty($filters['rating'])) {
-        $activeFilters[] = [
-            'key' => 'rating',
-            'label' => $filters['rating'] . ' ★ فما فوق',
-            'url' => $removeFilterUrl('rating'),
-        ];
-    }
-
-    if (! empty($filters['in_stock'])) {
-        $activeFilters[] = [
-            'key' => 'in_stock',
-            'label' => 'المتوفر فقط',
-            'url' => $removeFilterUrl('in_stock'),
-        ];
-    }
-
-    if (! empty($filters['on_sale'])) {
-        $activeFilters[] = [
-            'key' => 'on_sale',
-            'label' => 'العروض فقط',
-            'url' => $removeFilterUrl('on_sale'),
-        ];
-    }
-
-    if (! empty($filters['type'])) {
-        $typeLabel = match ($filters['type']) {
-            'physical' => 'منتجات عادية',
-            'digital' => 'منتجات رقمية',
-            'service' => 'خدمات',
-            default => $filters['type'],
-        };
-
-        $activeFilters[] = [
-            'key' => 'type',
-            'label' => $typeLabel,
-            'url' => $removeFilterUrl('type'),
-        ];
-    }
-@endphp
-
-@if(count($activeFilters) > 0)
-    <div class="scp-active-filters">
-        <div class="scp-active-filters-title">
-            الفلاتر المختارة:
-        </div>
-
-        <div class="scp-active-filters-list">
-            @foreach($activeFilters as $filter)
-                <a href="{{ $filter['url'] }}" class="scp-active-filter-chip">
-                    <span>{{ $filter['label'] }}</span>
-                    <strong>×</strong>
-                </a>
-            @endforeach
-
-            <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-active-filter-clear">
-                مسح الكل
-            </a>
-        </div>
-    </div>
-@endif
-
                 <div class="scp-products-main">
                     <div class="scp-products-summary">
                         <div>
@@ -302,7 +194,39 @@
 
                     <div class="scp-product-grid">
                         @forelse($products as $product)
+                            @php
+                                $stockValue = null;
+
+                                foreach (['stock_quantity', 'quantity', 'stock'] as $stockColumn) {
+                                    if (isset($product->{$stockColumn}) && $product->{$stockColumn} !== null) {
+                                        $stockValue = (int) $product->{$stockColumn};
+                                        break;
+                                    }
+                                }
+
+                                $isOutOfStock = $stockValue !== null && $stockValue <= 0;
+                            @endphp
                             <article class="scp-product-card">
+                                @if(auth()->check())
+                                    <form
+                                        method="POST"
+                                        action="{{ route('storefront.wishlist.toggle', ['product' => $product->id, 'lang' => $locale]) }}"
+                                        class="scp-product-wishlist-form"
+                                    >
+                                        @csrf
+
+                                        <button type="submit" title="{{ __('storefront.wishlist.toggle') }}">
+                                            ♥
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login') }}" class="scp-product-wishlist-form">
+                                        <button type="button" title="{{ __('storefront.wishlist.login_required') }}">
+                                            ♡
+                                        </button>
+                                    </a>
+                                @endif
+
                                 <div class="scp-product-image">
                                     @if($productImage($product))
                                         <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
@@ -312,10 +236,16 @@
                                         </div>
                                     @endif
 
-                                    @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.badges'))
-                                        @include('storefront.products.partials.badges', [
-                                            'product' => $product,
-                                        ])
+                                    @if(! empty($product->sale_price))
+                                        <span class="scp-product-badge">
+                                            {{ __('storefront.product.sale') }}
+                                        </span>
+                                    @endif
+
+                                    @if($productTypeValue($product) === 'digital')
+                                        <span class="scp-product-type-badge">
+                                            {{ __('storefront.products_page.digital') }}
+                                        </span>
                                     @endif
                                 </div>
 
@@ -325,6 +255,18 @@
                                     </div>
 
                                     <h3>{{ $product->getName($locale) }}</h3>
+
+                            @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.rating-summary'))
+                                @include('storefront.products.partials.rating-summary', [
+                                    'product' => $product,
+                                ])
+                            @endif
+
+                            @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.stock-status'))
+                                @include('storefront.products.partials.stock-status', [
+                                    'product' => $product,
+                                ])
+                            @endif
 
                                     <div class="scp-product-price">
                                         <strong>
@@ -352,8 +294,12 @@
     <input type="hidden" name="product_id" value="{{ $product->id }}">
     <input type="hidden" name="quantity" value="1">
 
-    <button type="submit" class="scp-btn-small primary">
-        {{ __('storefront.product.add_to_cart') }}
+    <button
+        type="submit"
+        class="scp-btn-small primary"
+        @disabled($isOutOfStock)
+    >
+        {{ $isOutOfStock ? (\Illuminate\Support\Facades\Lang::has('storefront.stock.out_of_stock') ? __('storefront.stock.out_of_stock') : 'نفذ المخزون') : __('storefront.product.add_to_cart') }}
     </button>
 </form>
                                     </div>

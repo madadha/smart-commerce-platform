@@ -135,19 +135,19 @@
 
             <div class="scp-product-grid">
                 @forelse($featuredProducts as $product)
+                    @php
+                                $stockValue = null;
+
+                                foreach (['stock_quantity', 'quantity', 'stock'] as $stockColumn) {
+                                    if (isset($product->{$stockColumn}) && $product->{$stockColumn} !== null) {
+                                        $stockValue = (int) $product->{$stockColumn};
+                                        break;
+                                    }
+                                }
+
+                                $isOutOfStock = $stockValue !== null && $stockValue <= 0;
+                    @endphp
                     <article class="scp-product-card">
-                        <form
-                            method="POST"
-                            action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
-                            class="scp-product-compare-form"
-                        >
-                            @csrf
-
-                            <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
-                                ⇄
-                            </button>
-                        </form>
-
                         <div class="scp-product-image">
                             @if($productImage($product))
                                 <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
@@ -171,9 +171,17 @@
 
                             <h3>{{ $product->getName($locale) }}</h3>
 
-                            @include('storefront.products.partials.rating-summary', [
-                                'product' => $product,
-                            ])
+                            @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.rating-summary'))
+                                @include('storefront.products.partials.rating-summary', [
+                                    'product' => $product,
+                                ])
+                            @endif
+
+                            @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.stock-status'))
+                                @include('storefront.products.partials.stock-status', [
+                                    'product' => $product,
+                                ])
+                            @endif
 
                             <div class="scp-product-price">
                                 <strong>
@@ -201,8 +209,12 @@
     <input type="hidden" name="product_id" value="{{ $product->id }}">
     <input type="hidden" name="quantity" value="1">
 
-    <button type="submit" class="scp-btn-small primary">
-        {{ __('storefront.product.add_to_cart') }}
+    <button
+        type="submit"
+        class="scp-btn-small primary"
+        @disabled($isOutOfStock)
+    >
+        {{ $isOutOfStock ? (\Illuminate\Support\Facades\Lang::has('storefront.stock.out_of_stock') ? __('storefront.stock.out_of_stock') : 'نفذ المخزون') : __('storefront.product.add_to_cart') }}
     </button>
 </form>
                             </div>
@@ -228,19 +240,19 @@
 
             <div class="scp-product-grid compact">
                 @forelse($latestProducts as $product)
+                    @php
+                                $stockValue = null;
+
+                                foreach (['stock_quantity', 'quantity', 'stock'] as $stockColumn) {
+                                    if (isset($product->{$stockColumn}) && $product->{$stockColumn} !== null) {
+                                        $stockValue = (int) $product->{$stockColumn};
+                                        break;
+                                    }
+                                }
+
+                                $isOutOfStock = $stockValue !== null && $stockValue <= 0;
+                    @endphp
                     <article class="scp-product-card">
-                        <form
-                            method="POST"
-                            action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
-                            class="scp-product-compare-form"
-                        >
-                            @csrf
-
-                            <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
-                                ⇄
-                            </button>
-                        </form>
-
                         <div class="scp-product-image">
                             @if($productImage($product))
                                 <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
@@ -258,9 +270,17 @@
 
                             <h3>{{ $product->getName($locale) }}</h3>
 
-                            @include('storefront.products.partials.rating-summary', [
-                                'product' => $product,
-                            ])
+                            @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.rating-summary'))
+                                @include('storefront.products.partials.rating-summary', [
+                                    'product' => $product,
+                                ])
+                            @endif
+
+                            @if(\Illuminate\Support\Facades\View::exists('storefront.products.partials.stock-status'))
+                                @include('storefront.products.partials.stock-status', [
+                                    'product' => $product,
+                                ])
+                            @endif
 
                             <div class="scp-product-price">
                                 <strong>

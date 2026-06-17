@@ -1462,3 +1462,76 @@ body.scp-storefront {
     }
 }
 
+
+/* =========================================
+   Stock Status System
+========================================= */
+
+.scp-stock-status {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+    padding: 0 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 950;
+    border: 1px solid transparent;
+}
+
+.scp-stock-status span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: block;
+}
+
+.scp-stock-status.available {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.scp-stock-status.available span {
+    background: #10b981;
+}
+
+.scp-stock-status.low {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+.scp-stock-status.low span {
+    background: #f59e0b;
+}
+
+.scp-stock-status.out {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.scp-stock-status.out span {
+    background: #ef4444;
+}
+
+.scp-stock-status.unknown {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.scp-stock-status.unknown span {
+    background: #2563eb;
+}
+
+.scp-btn-small.primary:disabled,
+.scp-detail-add-to-cart:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #9ca3af, #6b7280) !important;
+    box-shadow: none !important;
+}
+

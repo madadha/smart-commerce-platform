@@ -377,6 +377,14 @@ return [
 ],
 
 
+'stock' => [
+    'available' => 'متوفر',
+    'low_stock' => 'كمية قليلة: :count فقط',
+    'out_of_stock' => 'نفذ المخزون',
+],
+
+
+
 ];
 
 

@@ -380,6 +380,12 @@ return [
     'top_rated' => 'Top Rated',
 ],
 
+'stock' => [
+    'available' => 'In Stock',
+    'low_stock' => 'Low stock: only :count left',
+    'out_of_stock' => 'Out of Stock',
+],
+
 
 
 ];

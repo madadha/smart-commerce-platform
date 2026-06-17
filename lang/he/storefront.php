@@ -375,4 +375,12 @@ return [
 ],
 
 
+
+'stock' => [
+    'available' => 'זמין במלאי',
+    'low_stock' => 'מלאי נמוך: רק :count',
+    'out_of_stock' => 'אזל מהמלאי',
+],
+
+
 ];
