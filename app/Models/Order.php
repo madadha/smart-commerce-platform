@@ -158,6 +158,24 @@ class Order extends Model
             ->orderBy('id');
     }
 
+
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(OrderStatusHistory::class)
+            ->with('user')
+            ->orderByDesc('changed_at')
+            ->orderByDesc('id');
+    }
+
+    public function orderNotes(): HasMany
+    {
+        return $this->hasMany(OrderNote::class)
+            ->with('user')
+            ->orderByDesc('is_pinned')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+    }
+
     public function recalculateTotals(): void
     {
         $subtotal = $this->items()->sum('line_total');

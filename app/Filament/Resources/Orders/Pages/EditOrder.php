@@ -4,11 +4,12 @@ namespace App\Filament\Resources\Orders\Pages;
 
 use App\Filament\Resources\Orders\OrderResource;
 use App\Mail\StorefrontOrderCompletedMail;
-use App\Models\Order;
-use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -16,94 +17,129 @@ class EditOrder extends EditRecord
 {
     protected static string $resource = OrderResource::class;
 
-    protected ?string $originalOrderStatus = null;
+    protected ?string $oldOrderStatus = null;
 
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('status_history')
+                ->label('Status History')
+                ->icon('heroicon-o-clock')
+                ->color('gray')
+                ->modalHeading(fn () => 'Status History - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close')
+                ->modalWidth('3xl')
+                ->modalContent(fn () => view('filament.orders.status-history-modal', [
+                    'order' => $this->record->fresh(['statusHistories.user']),
+                ])),
+
+            Action::make('order_notes')
+                ->label('Order Notes')
+                ->icon('heroicon-o-chat-bubble-left-right')
+                ->color('warning')
+                ->modalHeading(fn () => 'Order Notes - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
+                ->modalSubmitActionLabel('Add Note')
+                ->modalCancelActionLabel('Close')
+                ->modalWidth('3xl')
+                ->schema([
+                    Textarea::make('note')
+                        ->label('New Internal Note')
+                        ->rows(4)
+                        ->required()
+                        ->maxLength(2000)
+                        ->helperText('This note is internal and will not be visible to the customer.'),
+
+                    Toggle::make('is_pinned')
+                        ->label('Pin this note')
+                        ->default(false),
+                ])
+                ->modalContent(fn () => view('filament.orders.notes-modal', [
+                    'order' => $this->record->fresh(['orderNotes.user']),
+                ]))
+                ->action(function (array $data): void {
+                    $this->record->orderNotes()->create([
+                        'user_id' => auth()->id(),
+                        'type' => 'internal',
+                        'note' => $data['note'],
+                        'is_pinned' => (bool) ($data['is_pinned'] ?? false),
+                    ]);
+
+                    Notification::make()
+                        ->title('Order note added')
+                        ->success()
+                        ->send();
+                }),
+
             DeleteAction::make(),
         ];
     }
 
-    protected function mutateFormDataBeforeFill(array $data): array
+    protected function beforeSave(): void
     {
-        $this->originalOrderStatus = $this->normalizeOrderStatus($this->record?->status ?? ($data['status'] ?? null));
-
-        return $data;
+        $this->oldOrderStatus = $this->normalizeStatusValue($this->record->getOriginal('status'));
     }
 
     protected function afterSave(): void
     {
-        /** @var Order $order */
-        $order = $this->record->fresh([
-            'customer',
-            'user',
-            'items.product',
-            'currency',
-            'shippingMethod',
-        ]);
+        $oldStatus = $this->oldOrderStatus;
+        $newStatus = $this->normalizeStatusValue($this->record->status);
 
-        $currentStatus = $this->normalizeOrderStatus($order->status);
+        if ($oldStatus !== null && $newStatus !== null && $oldStatus !== $newStatus) {
+            $this->record->statusHistories()->create([
+                'user_id' => auth()->id(),
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'note' => 'Order status changed from admin panel.',
+                'changed_at' => now(),
+            ]);
 
-        if ($this->originalOrderStatus !== 'completed' && $currentStatus === 'completed') {
-            $this->sendCompletedOrderEmail($order);
+            Notification::make()
+                ->title('Order status history saved')
+                ->success()
+                ->send();
+
+            if ($newStatus === 'completed') {
+                $this->sendCompletedEmailSafely();
+            }
         }
-
-        $this->originalOrderStatus = $currentStatus;
     }
 
-    private function sendCompletedOrderEmail(Order $order): void
+    private function sendCompletedEmailSafely(): void
     {
-        $email = $this->resolveCustomerEmail($order);
-
-        if (! $email) {
-            return;
-        }
-
-        $mailLocale = $this->resolveMailLocale($order);
-
         try {
-            Mail::to($email)->send(new StorefrontOrderCompletedMail($order, $mailLocale));
+            $order = $this->record->fresh([
+                'items.product',
+                'items.product.currency',
+                'currency',
+                'customer',
+                'shippingMethod',
+            ]);
+
+            $customerEmail = $order->customer_email
+                ?? $order->customer?->email
+                ?? null;
+
+            if (! empty($customerEmail)) {
+                Mail::to($customerEmail)->send(
+                    new StorefrontOrderCompletedMail($order, app()->getLocale() ?: 'ar')
+                );
+            }
         } catch (Throwable $exception) {
             report($exception);
         }
     }
 
-    private function resolveCustomerEmail(Order $order): ?string
+    private function normalizeStatusValue(mixed $status): ?string
     {
-        foreach ([
-            $order->customer_email ?? null,
-            $order->email ?? null,
-            $order->customer?->email ?? null,
-            $order->user?->email ?? null,
-        ] as $email) {
-            if (is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return $email;
-            }
+        if ($status instanceof \BackedEnum) {
+            return (string) $status->value;
         }
 
-        return null;
-    }
-
-    private function resolveMailLocale(Order $order): string
-    {
-        $locale = $order->locale
-            ?? $order->language
-            ?? request()->query('lang')
-            ?? request()->input('lang')
-            ?? session('storefront_locale')
-            ?? App::getLocale()
-            ?? 'ar';
-
-        return in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
-    }
-
-    private function normalizeOrderStatus(mixed $status): string
-    {
-        if ($status instanceof BackedEnum) {
-            $status = $status->value;
+        if ($status === null || $status === '') {
+            return null;
         }
 
-        return strtolower(trim((string) $status));
+        return (string) $status;
     }
 }
