@@ -25,10 +25,13 @@
 
     $statusValue = $order?->status instanceof \BackedEnum ? $order->status->value : (string) ($order?->status ?? '-');
     $paymentStatusValue = $order?->payment_status instanceof \BackedEnum ? $order->payment_status->value : (string) ($order?->payment_status ?? '-');
+    $priorityValue = (string) ($order?->priority ?? 'normal');
+    $priorityReason = (string) ($order?->priority_reason ?? 'No priority reason');
 
     $cards = [
         ['label' => 'Order Status', 'value' => $statusValue, 'hint' => 'Current order status'],
         ['label' => 'Payment Status', 'value' => $paymentStatusValue, 'hint' => 'Current payment state'],
+        ['label' => 'Order Priority', 'value' => ucfirst($priorityValue), 'hint' => $priorityReason],
         ['label' => 'Open Tasks', 'value' => $openTasks, 'hint' => $doneTasks . ' completed'],
         ['label' => 'Urgent Tasks', 'value' => $urgentTasks, 'hint' => $overdueTasks . ' overdue tasks'],
         ['label' => 'Pending Reminders', 'value' => $pendingReminders, 'hint' => $overdueReminders . ' overdue reminders'],
@@ -62,6 +65,15 @@
             </div>
         </div>
     </div>
+
+    @if (in_array($priorityValue, ['high', 'urgent'], true))
+        <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+            <strong>Priority:</strong> {{ ucfirst($priorityValue) }}
+            @if (! empty($order?->priority_reason))
+                <div class="mt-1">{{ $order->priority_reason }}</div>
+            @endif
+        </div>
+    @endif
 
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         @foreach ($cards as $card)

@@ -209,18 +209,6 @@ class Order extends Model
             ->orderByDesc('id');
     }
 
-
-
-    public function orderReminders(): HasMany
-    {
-        return $this->hasMany(OrderReminder::class)
-            ->with(['user', 'assignedTo'])
-            ->orderByRaw("FIELD(status, 'pending', 'done', 'cancelled')")
-            ->orderByRaw('remind_at IS NULL')
-            ->orderBy('remind_at')
-            ->orderByDesc('id');
-    }
-
     public function recalculateTotals(): void
     {
         $subtotal = $this->items()->sum('line_total');

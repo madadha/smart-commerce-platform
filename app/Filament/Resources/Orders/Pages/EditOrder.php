@@ -8,7 +8,6 @@ use App\Models\OrderAttachment;
 use App\Models\OrderNote;
 use App\Models\OrderStatusHistory;
 use App\Models\OrderTask;
-use App\Models\OrderReminder;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -33,27 +32,6 @@ class EditOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('followup_board')
-                ->label('Follow-up Board')
-                ->icon('heroicon-o-clipboard-document-check')
-                ->color('gray')
-                ->modalHeading(fn () => 'Follow-up Board - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Close')
-                ->modalWidth('5xl')
-                ->modalContent(fn () => view('filament.orders.followup-board-modal', [
-                    'order' => $this->record->fresh([
-                        'orderActivities.user',
-                        'statusHistories.user',
-                        'orderNotes.user',
-                        'attachments.user',
-                        'orderTasks.user',
-                        'orderTasks.assignedTo',
-                        'orderReminders.user',
-                        'orderReminders.assignedTo',
-                    ]),
-                ])),
-
             Action::make('order_activity')
                 ->label('Order Activity')
                 ->icon('heroicon-o-list-bullet')
@@ -70,8 +48,6 @@ class EditOrder extends EditRecord
                         'attachments.user',
                         'orderTasks.user',
                         'orderTasks.assignedTo',
-                        'orderReminders.user',
-                        'orderReminders.assignedTo',
                     ]),
                 ])),
 
@@ -168,91 +144,6 @@ class EditOrder extends EditRecord
 
                     Notification::make()
                         ->title('Order task added')
-                        ->success()
-                        ->send();
-                }),
-
-
-            Action::make('order_reminders')
-                ->label('Order Reminders')
-                ->icon('heroicon-o-bell-alert')
-                ->color('danger')
-                ->modalHeading(fn () => 'Order Reminders - ' . ($this->record->order_number ?? ('#' . $this->record->id)))
-                ->modalSubmitActionLabel('Add Reminder')
-                ->modalCancelActionLabel('Close')
-                ->modalWidth('4xl')
-                ->schema([
-                    TextInput::make('title')
-                        ->label('Reminder Title')
-                        ->required()
-                        ->maxLength(255)
-                        ->placeholder('Call customer, review payment, send invoice...'),
-
-                    Textarea::make('notes')
-                        ->label('Notes')
-                        ->rows(3)
-                        ->maxLength(2000),
-
-                    Select::make('status')
-                        ->label('Status')
-                        ->options([
-                            'pending' => 'Pending',
-                            'done' => 'Done',
-                            'cancelled' => 'Cancelled',
-                        ])
-                        ->default('pending')
-                        ->required(),
-
-                    Select::make('assigned_to_user_id')
-                        ->label('Assigned To')
-                        ->options(fn () => User::query()->orderBy('name')->pluck('name', 'id')->toArray())
-                        ->searchable()
-                        ->preload()
-                        ->default(fn () => auth()->id()),
-
-                    DateTimePicker::make('remind_at')
-                        ->label('Reminder Time')
-                        ->seconds(false)
-                        ->required(),
-
-                    Toggle::make('is_private')
-                        ->label('Private admin reminder')
-                        ->default(true),
-                ])
-                ->modalContent(fn () => view('filament.orders.reminders-modal', [
-                    'order' => $this->record->fresh(['orderReminders.user', 'orderReminders.assignedTo']),
-                ]))
-                ->action(function (array $data): void {
-                    $status = (string) ($data['status'] ?? 'pending');
-
-                    $reminder = $this->record->orderReminders()->create([
-                        'user_id' => auth()->id(),
-                        'assigned_to_user_id' => $data['assigned_to_user_id'] ?? null,
-                        'title' => $data['title'],
-                        'notes' => $data['notes'] ?? null,
-                        'status' => $status,
-                        'remind_at' => $data['remind_at'] ?? null,
-                        'completed_at' => $status === 'done' ? now() : null,
-                        'is_private' => (bool) ($data['is_private'] ?? true),
-                    ]);
-
-                    $this->record->orderActivities()->create([
-                        'user_id' => auth()->id(),
-                        'type' => 'reminder_created',
-                        'title' => 'Reminder created',
-                        'description' => $reminder->title,
-                        'subject_type' => OrderReminder::class,
-                        'subject_id' => $reminder->id,
-                        'metadata' => [
-                            'status' => $reminder->status,
-                            'assigned_to_user_id' => $reminder->assigned_to_user_id,
-                            'remind_at' => $reminder->remind_at?->toDateTimeString(),
-                        ],
-                        'occurred_at' => now(),
-                    ]);
-
-                    Notification::make()
-                        ->title('Order reminder added')
                         ->success()
                         ->send();
                 }),
