@@ -36,6 +36,14 @@ class CustomersTable
                     ->color(fn ($state): string => $state instanceof CustomerType ? $state->color() : 'gray')
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('requested_customer_type')
+                    ->label('Requested')
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => $state instanceof CustomerType ? $state->label() : (blank($state) ? '-' : (string) $state))
+                    ->color(fn ($state): string => $state instanceof CustomerType ? 'warning' : 'gray')
+                    ->placeholder('-')
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -93,6 +101,14 @@ class CustomersTable
                     ->options(collect(CustomerType::cases())->mapWithKeys(fn (CustomerType $type) => [
                         $type->value => $type->label(),
                     ])->toArray()),
+
+                Tables\Filters\SelectFilter::make('requested_customer_type')
+                    ->label('Requested Type')
+                    ->options([
+                        CustomerType::Reseller->value => CustomerType::Reseller->label(),
+                        CustomerType::Vip->value => CustomerType::Vip->label(),
+                        CustomerType::Company->value => CustomerType::Company->label(),
+                    ]),
 
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')

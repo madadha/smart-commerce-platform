@@ -11,6 +11,20 @@
 
             return (string) $value;
         };
+
+        $locale = $locale ?? request('lang', app()->getLocale() ?? 'ar');
+
+        $logoutText = match ($locale) {
+            'he' => 'התנתקות',
+            'en' => 'Logout',
+            default => 'تسجيل الخروج',
+        };
+
+        $logoutHint = match ($locale) {
+            'he' => 'צא מהחשבון שלך בצורה בטוחה.',
+            'en' => 'Sign out securely from your account.',
+            default => 'الخروج الآمن من حسابك.',
+        };
     @endphp
 
     <section class="scp-account-page">
@@ -236,10 +250,22 @@
                                 {{ __('storefront.account_dashboard.browse_products') }}
                             </a>
 
-                            <a href="{{ route('profile.edit') }}">
+                            <a href="{{ route('profile.edit', ['lang' => $locale]) }}">
                                 <span>⚙️</span>
                                 {{ __('storefront.account_dashboard.profile_settings') }}
                             </a>
+
+                            <form method="POST" action="{{ route('logout') }}" class="scp-account-logout-form">
+                                @csrf
+
+                                <input type="hidden" name="lang" value="{{ $locale }}">
+
+                                <button type="submit" class="scp-account-logout-action">
+                                    <span>🚪</span>
+                                    <strong>{{ $logoutText }}</strong>
+                                    <small>{{ $logoutHint }}</small>
+                                </button>
+                            </form>
                         </div>
                     </div>
 

@@ -1,29 +1,260 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@extends('storefront.layout')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
+@section('content')
+@php
+    $locale = $locale ?? request('lang', session('storefront_locale', app()->getLocale() ?: 'ar'));
+    $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
+    $customer = $customer ?? auth()->user()?->customer ?? null;
+    $user = $user ?? auth()->user();
+
+    $labels = [
+        'ar' => [
+            'badge' => 'حساب الزبون',
+            'title' => 'بياناتي وحسابي',
+            'desc' => 'حدّث بياناتك الشخصية وعنوانك حتى يتم تعبئة معلومات إتمام الطلب تلقائياً في كل مرة.',
+            'home' => 'الرئيسية', 'account' => 'حسابي', 'orders' => 'طلباتي', 'wishlist' => 'المفضلة', 'logout' => 'تسجيل الخروج',
+            'profile_info' => 'البيانات الأساسية', 'profile_hint' => 'هذه البيانات تستخدم لتسجيل الدخول والتواصل معك بخصوص الطلبات.',
+            'address_info' => 'بيانات التوصيل المحفوظة', 'address_hint' => 'سيتم استخدامها تلقائياً في صفحة إتمام الطلب ويمكن تعديلها في أي وقت.',
+            'security' => 'الأمان وكلمة المرور', 'security_hint' => 'غيّر كلمة المرور لحماية حسابك.',
+            'danger' => 'حذف الحساب', 'danger_hint' => 'حذف الحساب إجراء نهائي ولا يمكن التراجع عنه.',
+            'name' => 'الاسم الكامل', 'email' => 'البريد الإلكتروني', 'phone' => 'رقم الهاتف', 'whatsapp' => 'واتساب',
+            'city' => 'المدينة', 'area' => 'المنطقة', 'street' => 'الشارع / العنوان', 'building' => 'البناية', 'apartment' => 'الشقة', 'postal_code' => 'الرمز البريدي', 'address_notes' => 'ملاحظات العنوان',
+            'save' => 'حفظ البيانات', 'saved' => 'تم حفظ البيانات بنجاح.',
+            'current_password' => 'كلمة المرور الحالية', 'new_password' => 'كلمة المرور الجديدة', 'confirm_password' => 'تأكيد كلمة المرور', 'update_password' => 'تحديث كلمة المرور',
+            'delete_account' => 'حذف الحساب', 'customer_card' => 'بطاقة الزبون', 'quick_links' => 'روابط سريعة', 'summary' => 'ملخص بياناتك', 'not_set' => 'غير محدد',
+        ],
+        'he' => [
+            'badge' => 'חשבון לקוח', 'title' => 'הפרטים והחשבון שלי', 'desc' => 'עדכן את הפרטים והכתובת כדי למלא אוטומטית את פרטי התשלום.',
+            'home' => 'ראשי', 'account' => 'החשבון שלי', 'orders' => 'ההזמנות שלי', 'wishlist' => 'מועדפים', 'logout' => 'התנתקות',
+            'profile_info' => 'פרטים בסיסיים', 'profile_hint' => 'פרטים אלה משמשים להתחברות וליצירת קשר לגבי הזמנות.',
+            'address_info' => 'פרטי משלוח שמורים', 'address_hint' => 'ישמשו אוטומטית בעמוד התשלום.',
+            'security' => 'אבטחה וסיסמה', 'security_hint' => 'עדכן סיסמה לשמירה על החשבון.',
+            'danger' => 'מחיקת חשבון', 'danger_hint' => 'מחיקת החשבון היא פעולה סופית.',
+            'name' => 'שם מלא', 'email' => 'אימייל', 'phone' => 'טלפון', 'whatsapp' => 'וואטסאפ',
+            'city' => 'עיר', 'area' => 'אזור', 'street' => 'רחוב / כתובת', 'building' => 'בניין', 'apartment' => 'דירה', 'postal_code' => 'מיקוד', 'address_notes' => 'הערות כתובת',
+            'save' => 'שמירת פרטים', 'saved' => 'הפרטים נשמרו בהצלחה.',
+            'current_password' => 'סיסמה נוכחית', 'new_password' => 'סיסמה חדשה', 'confirm_password' => 'אישור סיסמה', 'update_password' => 'עדכון סיסמה',
+            'delete_account' => 'מחיקת חשבון', 'customer_card' => 'כרטיס לקוח', 'quick_links' => 'קישורים מהירים', 'summary' => 'סיכום הפרטים', 'not_set' => 'לא הוגדר',
+        ],
+        'en' => [
+            'badge' => 'Customer Account', 'title' => 'My Profile & Account', 'desc' => 'Update your profile and delivery details so checkout can be filled automatically.',
+            'home' => 'Home', 'account' => 'My Account', 'orders' => 'My Orders', 'wishlist' => 'Wishlist', 'logout' => 'Logout',
+            'profile_info' => 'Basic Information', 'profile_hint' => 'These details are used for login and order communication.',
+            'address_info' => 'Saved Delivery Details', 'address_hint' => 'These details will be used automatically during checkout.',
+            'security' => 'Security & Password', 'security_hint' => 'Update your password to keep your account safe.',
+            'danger' => 'Delete Account', 'danger_hint' => 'Deleting your account is permanent.',
+            'name' => 'Full Name', 'email' => 'Email', 'phone' => 'Phone', 'whatsapp' => 'WhatsApp',
+            'city' => 'City', 'area' => 'Area', 'street' => 'Street / Address', 'building' => 'Building', 'apartment' => 'Apartment', 'postal_code' => 'Postal Code', 'address_notes' => 'Address Notes',
+            'save' => 'Save Details', 'saved' => 'Details saved successfully.',
+            'current_password' => 'Current Password', 'new_password' => 'New Password', 'confirm_password' => 'Confirm Password', 'update_password' => 'Update Password',
+            'delete_account' => 'Delete Account', 'customer_card' => 'Customer Card', 'quick_links' => 'Quick Links', 'summary' => 'Your Details Summary', 'not_set' => 'Not set',
+        ],
+    ][$locale];
+
+    $displayName = $user?->name ?? $customer?->getDisplayName() ?? $labels['not_set'];
+    $initial = mb_substr($displayName, 0, 1);
+@endphp
+
+<section class="scp-profile-page">
+    <div class="scp-container">
+        <div class="scp-profile-hero">
+            <div>
+                <span class="scp-profile-badge">{{ $labels['badge'] }}</span>
+                <h1>{{ $labels['title'] }}</h1>
+                <p>{{ $labels['desc'] }}</p>
+
+                <div class="scp-profile-actions">
+                    <a href="{{ route('storefront.home', ['lang' => $locale]) }}">{{ $labels['home'] }}</a>
+                    <a href="{{ route('storefront.account.dashboard', ['lang' => $locale]) }}">{{ $labels['account'] }}</a>
+                    <a href="{{ route('storefront.account.orders', ['lang' => $locale]) }}">{{ $labels['orders'] }}</a>
+                    <a href="{{ route('storefront.wishlist.index', ['lang' => $locale]) }}">{{ $labels['wishlist'] }}</a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit">{{ $labels['logout'] }}</button>
+                    </form>
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
+            <aside class="scp-profile-user-card">
+                <div class="scp-profile-avatar">{{ $initial }}</div>
+                <div>
+                    <strong>{{ $displayName }}</strong>
+                    <span>{{ $user?->email }}</span>
+                    <small>{{ $customer?->phone ?: $labels['not_set'] }}</small>
                 </div>
-            </div>
+            </aside>
+        </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
+        @if (session('status') === 'profile-updated')
+            <div class="scp-profile-success">{{ $labels['saved'] }}</div>
+        @endif
+
+        @if (session('status') === 'password-updated')
+            <div class="scp-profile-success">{{ $labels['saved'] }}</div>
+        @endif
+
+        <div class="scp-profile-grid">
+            <main class="scp-profile-main">
+                <div class="scp-profile-card">
+                    <div class="scp-profile-card-head">
+                        <div>
+                            <h2>{{ $labels['profile_info'] }}</h2>
+                            <p>{{ $labels['profile_hint'] }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ route('profile.update', ['lang' => $locale]) }}" class="scp-profile-form">
+                        @csrf
+                        @method('patch')
+
+                        <div class="scp-profile-form-grid">
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['name'] }}</span>
+                                <input type="text" name="name" value="{{ old('name', $user?->name) }}" required>
+                                @error('name') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['email'] }}</span>
+                                <input type="email" name="email" value="{{ old('email', $user?->email) }}" required>
+                                @error('email') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['phone'] }}</span>
+                                <input type="text" name="phone" value="{{ old('phone', $customer?->phone) }}" placeholder="05x-xxxxxxx">
+                                @error('phone') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['whatsapp'] }}</span>
+                                <input type="text" name="whatsapp" value="{{ old('whatsapp', $customer?->whatsapp) }}" placeholder="05x-xxxxxxx">
+                                @error('whatsapp') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+                        </div>
+
+                        <div class="scp-profile-card-head" style="margin-top: 10px; margin-bottom: 0;">
+                            <div>
+                                <h3>{{ $labels['address_info'] }}</h3>
+                                <p>{{ $labels['address_hint'] }}</p>
+                            </div>
+                        </div>
+
+                        <div class="scp-profile-form-grid">
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['city'] }}</span>
+                                <input type="text" name="city" value="{{ old('city', $customer?->city) }}">
+                                @error('city') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['area'] }}</span>
+                                <input type="text" name="area" value="{{ old('area', $customer?->area) }}">
+                                @error('area') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field full">
+                                <span>{{ $labels['street'] }}</span>
+                                <input type="text" name="street" value="{{ old('street', $customer?->street) }}">
+                                @error('street') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['building'] }}</span>
+                                <input type="text" name="building" value="{{ old('building', $customer?->building) }}">
+                                @error('building') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['apartment'] }}</span>
+                                <input type="text" name="apartment" value="{{ old('apartment', $customer?->apartment) }}">
+                                @error('apartment') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['postal_code'] }}</span>
+                                <input type="text" name="postal_code" value="{{ old('postal_code', $customer?->postal_code) }}">
+                                @error('postal_code') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field full">
+                                <span>{{ $labels['address_notes'] }}</span>
+                                <textarea name="address_notes" rows="4">{{ old('address_notes', $customer?->address_notes) }}</textarea>
+                                @error('address_notes') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+                        </div>
+
+                        <div class="scp-profile-submit-row">
+                            <button type="submit" class="scp-profile-submit">{{ $labels['save'] }}</button>
+                        </div>
+                    </form>
                 </div>
-            </div>
+
+                <div class="scp-profile-card">
+                    <div class="scp-profile-card-head">
+                        <div>
+                            <h2>{{ $labels['security'] }}</h2>
+                            <p>{{ $labels['security_hint'] }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ route('password.update') }}" class="scp-profile-form">
+                        @csrf
+                        @method('put')
+                        <input type="hidden" name="lang" value="{{ $locale }}">
+
+                        <div class="scp-profile-form-grid">
+                            <label class="scp-profile-field full">
+                                <span>{{ $labels['current_password'] }}</span>
+                                <input type="password" name="current_password" autocomplete="current-password">
+                                @error('current_password', 'updatePassword') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['new_password'] }}</span>
+                                <input type="password" name="password" autocomplete="new-password">
+                                @error('password', 'updatePassword') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                            </label>
+
+                            <label class="scp-profile-field">
+                                <span>{{ $labels['confirm_password'] }}</span>
+                                <input type="password" name="password_confirmation" autocomplete="new-password">
+                            </label>
+                        </div>
+
+                        <div class="scp-profile-submit-row">
+                            <button type="submit" class="scp-profile-submit secondary">{{ $labels['update_password'] }}</button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+
+            <aside class="scp-profile-sidebar">
+                <div class="scp-profile-card">
+                    <h3>{{ $labels['summary'] }}</h3>
+                    <div class="scp-profile-summary">
+                        <div><span>{{ $labels['phone'] }}</span><strong>{{ $customer?->phone ?: $labels['not_set'] }}</strong></div>
+                        <div><span>{{ $labels['city'] }}</span><strong>{{ $customer?->city ?: $labels['not_set'] }}</strong></div>
+                        <div><span>{{ $labels['street'] }}</span><strong>{{ $customer?->street ?: $labels['not_set'] }}</strong></div>
+                    </div>
+                </div>
+
+                <div class="scp-profile-card danger">
+                    <h3>{{ $labels['danger'] }}</h3>
+                    <p>{{ $labels['danger_hint'] }}</p>
+                    <form method="POST" action="{{ route('profile.destroy') }}" class="scp-profile-form" onsubmit="return confirm('{{ $locale === 'ar' ? 'هل أنت متأكد من حذف الحساب؟' : 'Are you sure?' }}')">
+                        @csrf
+                        @method('delete')
+                        <label class="scp-profile-field">
+                            <span>{{ $labels['current_password'] }}</span>
+                            <input type="password" name="password" autocomplete="current-password">
+                            @error('password', 'userDeletion') <small class="scp-profile-error">{{ $message }}</small> @enderror
+                        </label>
+                        <button type="submit" class="scp-profile-delete">{{ $labels['delete_account'] }}</button>
+                    </form>
+                </div>
+            </aside>
         </div>
     </div>
-</x-app-layout>
+</section>
+@endsection

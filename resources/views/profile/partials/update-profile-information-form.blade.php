@@ -1,64 +1,105 @@
-<section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
-        </h2>
+@php
+    $locale = $locale ?? request('lang', session('storefront_locale', 'ar'));
+    $customer = $customer ?? null;
+@endphp
 
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
-        </p>
-    </header>
+<section>
+    <div class="scp-profile-card-head">
+        <div>
+            <h2>{{ $locale === 'ar' ? 'معلومات الحساب والزبون' : ($locale === 'he' ? 'פרטי חשבון ולקוח' : 'Account & customer information') }}</h2>
+            <p>{{ $locale === 'ar' ? 'هذه المعلومات ستظهر تلقائيًا في صفحة إتمام الطلب.' : ($locale === 'he' ? 'הפרטים יופיעו אוטומטית בעמוד התשלום.' : 'These details will be used automatically during checkout.') }}</p>
+        </div>
+    </div>
 
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update', ['lang' => $locale]) }}" class="scp-profile-form">
         @csrf
         @method('patch')
 
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        <div class="scp-profile-form-grid">
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'الاسم الكامل' : ($locale === 'he' ? 'שם מלא' : 'Full name') }}</span>
+                <input name="name" type="text" value="{{ old('name', $user->name) }}" required autocomplete="name">
+                <x-input-error :messages="$errors->get('name')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'البريد الإلكتروني' : ($locale === 'he' ? 'אימייל' : 'Email') }}</span>
+                <input name="email" type="email" value="{{ old('email', $user->email) }}" required autocomplete="username">
+                <x-input-error :messages="$errors->get('email')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'رقم الهاتف' : ($locale === 'he' ? 'טלפון' : 'Phone') }}</span>
+                <input name="phone" type="text" value="{{ old('phone', $customer?->phone) }}" autocomplete="tel" placeholder="05x-xxxxxxx">
+                <x-input-error :messages="$errors->get('phone')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>WhatsApp</span>
+                <input name="whatsapp" type="text" value="{{ old('whatsapp', $customer?->whatsapp) }}" autocomplete="tel">
+                <x-input-error :messages="$errors->get('whatsapp')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'المدينة' : ($locale === 'he' ? 'עיר' : 'City') }}</span>
+                <input name="city" type="text" value="{{ old('city', $customer?->city) }}">
+                <x-input-error :messages="$errors->get('city')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'المنطقة' : ($locale === 'he' ? 'אזור' : 'Area') }}</span>
+                <input name="area" type="text" value="{{ old('area', $customer?->area) }}">
+                <x-input-error :messages="$errors->get('area')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'الشارع' : ($locale === 'he' ? 'רחוב' : 'Street') }}</span>
+                <input name="street" type="text" value="{{ old('street', $customer?->street) }}">
+                <x-input-error :messages="$errors->get('street')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'البناية' : ($locale === 'he' ? 'בניין' : 'Building') }}</span>
+                <input name="building" type="text" value="{{ old('building', $customer?->building) }}">
+                <x-input-error :messages="$errors->get('building')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'الشقة' : ($locale === 'he' ? 'דירה' : 'Apartment') }}</span>
+                <input name="apartment" type="text" value="{{ old('apartment', $customer?->apartment) }}">
+                <x-input-error :messages="$errors->get('apartment')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field">
+                <span>{{ $locale === 'ar' ? 'الرمز البريدي' : ($locale === 'he' ? 'מיקוד' : 'Postal code') }}</span>
+                <input name="postal_code" type="text" value="{{ old('postal_code', $customer?->postal_code) }}">
+                <x-input-error :messages="$errors->get('postal_code')" class="scp-profile-error" />
+            </label>
+
+            <label class="scp-profile-field full">
+                <span>{{ $locale === 'ar' ? 'ملاحظات العنوان' : ($locale === 'he' ? 'הערות כתובת' : 'Address notes') }}</span>
+                <textarea name="address_notes" rows="4">{{ old('address_notes', $customer?->address_notes) }}</textarea>
+                <x-input-error :messages="$errors->get('address_notes')" class="scp-profile-error" />
+            </label>
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            <div class="scp-profile-warning">
+                {{ $locale === 'ar' ? 'بريدك الإلكتروني غير مؤكد.' : ($locale === 'he' ? 'האימייל שלך לא מאומת.' : 'Your email address is unverified.') }}
+                <button form="send-verification">
+                    {{ $locale === 'ar' ? 'إعادة إرسال رابط التحقق' : ($locale === 'he' ? 'שליחת קישור אימות' : 'Resend verification link') }}
+                </button>
+            </div>
+        @endif
 
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
-                </div>
-            @endif
-        </div>
-
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
-            @endif
+        <div class="scp-profile-submit-row">
+            <button type="submit" class="scp-profile-submit">
+                {{ $locale === 'ar' ? 'حفظ البيانات' : ($locale === 'he' ? 'שמירת פרטים' : 'Save details') }}
+            </button>
         </div>
     </form>
 </section>

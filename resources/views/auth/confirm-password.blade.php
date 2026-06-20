@@ -1,27 +1,16 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
+    @php $locale = request('lang', session('storefront_locale', 'ar')); $locale = in_array($locale, ['ar','he','en'], true) ? $locale : 'ar'; @endphp
+    <div class="scp-auth-heading">
+        <h2>{{ $locale === 'ar' ? 'تأكيد كلمة المرور' : ($locale === 'he' ? 'אישור סיסמה' : 'Confirm password') }}</h2>
+        <p>{{ $locale === 'ar' ? 'هذه منطقة آمنة، يرجى تأكيد كلمة المرور للمتابعة.' : ($locale === 'he' ? 'זהו אזור מאובטח, אשר סיסמה להמשך.' : 'This is a secure area. Please confirm your password.') }}</p>
     </div>
-
-    <form method="POST" action="{{ route('password.confirm') }}">
+    <form method="POST" action="{{ route('password.confirm') }}" class="scp-auth-form">
         @csrf
-
-        <!-- Password -->
-        <div>
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <div class="flex justify-end mt-4">
-            <x-primary-button>
-                {{ __('Confirm') }}
-            </x-primary-button>
-        </div>
+        <label class="scp-auth-field">
+            <span>{{ $locale === 'ar' ? 'كلمة المرور' : ($locale === 'he' ? 'סיסמה' : 'Password') }}</span>
+            <input type="password" name="password" required autocomplete="current-password">
+            <x-input-error :messages="$errors->get('password')" class="scp-auth-error" />
+        </label>
+        <button type="submit" class="scp-auth-submit">{{ $locale === 'ar' ? 'تأكيد' : ($locale === 'he' ? 'אישור' : 'Confirm') }}</button>
     </form>
 </x-guest-layout>

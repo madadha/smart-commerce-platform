@@ -37,11 +37,11 @@
                     </p>
 
                     <div class="scp-hero-buttons">
-                        <a href="#" class="scp-btn scp-btn-primary">
+                        <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar']) }}" class="scp-btn scp-btn-primary">
                             {{ __('storefront.hero.shop_now') }}
                         </a>
 
-                        <a href="#" class="scp-btn scp-btn-light">
+                        <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'on_sale' => 1]) }}" class="scp-btn scp-btn-light">
                             {{ __('storefront.hero.view_deals') }}
                         </a>
                     </div>
@@ -96,7 +96,7 @@
 
             <div class="scp-category-grid">
                 @forelse($featuredCategories as $category)
-                    <a href="#" class="scp-category-card">
+                    <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'category' => $category->id]) }}" class="scp-category-card">
                         <div class="scp-category-icon">
                             @if(! empty($category->icon))
                                 {{ $category->icon }}
@@ -310,7 +310,7 @@
 
             <div class="scp-brand-grid">
                 @forelse($brands as $brand)
-                    <a href="#" class="scp-brand-card">
+                    <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'brand' => $brand->id]) }}" class="scp-brand-card">
                         @if(! empty($brand->logo))
                             <img src="{{ asset('storage/' . $brand->logo) }}" alt="{{ $brand->getName($locale) }}">
                         @else

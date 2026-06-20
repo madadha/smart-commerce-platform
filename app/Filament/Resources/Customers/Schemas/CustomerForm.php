@@ -7,6 +7,7 @@ use App\Enums\CustomerType;
 use App\Models\Country;
 use App\Models\User;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -37,6 +38,7 @@ class CustomerForm
 
                         Select::make('customer_type')
                             ->label('Customer Type')
+                            ->helperText('Only admin can approve Reseller / VIP / Company. Public registration always starts as Regular.')
                             ->options(collect(CustomerType::cases())->mapWithKeys(fn (CustomerType $type) => [
                                 $type->value => $type->label(),
                             ])->toArray())
@@ -84,6 +86,44 @@ class CustomerForm
                             ->label('Birth Date'),
                     ])
                     ->columns(2),
+
+                Section::make('Customer Type Request')
+                    ->description('Used when the customer asks for Reseller / VIP / Company account from registration. Admin approves by changing Customer Type above.')
+                    ->schema([
+                        Select::make('requested_customer_type')
+                            ->label('Requested Type')
+                            ->options([
+                                CustomerType::Reseller->value => CustomerType::Reseller->label(),
+                                CustomerType::Vip->value => CustomerType::Vip->label(),
+                                CustomerType::Company->value => CustomerType::Company->label(),
+                            ])
+                            ->nullable(),
+
+                        DateTimePicker::make('customer_type_requested_at')
+                            ->label('Requested At')
+                            ->seconds(false)
+                            ->nullable(),
+
+                        DateTimePicker::make('customer_type_approved_at')
+                            ->label('Approved At')
+                            ->seconds(false)
+                            ->nullable(),
+
+                        Select::make('customer_type_approved_by')
+                            ->label('Approved By')
+                            ->options(fn (): array => User::query()
+                                ->orderBy('name')
+                                ->get()
+                                ->mapWithKeys(fn (User $user) => [
+                                    $user->id => $user->name . ' - ' . $user->email,
+                                ])
+                                ->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
 
                 Section::make('Company / Reseller Information')
                     ->schema([

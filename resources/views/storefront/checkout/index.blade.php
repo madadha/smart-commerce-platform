@@ -3,6 +3,7 @@
 @section('content')
     @php
         $currencySymbol = $cart?->currency?->symbol ?? '₪';
+        $checkoutDefaults = $checkoutDefaults ?? [];
 
         $resolveItemName = function ($item) use ($locale) {
             $product = $item->product ?? null;
@@ -72,6 +73,18 @@
                 <div class="scp-checkout-grid">
 
                     <div class="scp-checkout-main">
+                        @auth
+                            <div class="scp-checkout-saved-info">
+                                <div>
+                                    <strong>{{ $locale === 'ar' ? 'بياناتك محفوظة' : ($locale === 'he' ? 'הפרטים שלך שמורים' : 'Saved information') }}</strong>
+                                    <p>{{ $locale === 'ar' ? 'تم تعبئة بياناتك من حساب الزبون. يمكنك تعديلها من صفحة بياناتي.' : ($locale === 'he' ? 'הפרטים מולאו מהחשבון שלך. ניתן לערוך אותם בפרופיל.' : 'Your checkout details were filled from your customer profile. You can edit them from Profile.') }}</p>
+                                </div>
+                                <a href="{{ route('profile.edit', ['lang' => $locale]) }}">
+                                    {{ $locale === 'ar' ? 'تعديل بياناتي' : ($locale === 'he' ? 'עריכת פרטים' : 'Edit profile') }}
+                                </a>
+                            </div>
+                        @endauth
+
                         <form method="POST" action="{{ route('storefront.checkout.place') }}" class="scp-checkout-form">
                             @csrf
 
@@ -92,7 +105,7 @@
                                         <input
                                             type="text"
                                             name="customer_name"
-                                            value="{{ old('customer_name') }}"
+                                            value="{{ old('customer_name', $checkoutDefaults['customer_name'] ?? '') }}"
                                             placeholder="{{ __('storefront.checkout.full_name_placeholder') }}"
                                             required
                                         >
@@ -103,7 +116,7 @@
                                         <input
                                             type="email"
                                             name="customer_email"
-                                            value="{{ old('customer_email') }}"
+                                            value="{{ old('customer_email', $checkoutDefaults['customer_email'] ?? '') }}"
                                             placeholder="example@email.com"
                                         >
                                     </div>
@@ -113,7 +126,7 @@
                                         <input
                                             type="text"
                                             name="customer_phone"
-                                            value="{{ old('customer_phone') }}"
+                                            value="{{ old('customer_phone', $checkoutDefaults['customer_phone'] ?? '') }}"
                                             placeholder="05x-xxxxxxx"
                                             required
                                         >
@@ -124,7 +137,7 @@
                                         <input
                                             type="text"
                                             name="city"
-                                            value="{{ old('city') }}"
+                                            value="{{ old('city', $checkoutDefaults['city'] ?? '') }}"
                                             placeholder="{{ __('storefront.checkout.city_placeholder') }}"
                                             required
                                         >
@@ -147,7 +160,7 @@
                                         <input
                                             type="text"
                                             name="address"
-                                            value="{{ old('address') }}"
+                                            value="{{ old('address', $checkoutDefaults['address'] ?? '') }}"
                                             placeholder="{{ __('storefront.checkout.address_placeholder') }}"
                                             required
                                         >
@@ -159,7 +172,7 @@
                                             <option value="">{{ __('storefront.checkout.select_shipping_method') }}</option>
 
                                             @foreach($shippingMethods as $shippingMethod)
-                                                <option value="{{ $shippingMethod->id }}" @selected((string) old('shipping_method_id') === (string) $shippingMethod->id)>
+                                                <option value="{{ $shippingMethod->id }}" @selected((string) old('shipping_method_id', $checkoutDefaults['shipping_method_id'] ?? '') === (string) $shippingMethod->id)>
                                                     @if(method_exists($shippingMethod, 'getName'))
                                                         {{ $shippingMethod->getName($locale) }}
                                                     @else
@@ -191,7 +204,7 @@
                                             name="customer_notes"
                                             rows="4"
                                             placeholder="{{ __('storefront.checkout.notes_placeholder') }}"
-                                        >{{ old('customer_notes') }}</textarea>
+                                        >{{ old('customer_notes', $checkoutDefaults['customer_notes'] ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>

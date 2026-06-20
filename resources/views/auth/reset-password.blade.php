@@ -1,39 +1,33 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
+    @php $locale = request('lang', session('storefront_locale', 'ar')); $locale = in_array($locale, ['ar','he','en'], true) ? $locale : 'ar'; @endphp
+    <div class="scp-auth-heading">
+        <h2>{{ $locale === 'ar' ? 'تعيين كلمة مرور جديدة' : ($locale === 'he' ? 'הגדרת סיסמה חדשה' : 'Reset password') }}</h2>
+        <p>{{ $locale === 'ar' ? 'اختر كلمة مرور جديدة وآمنة لحسابك.' : ($locale === 'he' ? 'בחר סיסמה חדשה ומאובטחת.' : 'Choose a new secure password.') }}</p>
+    </div>
+
+    <form method="POST" action="{{ route('password.store') }}" class="scp-auth-form">
         @csrf
-
-        <!-- Password Reset Token -->
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
+        <input type="hidden" name="lang" value="{{ $locale }}">
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+        <label class="scp-auth-field">
+            <span>{{ $locale === 'ar' ? 'البريد الإلكتروني' : ($locale === 'he' ? 'אימייל' : 'Email') }}</span>
+            <input type="email" name="email" value="{{ old('email', $request->email) }}" required autofocus autocomplete="username">
+            <x-input-error :messages="$errors->get('email')" class="scp-auth-error" />
+        </label>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+        <label class="scp-auth-field">
+            <span>{{ $locale === 'ar' ? 'كلمة المرور الجديدة' : ($locale === 'he' ? 'סיסמה חדשה' : 'New password') }}</span>
+            <input type="password" name="password" required autocomplete="new-password">
+            <x-input-error :messages="$errors->get('password')" class="scp-auth-error" />
+        </label>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+        <label class="scp-auth-field">
+            <span>{{ $locale === 'ar' ? 'تأكيد كلمة المرور' : ($locale === 'he' ? 'אישור סיסמה' : 'Confirm password') }}</span>
+            <input type="password" name="password_confirmation" required autocomplete="new-password">
+            <x-input-error :messages="$errors->get('password_confirmation')" class="scp-auth-error" />
+        </label>
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="scp-auth-submit">{{ $locale === 'ar' ? 'حفظ كلمة المرور' : ($locale === 'he' ? 'שמירה' : 'Reset password') }}</button>
     </form>
 </x-guest-layout>

@@ -118,7 +118,9 @@ Route::prefix('store')->name('storefront.')->group(function () {
 */
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return redirect()->route('storefront.account.dashboard', [
+        'lang' => request('lang', session('storefront_locale', 'ar')),
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 /*

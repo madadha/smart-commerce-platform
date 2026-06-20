@@ -1,30 +1,64 @@
+@php
+    $locale = request('lang', session('storefront_locale', app()->getLocale() ?: 'ar'));
+    $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
+    $direction = in_array($locale, ['ar', 'he'], true) ? 'rtl' : 'ltr';
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="{{ $locale }}" dir="{{ $direction }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'Smart Commerce Platform') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ asset('css/storefront/storefront.css') }}?v={{ file_exists(public_path('css/storefront/storefront.css')) ? filemtime(public_path('css/storefront/storefront.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/storefront/design-overrides.css') }}?v={{ file_exists(public_path('css/storefront/design-overrides.css')) ? filemtime(public_path('css/storefront/design-overrides.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/storefront/auth.css') }}?v={{ file_exists(public_path('css/storefront/auth.css')) ? filemtime(public_path('css/storefront/auth.css')) : time() }}">
+</head>
+<body class="scp-storefront scp-auth-page {{ $direction === 'rtl' ? 'is-rtl' : 'is-ltr' }}">
+    <div class="scp-auth-shell">
+        <div class="scp-auth-brand-panel">
+            <a href="{{ route('storefront.home', ['lang' => $locale]) }}" class="scp-auth-logo">
+                <span class="scp-logo-mark">S</span>
+                <span>
+                    <strong>Smart Commerce</strong>
+                    <small>Marketplace Platform</small>
+                </span>
+            </a>
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
+            <div class="scp-auth-marketing">
+                <span class="scp-auth-badge">
+                    {{ $locale === 'ar' ? 'منصة تجارة ذكية' : ($locale === 'he' ? 'פלטפורמת מסחר חכמה' : 'Smart commerce platform') }}
+                </span>
+
+                <h1>
+                    {{ $locale === 'ar' ? 'ادخل إلى حسابك وتابع طلباتك بسهولة.' : ($locale === 'he' ? 'התחבר לחשבון ועקוב אחרי ההזמנות שלך.' : 'Access your account and manage your orders easily.') }}
+                </h1>
+
+                <p>
+                    {{ $locale === 'ar' ? 'تجربة متجر حديثة تدعم العربية والعبرية والإنجليزية، مع تتبع الطلبات والفواتير والمفضلة.' : ($locale === 'he' ? 'חוויית חנות מודרנית עם מעקב הזמנות, חשבוניות ורשימת מועדפים.' : 'A modern storefront experience with order tracking, invoices, and wishlist support.') }}
+                </p>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+            <div class="scp-auth-language-switcher">
+                <a href="{{ request()->fullUrlWithQuery(['lang' => 'ar']) }}" class="{{ $locale === 'ar' ? 'active' : '' }}">AR</a>
+                <a href="{{ request()->fullUrlWithQuery(['lang' => 'he']) }}" class="{{ $locale === 'he' ? 'active' : '' }}">HE</a>
+                <a href="{{ request()->fullUrlWithQuery(['lang' => 'en']) }}" class="{{ $locale === 'en' ? 'active' : '' }}">EN</a>
             </div>
         </div>
-    </body>
+
+        <div class="scp-auth-card-wrap">
+            <div class="scp-auth-card">
+                {{ $slot }}
+            </div>
+
+            <div class="scp-auth-back">
+                <a href="{{ route('storefront.home', ['lang' => $locale]) }}">
+                    {{ $locale === 'ar' ? 'العودة إلى المتجر' : ($locale === 'he' ? 'חזרה לחנות' : 'Back to storefront') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
 </html>

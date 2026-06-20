@@ -13,6 +13,10 @@ class Customer extends Model
         'user_id',
         'country_id',
         'customer_type',
+        'requested_customer_type',
+        'customer_type_requested_at',
+        'customer_type_approved_at',
+        'customer_type_approved_by',
         'status',
         'first_name',
         'last_name',
@@ -38,8 +42,11 @@ class Customer extends Model
 
     protected $casts = [
         'customer_type' => CustomerType::class,
+        'requested_customer_type' => CustomerType::class,
         'status' => CustomerStatus::class,
         'birth_date' => 'date',
+        'customer_type_requested_at' => 'datetime',
+        'customer_type_approved_at' => 'datetime',
         'accepts_marketing' => 'boolean',
         'is_active' => 'boolean',
         'sort_order' => 'integer',
@@ -48,6 +55,11 @@ class Customer extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function typeApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'customer_type_approved_by');
     }
 
     public function country(): BelongsTo
@@ -64,6 +76,12 @@ class Customer extends Model
     public function scopeResellers($query)
     {
         return $query->where('customer_type', CustomerType::Reseller->value);
+    }
+
+    public function scopePendingTypeRequests($query)
+    {
+        return $query->whereNotNull('requested_customer_type')
+            ->whereNull('customer_type_approved_at');
     }
 
     public function getFullName(): string
@@ -102,5 +120,23 @@ class Customer extends Model
     public function isBlocked(): bool
     {
         return $this->status === CustomerStatus::Blocked;
+    }
+
+    public function hasPendingTypeRequest(): bool
+    {
+        return ! empty($this->requested_customer_type) && empty($this->customer_type_approved_at);
+    }
+
+    public function approveRequestedType(?int $adminId = null): void
+    {
+        if (! $this->requested_customer_type) {
+            return;
+        }
+
+        $this->forceFill([
+            'customer_type' => $this->requested_customer_type,
+            'customer_type_approved_at' => now(),
+            'customer_type_approved_by' => $adminId,
+        ])->save();
     }
 }

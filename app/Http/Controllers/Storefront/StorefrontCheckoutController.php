@@ -6,6 +6,7 @@ use App\Enums\CartStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\StorefrontOrderCreatedMail;
 use App\Models\Cart;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShippingMethod;
@@ -51,6 +52,7 @@ class StorefrontCheckoutController extends Controller
             'shippingMethods' => $shippingMethods,
             'pageTitle' => __('storefront.checkout.page_title') . ' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.page_description'),
+            'checkoutDefaults' => $this->checkoutDefaults(),
         ]);
     }
 
@@ -96,6 +98,8 @@ class StorefrontCheckoutController extends Controller
                 );
 
                 $this->decreaseStockAfterOrder($cart);
+
+                $this->saveCustomerProfileFromCheckout($validated);
 
                 return $order;
             });
@@ -281,6 +285,69 @@ class StorefrontCheckoutController extends Controller
         }
 
         return in_array((string) $type, ['digital', 'service'], true);
+    }
+
+
+    private function checkoutDefaults(): array
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return [];
+        }
+
+        $customer = Customer::query()
+            ->where('user_id', $user->id)
+            ->first();
+
+        return [
+            'customer_name' => $user->name ?: $customer?->getDisplayName(),
+            'customer_email' => $user->email ?: $customer?->email,
+            'customer_phone' => $customer?->phone,
+            'city' => $customer?->city,
+            'address' => $customer?->street ?: $customer?->getFullAddress(),
+            'customer_notes' => $customer?->address_notes,
+        ];
+    }
+
+    private function saveCustomerProfileFromCheckout(array $validated): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
+        [$firstName, $lastName] = $this->splitName((string) ($validated['customer_name'] ?? $user->name));
+
+        Customer::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $validated['customer_email'] ?? $user->email,
+                'phone' => $validated['customer_phone'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'street' => $validated['address'] ?? null,
+                'address_notes' => $validated['customer_notes'] ?? null,
+                'customer_type' => \App\Enums\CustomerType::Regular->value,
+                'status' => \App\Enums\CustomerStatus::Active->value,
+                'is_active' => true,
+            ]
+        );
+    }
+
+    private function splitName(string $name): array
+    {
+        $name = trim($name);
+
+        if ($name === '') {
+            return [null, null];
+        }
+
+        $parts = preg_split('/\s+/', $name, 2);
+
+        return [$parts[0] ?? $name, $parts[1] ?? null];
     }
 
     private function getCurrentCart(): ?Cart

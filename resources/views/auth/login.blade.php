@@ -1,47 +1,54 @@
 <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    @php
+        $locale = request('lang', session('storefront_locale', 'ar'));
+        $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
+    @endphp
 
-    <form method="POST" action="{{ route('login') }}">
+    <div class="scp-auth-heading">
+        <h2>{{ $locale === 'ar' ? 'تسجيل الدخول' : ($locale === 'he' ? 'כניסה לחשבון' : 'Login') }}</h2>
+        <p>{{ $locale === 'ar' ? 'ادخل إلى حسابك لمتابعة الطلبات والمفضلة والفواتير.' : ($locale === 'he' ? 'התחבר כדי לעקוב אחרי הזמנות, מועדפים וחשבוניות.' : 'Access your orders, wishlist, and invoices.') }}</p>
+    </div>
+
+    <x-auth-session-status class="scp-auth-alert success" :status="session('status')" />
+
+    <form method="POST" action="{{ route('login') }}" class="scp-auth-form">
         @csrf
+        <input type="hidden" name="lang" value="{{ $locale }}">
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+        <label class="scp-auth-field">
+            <span>{{ $locale === 'ar' ? 'البريد الإلكتروني' : ($locale === 'he' ? 'אימייל' : 'Email') }}</span>
+            <input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="example@email.com">
+            <x-input-error :messages="$errors->get('email')" class="scp-auth-error" />
+        </label>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        <label class="scp-auth-field">
+            <span>{{ $locale === 'ar' ? 'كلمة المرور' : ($locale === 'he' ? 'סיסמה' : 'Password') }}</span>
+            <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+            <x-input-error :messages="$errors->get('password')" class="scp-auth-error" />
+        </label>
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+        <div class="scp-auth-row">
+            <label class="scp-auth-check">
+                <input type="checkbox" name="remember">
+                <span>{{ $locale === 'ar' ? 'تذكرني' : ($locale === 'he' ? 'זכור אותי' : 'Remember me') }}</span>
             </label>
-        </div>
 
-        <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
+                <a href="{{ route('password.request', ['lang' => $locale]) }}">
+                    {{ $locale === 'ar' ? 'نسيت كلمة المرور؟' : ($locale === 'he' ? 'שכחת סיסמה?' : 'Forgot password?') }}
                 </a>
             @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
         </div>
+
+        <button type="submit" class="scp-auth-submit">
+            {{ $locale === 'ar' ? 'دخول' : ($locale === 'he' ? 'כניסה' : 'Login') }}
+        </button>
     </form>
+
+    <div class="scp-auth-switch">
+        <span>{{ $locale === 'ar' ? 'ليس لديك حساب؟' : ($locale === 'he' ? 'אין לך חשבון?' : 'No account yet?') }}</span>
+        <a href="{{ route('register', ['lang' => $locale]) }}">
+            {{ $locale === 'ar' ? 'إنشاء حساب جديد' : ($locale === 'he' ? 'הרשמה' : 'Create account') }}
+        </a>
+    </div>
 </x-guest-layout>
