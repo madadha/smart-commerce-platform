@@ -1,8 +1,8 @@
 # Smart Commerce Platform
 
-Smart Commerce Platform is a modern Laravel-based e-commerce management system for physical products, digital products, digital codes, customers, orders, invoices, payments, shipping, stock control, product reviews, wishlists, product comparison, customer communication, and multilingual storefront pages.
+Smart Commerce Platform is a Laravel 13 smart commerce system for managing products, customers, carts, checkout, orders, invoices, stock, multilingual storefront pages, and advanced admin order workflows.
 
-The project is designed as an admin-driven commerce platform using Laravel, MySQL, Filament Admin Panel, Livewire, Breeze Authentication, Spatie Roles & Permissions, Blade, Tailwind CSS, and a responsive public storefront.
+The system is built with Laravel, MySQL, Filament Admin Panel, Livewire, Laravel Breeze, Spatie Roles & Permissions, Blade, Tailwind CSS, Vite, mPDF, and custom responsive storefront CSS.
 
 ---
 
@@ -16,519 +16,317 @@ The project is designed as an admin-driven commerce platform using Laravel, MySQ
 | PHP | PHP 8.4 |
 | Database | MySQL |
 | Admin Panel | Filament |
-| Frontend | Blade, Tailwind CSS, Vite |
 | Authentication | Laravel Breeze |
 | Permissions | Spatie Laravel Permission |
-| Local Environment | Laragon / Windows |
+| Frontend | Blade, Tailwind CSS, Vite, custom CSS |
+| PDF | mPDF |
+| QR | Simple QR Code |
 | Languages | Arabic, Hebrew, English |
+| Local Environment | Laragon / Windows |
 | Main Branch | `main` |
 
 ---
 
-## Main Features
+## Latest Completed Stages
 
-### Storefront
+- Stage 73: Storefront customer authentication UI upgrade.
+- Stage 74: Customer profile, saved customer data, and checkout saved info.
+- Stage 75: Storefront mobile and customer area polish.
+- Stage 76: Customer type mode and reseller/company request logic.
+- Stage 77: Move logout action to customer quick actions.
+- Stage 78: Multilingual auth, logout, and header fix.
 
-- Public storefront homepage.
+---
+
+## Storefront Features
+
+- Public homepage.
 - Product listing page.
 - Product details page.
-- Search and advanced filters.
-- Category filtering.
-- Brand filtering.
-- Price filtering.
-- Sorting options.
-- Product cards with ratings, badges, stock status, compare, and wishlist actions.
-- Recently viewed products.
+- Header search connected to products page.
+- Advanced filters: category, brand, price, rating, stock, and sale.
+- Product cards with badges, ratings, stock status, compare, and wishlist actions.
+- Cart page.
+- Checkout page.
+- Order success page.
+- Customer order tracking.
+- Customer account dashboard.
+- Customer order history.
+- Customer wishlist.
+- Product comparison page.
+- Responsive design for desktop and mobile.
 - RTL support for Arabic and Hebrew.
 - LTR support for English.
 
-### Product Management
+---
+
+## Multilingual Support
+
+The storefront supports:
+
+- Arabic: `?lang=ar`
+- Hebrew: `?lang=he`
+- English: `?lang=en`
+
+Arabic and Hebrew use RTL layout. English uses LTR layout. Storefront controllers resolve the locale from the request, store it in session, set the Laravel app locale, and pass `locale` and `direction` to the views.
+
+Important rule: multilingual Blade views should use translation keys and should not contain fixed Arabic text unless it is intentionally language-specific.
+
+---
+
+## Customer Authentication
+
+- Custom storefront login page.
+- Custom storefront registration page.
+- Forgot password page.
+- Reset password page.
+- Confirm password page.
+- Verify email page.
+- Guest header links for login and registration.
+- Authenticated header links for account, orders, wishlist, and compare.
+- Logout is placed inside the account dashboard quick actions.
+
+---
+
+## Customer Account Area
+
+Route:
+
+```text
+/store/account
+```
+
+Features:
+
+- Customer welcome hero.
+- Customer profile card.
+- Total orders.
+- Total spending.
+- Pending orders.
+- Completed orders.
+- Unpaid orders.
+- Recent orders list.
+- Latest order card.
+- Quick actions card.
+- Multilingual interface.
+- Mobile-friendly layout.
+
+Quick actions include:
+
+- My Orders.
+- Track Order.
+- Browse Products.
+- Profile Settings.
+- Logout.
+
+---
+
+## Customer Profile
+
+Route:
+
+```text
+/profile
+```
+
+Features:
+
+- Storefront-style profile page.
+- Profile information update.
+- Saved customer address information.
+- Password update.
+- Account delete section.
+- Responsive mobile design.
+
+Saved customer information can include:
+
+- Full name.
+- Email.
+- Phone.
+- WhatsApp.
+- City.
+- Area.
+- Street.
+- Building number.
+- Apartment number.
+- Address notes.
+
+---
+
+## Customer Type System
+
+Supported customer types:
+
+- Regular Customer.
+- Reseller.
+- VIP Customer.
+- Company.
+
+Public registration always creates a regular customer account. Customers cannot directly choose Reseller, VIP, or Company during public registration. The admin can update the customer type from the Filament admin panel.
+
+Configuration examples:
+
+```env
+CUSTOMER_TYPE_MODE=regular
+CUSTOMER_ALLOW_RESELLER_REQUESTS=false
+CUSTOMER_ALLOW_COMPANY_REQUESTS=false
+CUSTOMER_ALLOW_VIP_REQUESTS=false
+```
+
+```env
+CUSTOMER_TYPE_MODE=reseller
+CUSTOMER_ALLOW_RESELLER_REQUESTS=true
+```
+
+After changing customer type settings:
+
+```bash
+php artisan config:clear
+```
+
+---
+
+## Product Management
 
 - Physical products.
 - Digital products.
+- Digital cards.
+- Digital files.
 - Services.
+- Subscriptions.
+- Bundles.
 - Product variants.
 - Product options.
 - Multi-language product names and descriptions.
-- SKU and barcode support.
-- Product images and media gallery.
-- Product badges.
-- Product reviews and rating summaries.
+- SKU and barcode.
+- Product images and galleries.
+- Brands and categories.
+- Currency support.
+- Sale price and regular price.
+- Product status.
+- Featured products.
+- Product reviews.
 - Product questions and answers.
-- Stock tracking.
-- Low stock alerts.
-- Admin stock quick actions.
+- Product badges.
+- Stock management.
 
-### Cart & Checkout
+---
 
-- Storefront cart.
-- Add to cart.
+## Cart and Checkout
+
+- Add products to cart.
 - Update cart item quantity.
 - Remove cart item.
-- Checkout page.
-- Customer details form.
-- Shipping method selection.
-- Payment method selection.
-- Order creation from cart.
-- Stock validation before order creation.
-- Prevent out-of-stock products from being added to cart.
-- Prevent ordering quantity greater than available stock.
-- Stock deduction after successful order creation.
+- Prevent out-of-stock add-to-cart.
+- Validate quantity before checkout.
+- Create order from active cart.
+- Deduct stock after successful order.
+- Clear cart after order creation.
+- Redirect customer to signed order page.
+- Save customer checkout information for future orders.
 
-### Orders
+---
 
-- Admin order management.
-- Storefront order details page.
-- Signed order links for customers.
-- Order status timeline for customers.
-- Order tracking page.
-- Order history for authenticated customers.
-- Order status history in admin panel.
-- Automatic status history logging when order status changes.
-- Status history modal in Filament order edit page.
-- Admin order notes system.
-- Admin order attachments system.
-- Admin order activity log.
-- Admin internal order tasks.
-- Admin order reminders.
-- Admin follow-up board.
+## Orders
+
+Storefront order features:
+
+- Signed order details page.
+- Signed invoice download route.
+- Order tracking form.
+- Customer order history.
+- Order status and payment status display.
+- Digital code display logic.
+
+Admin order features:
+
+- Order management.
+- Order status history.
+- Status history modal.
+- Order notes.
+- Order attachments.
+- Order activity log.
+- Internal order tasks.
+- Order reminders.
+- Follow-up board.
+- Order priority system.
 
 Supported order statuses:
 
-- Pending
-- Processing
-- Shipped
-- Completed
-- Cancelled
-- Refunded
+- Pending.
+- Processing.
+- Shipped.
+- Completed.
+- Cancelled.
+- Refunded.
 
-### Invoices
+---
+
+## Invoices
 
 - Customer invoice PDF download.
-- Signed invoice download route.
-- Arabic/Hebrew/English support.
-- RTL/LTR support.
-- Correct currency display.
-- QR code inside the invoice.
-- Order link inside the invoice.
-- Professional invoice layout.
-- mPDF support for better Arabic rendering.
+- Signed invoice route.
+- Arabic, Hebrew, and English support.
+- RTL and LTR support.
+- Currency display fix.
+- QR code inside invoice.
+- Signed order link inside invoice.
+- mPDF rendering.
 
-### Emails
+---
+
+## Emails
 
 - Order created email.
 - Order completed email.
 - Email includes order summary.
 - Email includes signed order link.
 - Email includes signed invoice link.
-- Email sending is wrapped safely so order creation or update does not fail if email delivery fails.
-
-### Payments & Shipping
-
-- Payment methods and payment status fields.
-- Shipping methods module.
-- Shipping cost support.
-- Free shipping logic support.
-- Home delivery and pickup support.
-- Multi-currency support.
-
-### Customers
-
-- Customer records.
-- Customer phone, email, city, and address.
-- Link customers to orders.
-- Authenticated account dashboard.
-- Customer order history.
-
-### Admin Panel
-
-- Filament resources.
-- Product management.
-- Order management.
-- Customer management.
-- Shipping method management.
-- Invoice and order tools.
-- Status history button inside order edit page.
-- Order notes button inside order edit page.
-- Order attachments button inside order edit page.
-- Order activity button inside order edit page.
-- Order tasks button inside order edit page.
-- Order reminders button inside order edit page.
-- Follow-up board button inside order edit page.
-- Low stock navigation badge.
-- Quick restock actions.
+- Email sending is safely wrapped so order actions do not fail if email delivery fails.
 
 ---
 
-## Core Modules
-
-### 1. Languages Module
-
-The platform supports multilingual content using JSON fields.
-
-Example:
-
-```json
-{
-  "ar": "الاسم بالعربية",
-  "he": "שם בעברית",
-  "en": "Name in English"
-}
-```
-
-Supported languages:
-
-- Arabic
-- Hebrew
-- English
-
----
-
-### 2. Countries & Currencies Module
-
-The platform supports multiple countries and currencies.
-
-Examples:
-
-- Israel / ILS
-- Jordan / JOD
-- Egypt / EGP
-- United Arab Emirates / AED
-
----
-
-### 3. Products Module
-
-The product module is the core of the platform.
-
-Product fields include:
-
-- Multi-language name.
-- Slug.
-- Short description.
-- Full description.
-- SKU.
-- Barcode.
-- Product type.
-- Product status.
-- Brand.
-- Company.
-- Currency.
-- Price.
-- Sale price.
-- Cost price.
-- Main image.
-- Gallery images.
-- Stock quantity.
-- Minimum stock quantity.
-- Shipping data.
-- SEO title.
-- SEO description.
-- Featured status.
-- Active status.
-- Sort order.
-
-Supported product types:
-
-- Physical product.
-- Digital product.
-- Digital card.
-- Digital file.
-- Service.
-- Subscription.
-- Bundle.
-
----
-
-### 4. Reviews & Ratings
-
-Products support customer reviews.
-
-Features:
-
-- Review form on product details page.
-- Rating summary on product page.
-- Rating display on product cards.
-- Admin review management.
-- Approved/pending review workflow.
-
----
-
-### 5. Wishlist
-
-Authenticated customers can save products to wishlist.
-
-Features:
-
-- Wishlist page.
-- Toggle wishlist from product card.
-- Add/remove wishlist items.
-- Auth-protected wishlist routes.
-
----
-
-### 6. Product Compare
-
-Customers can compare multiple products.
-
-Features:
-
-- Add product to comparison.
-- Remove product from comparison.
-- Clear comparison list.
-- Comparison page.
-
----
-
-### 7. Product Questions & Answers
-
-Customers can ask questions on product pages.
-
-Features:
-
-- Product question form.
-- Admin question management.
-- Answer display on storefront.
-- Active/approved question logic.
-
----
-
-### 8. Stock System
-
-The platform includes a practical stock management system.
-
-Features:
-
-- Stock status display on product cards and product pages.
-- In stock / low stock / out of stock states.
-- Low stock admin alerts.
-- Admin navigation badge for low stock products.
-- Quick stock actions from product table.
-- Prevent out-of-stock add-to-cart.
-- Validate stock before checkout.
-- Deduct stock after successful order.
-
----
-
-### 9. Checkout & Order Creation
-
-Checkout creates orders from the active cart.
-
-Checkout flow:
-
-1. Customer adds products to cart.
-2. Customer opens checkout.
-3. Customer enters contact and shipping details.
-4. System validates cart stock.
-5. System converts cart to order.
-6. System deducts stock.
-7. System clears cart session.
-8. System redirects customer to signed order page.
-9. System sends order-created email if an email exists.
-
----
-
-### 10. Order Status History
-
-Every order status change from the admin panel can be recorded.
-
-Stored data:
-
-- Order ID.
-- User ID.
-- Old status.
-- New status.
-- Note.
-- Change date.
-
-The status history is displayed in a modal inside the Filament order edit page.
-
----
-
-### 11. Invoice PDF System
-
-Invoices are generated as PDF files for customer orders.
-
-Features:
-
-- Download invoice PDF.
-- Signed invoice route.
-- QR code to signed order page.
-- Customer details.
-- Order details.
-- Items table.
-- Totals section.
-- Arabic-friendly rendering using mPDF.
-- Currency display with fixed LTR formatting.
-
----
-
-### 12. Email System
-
-The platform sends customer emails for important order events.
-
-Current emails:
-
-- Order created email.
-- Order completed email.
-
-Each email includes:
-
-- Order number.
-- Order summary.
-- Signed order link.
-- Signed invoice download link.
-
----
-
-### 13. Admin Order Notes
-
-Admins can add internal notes to orders.
-
-Features:
-
-- Add internal order notes.
-- Show note author.
-- Show note date.
-- Pin important notes.
-- Display notes inside the order edit page.
-- Log notes into the order activity timeline.
-
----
-
-### 14. Admin Order Attachments
-
-Admins can upload private attachments to an order.
-
-Examples:
-
-- Proof of payment.
-- Bank transfer file.
-- Shipping label.
-- WhatsApp conversation screenshot.
-- Any internal order-related file.
-
-Features:
-
-- Upload attachment files.
-- Store original file name.
-- Store MIME type and file size.
-- Show uploader name.
-- Open uploaded file from the admin panel.
-- Keep attachments internal to the admin panel.
-- Log attachment uploads into the order activity timeline.
-
----
-
-### 15. Admin Order Activity Log
-
-Orders include a unified activity log that combines order events.
-
-Tracked activities:
-
-- Status changes.
+## Admin Panel
+
+Filament admin panel modules include:
+
+- Products.
+- Categories.
+- Brands.
+- Customers.
+- Orders.
+- Shipping methods.
+- Reviews.
+- Questions.
+- Stock tools.
+- Invoices.
+- Customer type management.
+- Order workflow tools.
+
+Order edit page can include:
+
+- Status History.
 - Notes.
 - Attachments.
-- Internal tasks.
+- Activity Log.
+- Tasks.
 - Reminders.
-
-Each activity can include:
-
-- User ID.
-- Activity type.
-- Title.
-- Description.
-- Old value.
-- New value.
-- Related model.
-- Properties JSON.
-- Occurrence date.
-
----
-
-### 16. Admin Order Internal Tasks
-
-Admins can create internal tasks for an order.
-
-Task fields:
-
-- Title.
-- Description.
-- Status.
+- Follow-up Board.
 - Priority.
-- Assigned user.
-- Due date.
-
-Supported task statuses:
-
-- Pending.
-- In Progress.
-- Done.
-- Cancelled.
-
-Supported priorities:
-
-- Low.
-- Normal.
-- High.
-- Urgent.
-
-Tasks are shown in the order edit page and can be included in the order activity log.
-
----
-
-### 17. Admin Order Reminders
-
-Admins can create reminders for order follow-up.
-
-Reminder fields:
-
-- Title.
-- Notes.
-- Reminder time.
-- Status.
-- Assigned user.
-
-Supported reminder statuses:
-
-- Pending.
-- Done.
-- Cancelled.
-
-The system can highlight overdue reminders in the admin panel.
-
----
-
-### 18. Admin Follow-up Board
-
-The follow-up board gives admins a quick summary of the order.
-
-Displayed information:
-
-- Current order status.
-- Payment status.
-- Open tasks count.
-- Urgent tasks count.
-- Overdue reminders count.
-- Attachments count.
-- Latest status change.
-- Latest note.
-- Latest attachment.
-- Latest activity.
-- Upcoming tasks and reminders.
 
 ---
 
 ## Important Routes
 
 ```php
-Route::get('/store/orders/{order}', [StorefrontOrderController::class, 'show'])
-    ->middleware('signed')
-    ->name('storefront.orders.show');
-
-Route::get('/store/orders/{order}/invoice', [StorefrontOrderController::class, 'invoice'])
-    ->middleware('signed')
-    ->name('storefront.orders.invoice');
+Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
+Route::get('/store/products', [StorefrontController::class, 'products'])->name('storefront.products.index');
+Route::get('/store/cart', [StorefrontCartController::class, 'index'])->name('storefront.cart.index');
+Route::get('/store/checkout', [StorefrontCheckoutController::class, 'index'])->name('storefront.checkout.index');
+Route::get('/store/account', [StorefrontOrderController::class, 'dashboard'])->middleware('auth')->name('storefront.account.dashboard');
+Route::get('/store/account/orders', [StorefrontOrderController::class, 'history'])->middleware('auth')->name('storefront.orders.history');
+Route::get('/store/orders/{order}', [StorefrontOrderController::class, 'show'])->middleware('signed')->name('storefront.orders.show');
+Route::get('/store/orders/{order}/invoice', [StorefrontOrderController::class, 'invoice'])->middleware('signed')->name('storefront.orders.invoice');
 ```
 
 ---
@@ -536,6 +334,7 @@ Route::get('/store/orders/{order}/invoice', [StorefrontOrderController::class, '
 ## Main Database Tables
 
 - `users`
+- `customers`
 - `products`
 - `product_reviews`
 - `product_questions`
@@ -551,117 +350,9 @@ Route::get('/store/orders/{order}/invoice', [StorefrontOrderController::class, '
 - `order_activities`
 - `order_tasks`
 - `order_reminders`
-- `customers`
 - `shipping_methods`
 - `currencies`
-
----
-
-## Technical Stack
-
-- PHP 8.4
-- Laravel 13
-- MySQL
-- Filament Admin Panel
-- Livewire
-- Laravel Breeze
-- Spatie Laravel Permission
-- Blade
-- Tailwind CSS
-- Vite
-- mPDF
-- Simple QR Code
-- Git / GitHub
-- Laragon
-
----
-
-## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/madadha/smart-commerce-platform.git
-cd smart-commerce-platform
-```
-
-Install PHP dependencies:
-
-```bash
-composer install
-```
-
-Install JavaScript dependencies:
-
-```bash
-npm install
-```
-
-Create environment file:
-
-```bash
-cp .env.example .env
-```
-
-Generate application key:
-
-```bash
-php artisan key:generate
-```
-
-Configure database in `.env`:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=smart_commerce_platform
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-Run migrations:
-
-```bash
-php artisan migrate
-```
-
-Create storage symlink:
-
-```bash
-php artisan storage:link
-```
-
-Build assets:
-
-```bash
-npm run build
-```
-
-Clear cache:
-
-```bash
-php artisan optimize:clear
-```
-
----
-
-## Mail Configuration
-
-Example SMTP configuration:
-
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=your-smtp-host
-MAIL_PORT=465
-MAIL_USERNAME=your-email@example.com
-MAIL_PASSWORD=your-mail-password
-MAIL_ENCRYPTION=ssl
-MAIL_FROM_ADDRESS=your-email@example.com
-MAIL_FROM_NAME="Smart Commerce Platform"
-```
-
-Do not commit real mail passwords or `.env` files to GitHub.
+- `product_digital_codes`
 
 ---
 
@@ -670,29 +361,13 @@ Do not commit real mail passwords or `.env` files to GitHub.
 ```bash
 php artisan optimize:clear
 php artisan view:clear
+php artisan config:clear
 composer dump-autoload
 php artisan route:list
 php artisan migrate
+php artisan migrate:status
 php artisan storage:link
 npm run build
-```
-
-Check invoice route:
-
-```bash
-php artisan route:list | findstr invoice
-```
-
-Check order-related migrations:
-
-```bash
-php artisan migrate:status | findstr order_
-```
-
-Check Git status:
-
-```bash
-git status
 ```
 
 ---
@@ -702,7 +377,14 @@ git status
 ```bash
 git status
 git add .
-git commit -m "Update smart commerce platform features"
+git commit -m "Update storefront customer account and multilingual auth flow"
+git pull --rebase origin main
+git push origin main
+```
+
+If there is nothing new to commit locally:
+
+```bash
 git pull --rebase origin main
 git push origin main
 ```
@@ -712,43 +394,10 @@ git push origin main
 ## Security Notes
 
 - Keep `.env` out of Git.
-- Do not commit SMTP passwords.
-- Signed routes are used for customer order and invoice links.
-- Digital codes should be masked in admin listings.
-- Customer emails should be sent safely without breaking order flow.
-- Internal order notes, attachments, tasks, reminders, and activity logs are admin-only features.
-
----
-
-## Current Development Status
-
-Completed major features:
-
-- Storefront product pages.
-- Wishlist.
-- Reviews and ratings.
-- Product compare.
-- Recently viewed products.
-- Product questions and answers.
-- Advanced product filters.
-- Product badges.
-- Stock status system.
-- Out-of-stock cart protection.
-- Stock deduction after order.
-- Low stock admin alerts.
-- Admin stock quick actions.
-- Customer invoice PDF.
-- Invoice QR code.
-- Order-created email.
-- Order-completed email.
-- Customer order status timeline.
-- Admin order status history.
-- Admin order notes system.
-- Admin order attachments system.
-- Admin order activity log.
-- Admin internal order tasks.
-- Admin order reminders.
-- Admin follow-up board.
+- Signed routes protect customer order and invoice links.
+- Public registration creates regular customers only.
+- Admin controls customer type upgrades.
+- Internal notes, attachments, tasks, reminders, priorities, and activity logs are admin-only features.
 
 ---
 
