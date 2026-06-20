@@ -19,72 +19,156 @@
         };
     @endphp
 
+
+    @php
+        $storefrontSettings = $storefrontSettings ?? (\App\Models\StorefrontSetting::current());
+        $storefrontSlides = $storefrontSlides ?? collect();
+        $showCategoriesSection = $storefrontSettings?->show_categories_section ?? true;
+        $showFeaturedSection = $storefrontSettings?->show_featured_section ?? true;
+        $showLatestSection = $storefrontSettings?->show_latest_section ?? true;
+        $showBrandsSection = $storefrontSettings?->show_brands_section ?? true;
+
+        $settingText = function (string $field, string $fallback) use ($storefrontSettings, $locale) {
+            return $storefrontSettings?->localized($field, $locale, $fallback) ?: $fallback;
+        };
+
+        $resolveStoreUrl = function (?string $url) use ($locale) {
+            if (empty($url)) {
+                return route('storefront.products.index', ['lang' => $locale ?? 'ar']);
+            }
+
+            if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://'])) {
+                return $url;
+            }
+
+            return url($url) . (str_contains($url, '?') ? '&' : '?') . 'lang=' . ($locale ?? 'ar');
+        };
+    @endphp
+
     <section class="scp-hero-section">
         <div class="scp-container">
-            <div class="scp-hero-layout">
+            @if($storefrontSlides->isNotEmpty())
+                <div class="scp-dynamic-slider" data-scp-slider data-autoplay="6000">
+                    @foreach($storefrontSlides as $slideIndex => $slide)
+                        <article class="scp-dynamic-slide {{ $slideIndex === 0 ? 'is-active' : '' }}" data-scp-slide>
+                            <div class="scp-dynamic-slide-content">
+                                <div class="scp-hero-badge">
+                                    {{ $slide->localized('badge', $locale, __('storefront.hero.badge')) }}
+                                </div>
 
-                <div class="scp-hero-content">
-                    <div class="scp-hero-badge">
-                        {{ __('storefront.hero.badge') }}
-                    </div>
+                                <h1>
+                                    {{ $slide->localized('title', $locale, __('storefront.hero.title')) }}
+                                </h1>
 
-                    <h1>
-                        {{ __('storefront.hero.title') }}
-                    </h1>
+                                <p>
+                                    {{ $slide->localized('description', $locale, __('storefront.hero.text')) }}
+                                </p>
 
-                    <p>
-                        {{ __('storefront.hero.text') }}
-                    </p>
+                                <div class="scp-hero-buttons">
+                                    <a href="{{ $resolveStoreUrl($slide->primary_button_url) }}" class="scp-btn scp-btn-primary">
+                                        {{ $slide->localized('primary_button_text', $locale, __('storefront.hero.shop_now')) }}
+                                    </a>
 
-                    <div class="scp-hero-buttons">
-                        <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar']) }}" class="scp-btn scp-btn-primary">
-                            {{ __('storefront.hero.shop_now') }}
-                        </a>
+                                    <a href="{{ $resolveStoreUrl($slide->secondary_button_url) }}" class="scp-btn scp-btn-light">
+                                        {{ $slide->localized('secondary_button_text', $locale, __('storefront.hero.view_deals')) }}
+                                    </a>
+                                </div>
+                            </div>
 
-                        <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'on_sale' => 1]) }}" class="scp-btn scp-btn-light">
-                            {{ __('storefront.hero.view_deals') }}
-                        </a>
-                    </div>
+                            <div class="scp-dynamic-slide-media">
+                                @if($slide->imageUrl())
+                                    <img src="{{ $slide->imageUrl() }}" alt="{{ $slide->localized('title', $locale, __('storefront.hero.title')) }}">
+                                @else
+                                    <div class="scp-showcase-card main">
+                                        <span>{{ __('storefront.hero.showcase_small') }}</span>
+                                        <strong>{{ __('storefront.hero.showcase_title') }}</strong>
+                                    </div>
+                                @endif
+                            </div>
+                        </article>
+                    @endforeach
 
-                    <div class="scp-hero-stats">
-                        <div>
-                            <strong>{{ $featuredProducts->count() + $latestProducts->count() }}+</strong>
-                            <span>{{ __('storefront.hero.products') }}</span>
+                    @if($storefrontSlides->count() > 1)
+                        <button type="button" class="scp-slider-arrow scp-slider-prev" data-scp-prev aria-label="Previous slide">‹</button>
+                        <button type="button" class="scp-slider-arrow scp-slider-next" data-scp-next aria-label="Next slide">›</button>
+
+                        <div class="scp-slider-dots" aria-label="Slider navigation">
+                            @foreach($storefrontSlides as $slideIndex => $slide)
+                                <button
+                                    type="button"
+                                    class="scp-slider-dot {{ $slideIndex === 0 ? 'is-active' : '' }}"
+                                    data-scp-dot="{{ $slideIndex }}"
+                                    aria-label="Go to slide {{ $slideIndex + 1 }}"
+                                ></button>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @else
+                <div class="scp-hero-layout">
+                    <div class="scp-hero-content">
+                        <div class="scp-hero-badge">
+                            {{ $settingText('hero_badge', __('storefront.hero.badge')) }}
                         </div>
 
-                        <div>
-                            <strong>{{ $featuredCategories->count() }}+</strong>
-                            <span>{{ __('storefront.hero.categories') }}</span>
+                        <h1>
+                            {{ $settingText('hero_title', __('storefront.hero.title')) }}
+                        </h1>
+
+                        <p>
+                            {{ $settingText('hero_text', __('storefront.hero.text')) }}
+                        </p>
+
+                        <div class="scp-hero-buttons">
+                            <a href="{{ $resolveStoreUrl($storefrontSettings?->hero_primary_button_url ?: '/store/products') }}" class="scp-btn scp-btn-primary">
+                                {{ $settingText('hero_primary_button_text', __('storefront.hero.shop_now')) }}
+                            </a>
+
+                            <a href="{{ $resolveStoreUrl($storefrontSettings?->hero_secondary_button_url ?: '/store/products?on_sale=1') }}" class="scp-btn scp-btn-light">
+                                {{ $settingText('hero_secondary_button_text', __('storefront.hero.view_deals')) }}
+                            </a>
                         </div>
 
-                        <div>
-                            <strong>3</strong>
-                            <span>{{ __('storefront.hero.languages') }}</span>
+                        <div class="scp-hero-stats">
+                            <div>
+                                <strong>{{ $featuredProducts->count() + $latestProducts->count() }}+</strong>
+                                <span>{{ __('storefront.hero.products') }}</span>
+                            </div>
+
+                            <div>
+                                <strong>{{ $featuredCategories->count() }}+</strong>
+                                <span>{{ __('storefront.hero.categories') }}</span>
+                            </div>
+
+                            <div>
+                                <strong>3</strong>
+                                <span>{{ __('storefront.hero.languages') }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="scp-hero-showcase">
+                        <div class="scp-showcase-card main">
+                            <span>{{ __('storefront.hero.showcase_small') }}</span>
+                            <strong>{{ __('storefront.hero.showcase_title') }}</strong>
+                        </div>
+
+                        <div class="scp-showcase-card floating one">
+                            <span>{{ __('storefront.hero.coupons') }}</span>
+                            <strong>{{ __('storefront.hero.dynamic_deals') }}</strong>
+                        </div>
+
+                        <div class="scp-showcase-card floating two">
+                            <span>{{ __('storefront.hero.checkout') }}</span>
+                            <strong>{{ __('storefront.hero.cart_to_order') }}</strong>
                         </div>
                     </div>
                 </div>
-
-                <div class="scp-hero-showcase">
-                    <div class="scp-showcase-card main">
-                        <span>{{ __('storefront.hero.showcase_small') }}</span>
-                        <strong>{{ __('storefront.hero.showcase_title') }}</strong>
-                    </div>
-
-                    <div class="scp-showcase-card floating one">
-                        <span>{{ __('storefront.hero.coupons') }}</span>
-                        <strong>{{ __('storefront.hero.dynamic_deals') }}</strong>
-                    </div>
-
-                    <div class="scp-showcase-card floating two">
-                        <span>{{ __('storefront.hero.checkout') }}</span>
-                        <strong>{{ __('storefront.hero.cart_to_order') }}</strong>
-                    </div>
-                </div>
-
-            </div>
+            @endif
         </div>
     </section>
 
+    @if($showCategoriesSection)
     <section class="scp-section">
         <div class="scp-container">
             <div class="scp-section-heading">
@@ -120,6 +204,9 @@
         </div>
     </section>
 
+    @endif
+
+    @if($showFeaturedSection)
     <section class="scp-section scp-section-muted">
         <div class="scp-container">
             <div class="scp-section-heading">
@@ -229,6 +316,9 @@
         </div>
     </section>
 
+    @endif
+
+    @if($showLatestSection)
     <section class="scp-section">
         <div class="scp-container">
             <div class="scp-section-heading">
@@ -299,6 +389,9 @@
         </div>
     </section>
 
+    @endif
+
+    @if($showBrandsSection)
     <section class="scp-section scp-section-muted">
         <div class="scp-container">
             <div class="scp-section-heading">
@@ -308,21 +401,107 @@
                 </div>
             </div>
 
-            <div class="scp-brand-grid">
-                @forelse($brands as $brand)
-                    <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'brand' => $brand->id]) }}" class="scp-brand-card">
-                        @if(! empty($brand->logo))
-                            <img src="{{ asset('storage/' . $brand->logo) }}" alt="{{ $brand->getName($locale) }}">
-                        @else
-                            <strong>{{ $brand->getName($locale) }}</strong>
-                        @endif
-                    </a>
-                @empty
-                    <div class="scp-empty">
-                        {{ __('storefront.empty.brands') }}
+            @if($brands->isNotEmpty())
+                <div class="scp-brand-carousel" data-scp-brand-carousel>
+                    <div class="scp-brand-track" data-scp-brand-track>
+                        @foreach($brands as $brand)
+                            <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'brand' => $brand->id]) }}" class="scp-brand-card scp-brand-carousel-card">
+                                @if(! empty($brand->logo))
+                                    <img src="{{ asset('storage/' . $brand->logo) }}" alt="{{ $brand->getName($locale) }}">
+                                @else
+                                    <strong>{{ $brand->getName($locale) }}</strong>
+                                @endif
+                            </a>
+                        @endforeach
+
+                        @foreach($brands as $brand)
+                            <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'brand' => $brand->id]) }}" class="scp-brand-card scp-brand-carousel-card" aria-hidden="true" tabindex="-1">
+                                @if(! empty($brand->logo))
+                                    <img src="{{ asset('storage/' . $brand->logo) }}" alt="">
+                                @else
+                                    <strong>{{ $brand->getName($locale) }}</strong>
+                                @endif
+                            </a>
+                        @endforeach
                     </div>
-                @endforelse
-            </div>
+                </div>
+            @else
+                <div class="scp-empty">
+                    {{ __('storefront.empty.brands') }}
+                </div>
+            @endif
         </div>
     </section>
+    @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-scp-slider]').forEach(function (slider) {
+                var slides = Array.from(slider.querySelectorAll('[data-scp-slide]'));
+                var dots = Array.from(slider.querySelectorAll('[data-scp-dot]'));
+                var prev = slider.querySelector('[data-scp-prev]');
+                var next = slider.querySelector('[data-scp-next]');
+                var delay = parseInt(slider.dataset.autoplay || '6000', 10);
+                var current = 0;
+                var timer = null;
+
+                if (slides.length <= 1) {
+                    return;
+                }
+
+                function show(index) {
+                    current = (index + slides.length) % slides.length;
+
+                    slides.forEach(function (slide, slideIndex) {
+                        slide.classList.toggle('is-active', slideIndex === current);
+                    });
+
+                    dots.forEach(function (dot, dotIndex) {
+                        dot.classList.toggle('is-active', dotIndex === current);
+                    });
+                }
+
+                function start() {
+                    stop();
+                    timer = window.setInterval(function () {
+                        show(current + 1);
+                    }, delay);
+                }
+
+                function stop() {
+                    if (timer) {
+                        window.clearInterval(timer);
+                    }
+                }
+
+                if (prev) {
+                    prev.addEventListener('click', function () {
+                        show(current - 1);
+                        start();
+                    });
+                }
+
+                if (next) {
+                    next.addEventListener('click', function () {
+                        show(current + 1);
+                        start();
+                    });
+                }
+
+                dots.forEach(function (dot) {
+                    dot.addEventListener('click', function () {
+                        show(parseInt(dot.dataset.scpDot || '0', 10));
+                        start();
+                    });
+                });
+
+                slider.addEventListener('mouseenter', stop);
+                slider.addEventListener('mouseleave', start);
+
+                show(0);
+                start();
+            });
+        });
+    </script>
+
 @endsection

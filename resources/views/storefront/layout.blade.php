@@ -34,17 +34,35 @@
     ];
 
     $authText = $authLabels[$currentLocale] ?? $authLabels['ar'];
+
+    $storefrontSettings = $storefrontSettings ?? (\App\Models\StorefrontSetting::current());
+    $storeName = $storefrontSettings?->localized('store_name', $currentLocale, 'Smart Commerce') ?: 'Smart Commerce';
+    $storeTagline = $storefrontSettings?->localized('store_tagline', $currentLocale, 'Marketplace Platform') ?: 'Marketplace Platform';
+    $topbarText = $storefrontSettings?->localized('topbar_text', $currentLocale, __('storefront.topbar')) ?: __('storefront.topbar');
+    $footerDescription = $storefrontSettings?->localized('footer_description', $currentLocale, __('storefront.footer.description')) ?: __('storefront.footer.description');
+    $logoUrl = $storefrontSettings?->logoUrl();
+    $faviconUrl = $storefrontSettings?->faviconUrl();
+    $themeVariables = $storefrontSettings?->cssVariables();
 @endphp
 <html lang="{{ $currentLocale }}" dir="{{ $currentDirection }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $pageTitle ?? 'Smart Commerce Platform' }}</title>
+    <title>{{ $pageTitle ?? $storeName }}</title>
 
-    <meta name="description" content="{{ $pageDescription ?? 'Smart Commerce Platform - Modern dynamic e-commerce platform.' }}">
+    <meta name="description" content="{{ $pageDescription ?? $storeTagline }}">
 
     <link rel="stylesheet" href="{{ asset('css/storefront/storefront.css') }}?v={{ filemtime(public_path('css/storefront/storefront.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/storefront/design-overrides.css') }}?v={{ filemtime(public_path('css/storefront/design-overrides.css')) }}">
+    @if($faviconUrl)
+        <link rel="icon" href="{{ $faviconUrl }}">
+    @endif
+
+    @if(! empty($themeVariables))
+        <style>
+            :root { {!! $themeVariables !!} }
+        </style>
+    @endif
 </head>
 
 <body class="scp-storefront {{ $currentDirection === 'rtl' ? 'is-rtl' : 'is-ltr' }}">
@@ -54,7 +72,7 @@
 
         <div class="scp-topbar">
             <div class="scp-topbar-text">
-                {{ __('storefront.topbar') }}
+                {{ $topbarText }}
             </div>
 
             <div class="scp-language-switcher">
@@ -66,10 +84,14 @@
 
         <div class="scp-main-header">
             <a href="{{ route('storefront.home', ['lang' => $currentLocale]) }}" class="scp-logo">
-                <span class="scp-logo-mark">S</span>
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $storeName }}" class="scp-logo-image">
+                @else
+                    <span class="scp-logo-mark">{{ mb_substr($storeName, 0, 1) }}</span>
+                @endif
                 <span>
-                    <strong>Smart Commerce</strong>
-                    <small>Marketplace Platform</small>
+                    <strong>{{ $storeName }}</strong>
+                    <small>{{ $storeTagline }}</small>
                 </span>
             </a>
 
@@ -116,9 +138,32 @@
                     <small>{{ $authText['cart'] }}</small>
                 </a>
             </div>
+
+            <button
+                type="button"
+                class="scp-mobile-menu-toggle"
+                data-scp-mobile-menu-toggle
+                aria-label="{{ $currentLocale === 'he' ? 'פתיחת תפריט' : ($currentLocale === 'en' ? 'Open menu' : 'فتح القائمة') }}"
+                aria-expanded="false"
+                aria-controls="scp-mobile-navigation"
+            >
+                <span class="scp-mobile-menu-icon" aria-hidden="true">
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                </span>
+                <small>{{ $currentLocale === 'he' ? 'תפריט' : ($currentLocale === 'en' ? 'Menu' : 'القائمة') }}</small>
+            </button>
         </div>
 
-        <nav class="scp-nav">
+        <div class="scp-mobile-menu-backdrop" data-scp-mobile-menu-close></div>
+
+        <nav id="scp-mobile-navigation" class="scp-nav" data-scp-mobile-menu aria-label="{{ $currentLocale === 'he' ? 'ניווט ראשי' : ($currentLocale === 'en' ? 'Main navigation' : 'التنقل الرئيسي') }}">
+            <div class="scp-mobile-menu-head">
+                <strong>{{ $currentLocale === 'he' ? 'תפריט החנות' : ($currentLocale === 'en' ? 'Store Menu' : 'قائمة المتجر') }}</strong>
+                <button type="button" data-scp-mobile-menu-close aria-label="{{ $currentLocale === 'he' ? 'סגירת תפריט' : ($currentLocale === 'en' ? 'Close menu' : 'إغلاق القائمة') }}">×</button>
+            </div>
+
             <a href="{{ route('storefront.home', ['lang' => $currentLocale]) }}">
                 {{ __('storefront.nav.home') }}
             </a>
@@ -197,9 +242,9 @@
     <div class="scp-container">
         <div class="scp-footer-grid">
             <div>
-                <h3>Smart Commerce Platform</h3>
+                <h3>{{ $storeName }}</h3>
                 <p>
-                    {{ __('storefront.footer.description') }}
+                    {{ $footerDescription }}
                 </p>
             </div>
 
@@ -228,6 +273,56 @@
         </div>
     </div>
 </footer>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var body = document.body;
+        var toggles = document.querySelectorAll('[data-scp-mobile-menu-toggle]');
+        var closers = document.querySelectorAll('[data-scp-mobile-menu-close]');
+        var menu = document.querySelector('[data-scp-mobile-menu]');
+
+        function openMenu() {
+            body.classList.add('scp-mobile-menu-open');
+            toggles.forEach(function (toggle) {
+                toggle.setAttribute('aria-expanded', 'true');
+            });
+        }
+
+        function closeMenu() {
+            body.classList.remove('scp-mobile-menu-open');
+            toggles.forEach(function (toggle) {
+                toggle.setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        toggles.forEach(function (toggle) {
+            toggle.addEventListener('click', function () {
+                if (body.classList.contains('scp-mobile-menu-open')) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            });
+        });
+
+        closers.forEach(function (closer) {
+            closer.addEventListener('click', closeMenu);
+        });
+
+        if (menu) {
+            menu.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', closeMenu);
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeMenu();
+            }
+        });
+    });
+</script>
 
 </body>
 </html>
