@@ -226,6 +226,33 @@ class CheckoutInventoryServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_a_fully_refunded_payment_marks_the_order_as_refunded_without_restocking(): void
+    {
+        $product = $this->createProduct(stock: 2);
+        [$order] = $this->createOrderItem($product);
+        app(CheckoutInventoryService::class)->reserveOrderInventory($order);
+        $payment = Payment::query()->forceCreate([
+            'payment_number' => 'PAY-REFUND-'.uniqid(),
+            'order_id' => $order->id,
+            'payment_method' => 'test',
+            'status' => 'paid',
+            'amount' => $order->grand_total,
+            'paid_at' => now(),
+            'is_active' => true,
+        ]);
+
+        $payment->update([
+            'status' => 'refunded',
+            'refunded_amount' => $order->grand_total,
+            'refunded_at' => now(),
+        ]);
+
+        $this->assertSame('refunded', $order->fresh()->payment_status->value);
+        $this->assertSame(0.0, (float) $order->fresh()->paid_total);
+        $this->assertSame(1, $product->fresh()->stock_quantity);
+        $this->assertSame('fulfilled', $order->items()->first()->inventory_status);
+    }
+
     private function createProduct(int $stock, string $type = 'physical'): Product
     {
         return Product::query()->forceCreate([

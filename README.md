@@ -385,8 +385,8 @@ This roadmap is the agreed execution order for taking the platform from its curr
 | Cart and order creation | 80% | Totals and inventory processing are centralized; live payment integration remains. |
 | Inventory and digital fulfillment | 80% | Transactional reservation, fulfillment, cancellation, failure, and expiry rules are implemented. |
 | Live payments and refunds | 20% | Payment records exist; a real gateway and verified webhooks are not implemented yet. |
-| Admin authorization and security | 45% | Roles exist, but resource-level policies and stronger admin controls are required. |
-| Automated commerce coverage | 40% | Inventory, variants, digital reservations, totals, authentication, and storefront basics are covered. |
+| Admin authorization and security | 55% | Admin panel entry now requires explicit permission; resource-level policies remain. |
+| Automated commerce coverage | 70% | CI covers inventory, cart variants, checkout, totals, refunds, invoices, localization, auth throttling, signed URLs, and frontend builds. |
 | Production operations | 50% | Deployment, queues, mail, backups, monitoring, and live credentials remain. |
 
 Readiness percentages are planning estimates based on the current codebase, not release guarantees.
@@ -411,14 +411,14 @@ Exit criteria: no double deduction, no overselling under concurrent checkout, an
 
 Target: protect every critical commerce flow before integrating live money.
 
-- [ ] Add cart tests for products, variants, quantities, prices, and SKU snapshots.
-- [ ] Add checkout tests for guest and authenticated customers.
-- [ ] Add coupon, tax, shipping, order-total, and currency tests.
-- [ ] Add order, invoice, cancellation, refund, and digital-delivery tests.
-- [ ] Add login, registration, password reset, throttling, and validation tests.
-- [ ] Verify Arabic, Hebrew, and English locale behavior, including RTL/LTR direction.
+- [x] Add cart tests for products, variants, quantities, prices, and SKU snapshots.
+- [x] Add checkout tests for guest and authenticated customers.
+- [x] Add coupon, tax, shipping, order-total, and currency tests.
+- [x] Add order, invoice, cancellation, refund, and digital-delivery tests.
+- [x] Add login, registration, password reset, throttling, and validation tests.
+- [x] Verify Arabic, Hebrew, and English locale behavior, including RTL/LTR direction.
 - [ ] Add authorization tests for every admin role and protected resource.
-- [ ] Add GitHub Actions for PHPUnit, Composer audit, PHP formatting, and frontend builds.
+- [x] Add GitHub Actions for PHPUnit, Composer audit, PHP formatting, and frontend builds.
 
 Exit criteria: all critical scenarios run automatically and must pass before a branch can be merged.
 

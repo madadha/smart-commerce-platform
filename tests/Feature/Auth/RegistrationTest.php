@@ -28,4 +28,17 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $response->assertRedirect(route('storefront.account.dashboard', ['lang' => 'ar'], absolute: false));
     }
+
+    public function test_registration_rejects_invalid_and_unconfirmed_credentials(): void
+    {
+        $this->post('/register', [
+            'name' => '',
+            'email' => 'not-an-email',
+            'password' => 'short',
+            'password_confirmation' => 'different',
+        ])->assertSessionHasErrors(['name', 'email', 'password']);
+
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
 }
