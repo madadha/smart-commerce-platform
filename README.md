@@ -372,6 +372,135 @@ npm run build
 
 ---
 
+## Production Completion Roadmap
+
+This roadmap is the agreed execution order for taking the platform from its current development state to a safe production launch. Complete and verify each phase before moving to the next one.
+
+### Current Readiness Snapshot
+
+| Area | Estimated readiness | Notes |
+| --- | ---: | --- |
+| Storefront UI and localization | 85% | Responsive Arabic/Hebrew RTL and English LTR flows are available. |
+| Catalog, media, options, and variants | 80% | Product gallery, video, options, variants, and digital codes are managed from Filament. |
+| Cart and order creation | 65% | Main flow exists, but inventory and payment lifecycle hardening is required. |
+| Inventory and digital fulfillment | 50% | Concurrency, reservation, cancellation, and release rules must be completed. |
+| Live payments and refunds | 20% | Payment records exist; a real gateway and verified webhooks are not implemented yet. |
+| Admin authorization and security | 45% | Roles exist, but resource-level policies and stronger admin controls are required. |
+| Automated commerce coverage | 25% | Authentication and basic storefront tests pass; critical commerce flows need coverage. |
+| Production operations | 50% | Deployment, queues, mail, backups, monitoring, and live credentials remain. |
+
+Readiness percentages are planning estimates based on the current codebase, not release guarantees.
+
+### Phase 1 — Checkout, Inventory, and Digital Codes
+
+Target: make order creation transactional, concurrency-safe, and predictable.
+
+- [ ] Consolidate all checkout inventory handling into one service.
+- [ ] Remove duplicate product stock deduction during checkout.
+- [ ] Deduct stock from the selected variant instead of the base product when applicable.
+- [ ] Lock affected products, variants, and digital codes before validation and deduction.
+- [ ] Reserve digital codes when an order is created and mark them sold only after confirmed payment.
+- [ ] Release reserved stock and digital codes after payment failure, cancellation, or reservation expiry.
+- [ ] Define explicit inventory behavior for physical, digital, service, subscription, and bundle products.
+- [ ] Centralize subtotal, coupon, tax, shipping, and grand-total calculations.
+- [ ] Add tests for insufficient stock, last-item concurrency, variants, and digital-code allocation.
+
+Exit criteria: no double deduction, no overselling under concurrent checkout, and no digital code delivered before payment.
+
+### Phase 2 — Automated Quality Gates
+
+Target: protect every critical commerce flow before integrating live money.
+
+- [ ] Add cart tests for products, variants, quantities, prices, and SKU snapshots.
+- [ ] Add checkout tests for guest and authenticated customers.
+- [ ] Add coupon, tax, shipping, order-total, and currency tests.
+- [ ] Add order, invoice, cancellation, refund, and digital-delivery tests.
+- [ ] Add login, registration, password reset, throttling, and validation tests.
+- [ ] Verify Arabic, Hebrew, and English locale behavior, including RTL/LTR direction.
+- [ ] Add authorization tests for every admin role and protected resource.
+- [ ] Add GitHub Actions for PHPUnit, Composer audit, PHP formatting, and frontend builds.
+
+Exit criteria: all critical scenarios run automatically and must pass before a branch can be merged.
+
+### Phase 3 — Live Payments
+
+Target: integrate one production payment provider correctly before adding more gateways.
+
+- [ ] Define a provider-independent payment gateway contract.
+- [ ] Integrate the first selected live payment provider.
+- [ ] Create and persist payment attempts with unique idempotency keys.
+- [ ] Verify webhook signatures and reject invalid callbacks.
+- [ ] Make webhook processing idempotent so duplicate events cannot duplicate payment or fulfillment.
+- [ ] Support pending, paid, failed, cancelled, partially refunded, and refunded states.
+- [ ] Support full and partial refunds with an audit trail.
+- [ ] Add payment reconciliation and failed-webhook monitoring.
+- [ ] Fulfill digital orders only after a verified paid event.
+
+Exit criteria: successful, failed, cancelled, duplicated, delayed, and refunded payment scenarios pass in the provider sandbox.
+
+### Phase 4 — Shipping and Fulfillment
+
+Target: make physical and digital order delivery operationally complete.
+
+- [ ] Add shipping zones and location-based rates.
+- [ ] Support delivery and store-pickup methods.
+- [ ] Validate shipping eligibility and cost on the server during checkout.
+- [ ] Add shipment records, carrier, tracking number, and fulfillment timestamps.
+- [ ] Define valid order and shipment status transitions.
+- [ ] Send localized order, payment, shipment, cancellation, and digital-delivery emails.
+- [ ] Prevent digital codes from appearing in public logs, notifications, or unauthorized screens.
+
+Exit criteria: one physical and one digital test order can be completed end-to-end from checkout to fulfillment.
+
+### Phase 5 — Authorization and Security
+
+Target: protect customer data, administration, files, and privileged operations.
+
+- [ ] Add Laravel policies for all Filament resources and sensitive actions.
+- [ ] Define permissions for Super Admin, Admin, Orders Manager, Catalog Manager, and Support roles.
+- [ ] Restrict refunds, digital-code access, role changes, settings, and exports to authorized roles.
+- [ ] Enable multi-factor authentication for privileged admin accounts.
+- [ ] Add an audit log for sensitive administrative changes.
+- [ ] Validate uploaded file MIME types, extensions, sizes, and access rules.
+- [ ] Review signed links, session security, rate limits, and password-reset behavior.
+- [ ] Perform responsive browser testing for login and registration across supported locales.
+
+Exit criteria: each role can access only its intended resources, and all sensitive actions are auditable.
+
+### Phase 6 — Production Operations and Launch
+
+Target: deploy a supportable, observable, and recoverable production system.
+
+- [ ] Complete the [`docs/production-checklist.md`](docs/production-checklist.md) requirements.
+- [ ] Configure production environment variables, HTTPS, secure cookies, and trusted proxies.
+- [ ] Configure production database migrations and optimized indexes.
+- [ ] Configure SMTP and verify localized transactional email delivery.
+- [ ] Run a supervised queue worker and scheduled task runner.
+- [ ] Configure automated database and uploaded-file backups and test restoration.
+- [ ] Configure application error tracking, logs, uptime checks, and payment alerts.
+- [ ] Build and cache production assets, configuration, routes, and views.
+- [ ] Perform staging acceptance tests on mobile, tablet, and desktop.
+- [ ] Prepare a rollback procedure and complete a final launch checklist review.
+
+Exit criteria: staging passes the full acceptance suite, backups can be restored, monitoring is active, and rollback is documented.
+
+### Initial Launch Scope
+
+The first production release should focus on:
+
+- Physical and digital products.
+- Product media, options, and selectable variants.
+- Guest and customer checkout.
+- One live payment gateway.
+- Delivery and store pickup.
+- Inventory and digital-code fulfillment.
+- Orders, invoices, localized notifications, and role-based administration.
+- Arabic, Hebrew, and English storefronts.
+
+Defer advanced subscriptions, multi-vendor marketplace features, reseller commissions, AI features, multiple payment gateways, referrals, and advanced analytics until the core launch is stable.
+
+---
+
 ## Git Workflow
 
 ```bash
