@@ -2,6 +2,10 @@
     $locale = request('lang', session('storefront_locale', app()->getLocale() ?: 'ar'));
     $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
     $direction = in_array($locale, ['ar', 'he'], true) ? 'rtl' : 'ltr';
+    $storefrontSettings = \App\Models\StorefrontSetting::current();
+    $storeName = $storefrontSettings?->localized('store_name', $locale, 'Smart Commerce') ?: 'Smart Commerce';
+    $storeTagline = $storefrontSettings?->localized('store_tagline', $locale, 'Marketplace Platform') ?: 'Marketplace Platform';
+    $logoUrl = $storefrontSettings?->logoUrl();
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locale }}" dir="{{ $direction }}">
@@ -10,7 +14,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Smart Commerce Platform') }}</title>
+    <title>{{ $storeName }} — {{ $locale === 'ar' ? 'حساب العميل' : ($locale === 'he' ? 'חשבון לקוח' : 'Customer account') }}</title>
+    <meta name="description" content="{{ $storeTagline }}">
 
     <link rel="stylesheet" href="{{ asset('css/storefront/storefront.css') }}?v={{ file_exists(public_path('css/storefront/storefront.css')) ? filemtime(public_path('css/storefront/storefront.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/storefront/design-overrides.css') }}?v={{ file_exists(public_path('css/storefront/design-overrides.css')) ? filemtime(public_path('css/storefront/design-overrides.css')) : time() }}">
@@ -20,10 +25,14 @@
     <div class="scp-auth-shell">
         <div class="scp-auth-brand-panel">
             <a href="{{ route('storefront.home', ['lang' => $locale]) }}" class="scp-auth-logo">
-                <span class="scp-logo-mark">S</span>
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $storeName }}" class="scp-auth-logo-image">
+                @else
+                    <span class="scp-logo-mark">{{ mb_substr($storeName, 0, 1) }}</span>
+                @endif
                 <span>
-                    <strong>Smart Commerce</strong>
-                    <small>Marketplace Platform</small>
+                    <strong>{{ $storeName }}</strong>
+                    <small>{{ $storeTagline }}</small>
                 </span>
             </a>
 

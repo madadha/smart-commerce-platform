@@ -67,6 +67,7 @@ Route::prefix('store')->name('storefront.')->group(function () {
         ->name('checkout.index');
 
     Route::post('/checkout/place-order', [StorefrontCheckoutController::class, 'placeOrder'])
+        ->middleware('throttle:10,1')
         ->name('checkout.place');
 
     Route::get('/checkout/success/{order}', [StorefrontCheckoutController::class, 'success'])
@@ -76,6 +77,7 @@ Route::prefix('store')->name('storefront.')->group(function () {
         ->name('orders.track');
 
     Route::post('/track-order/result', [StorefrontOrderController::class, 'trackingResult'])
+        ->middleware('throttle:20,1')
         ->name('orders.track.result');
 
     Route::get('/account', [StorefrontOrderController::class, 'dashboard'])

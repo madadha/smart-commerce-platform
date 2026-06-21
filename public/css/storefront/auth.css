@@ -425,3 +425,137 @@
     }
 }
 
+/* Launch-ready responsive authentication experience */
+body.scp-auth-page {
+    min-height: 100svh;
+    margin: 0;
+    overflow-x: hidden;
+    background: #07111f !important;
+}
+
+.scp-auth-shell {
+    width: 100%;
+    max-width: none !important;
+    min-height: 100svh;
+    grid-template-columns: minmax(360px, .9fr) minmax(440px, 1.1fr);
+}
+
+.scp-auth-brand-panel {
+    isolation: isolate;
+    background:
+        radial-gradient(circle at 20% 15%, rgba(37, 99, 235, .34), transparent 34%),
+        radial-gradient(circle at 85% 80%, rgba(245, 158, 11, .20), transparent 30%),
+        linear-gradient(145deg, #071426, #0b2149 58%, #123873);
+}
+
+.scp-auth-brand-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: .14;
+    background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, #000, transparent 85%);
+}
+
+.scp-auth-logo-image {
+    width: 48px;
+    height: 48px;
+    padding: 5px;
+    border-radius: 15px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.scp-auth-card-wrap {
+    min-width: 0;
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, .08), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(245, 158, 11, .10), transparent 28%),
+        #f8fafc;
+}
+
+.scp-auth-card {
+    width: min(100%, 590px);
+    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, .98);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, .14);
+}
+
+.scp-auth-card:has(.scp-auth-request-box) { width: min(100%, 720px); }
+
+.scp-auth-field input,
+.scp-auth-field select {
+    min-height: 52px;
+}
+
+.scp-auth-field input:focus-visible,
+.scp-auth-field select:focus-visible,
+.scp-auth-submit:focus-visible,
+.scp-auth-language-switcher a:focus-visible,
+.scp-auth-row a:focus-visible {
+    outline: 3px solid rgba(245, 158, 11, .32);
+    outline-offset: 2px;
+}
+
+.scp-auth-submit {
+    min-height: 52px;
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.scp-auth-submit:hover { transform: translateY(-1px); filter: saturate(1.08); box-shadow: 0 18px 34px rgba(251, 133, 0, .3); }
+
+@media (max-width: 900px) {
+    .scp-auth-shell { grid-template-columns: 1fr; }
+
+    .scp-auth-brand-panel {
+        min-height: 220px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto 1fr;
+        align-items: start;
+        gap: 18px;
+        padding: 24px;
+    }
+
+    .scp-auth-brand-panel::before { inset: 12px; border-radius: 24px; }
+    .scp-auth-marketing { align-self: end; }
+    .scp-auth-marketing h1 { max-width: 620px; margin: 10px 0 0; font-size: clamp(23px, 6vw, 34px); }
+    .scp-auth-marketing p { display: none; }
+    .scp-auth-badge { padding: 5px 10px; font-size: 10px; }
+    .scp-auth-language-switcher { grid-column: 2; grid-row: 1; }
+    .scp-auth-card-wrap { padding: 20px; }
+}
+
+@media (max-width: 560px) {
+    .scp-auth-brand-panel {
+        min-height: 184px;
+        padding: 20px;
+        gap: 12px;
+    }
+
+    .scp-auth-logo { gap: 8px; }
+    .scp-auth-logo .scp-logo-mark,
+    .scp-auth-logo-image { width: 42px; height: 42px; }
+    .scp-auth-logo strong { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+    .scp-auth-logo small { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+    .scp-auth-language-switcher { gap: 5px; }
+    .scp-auth-language-switcher a { min-width: 34px; padding: 7px 8px; text-align: center; font-size: 11px; }
+    .scp-auth-marketing h1 { font-size: 22px; line-height: 1.25; }
+    .scp-auth-card-wrap { padding: 14px 12px 22px; }
+    .scp-auth-card { padding: 22px 18px; border-radius: 22px; }
+    .scp-auth-heading h2 { font-size: 25px; }
+    .scp-auth-heading p { font-size: 14px; }
+    .scp-auth-row { align-items: flex-start; }
+}
+
+@media (max-width: 380px) {
+    .scp-auth-brand-panel { grid-template-columns: 1fr; min-height: 210px; }
+    .scp-auth-language-switcher { grid-column: 1; grid-row: auto; }
+    .scp-auth-marketing { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scp-auth-submit { transition: none; }
+}

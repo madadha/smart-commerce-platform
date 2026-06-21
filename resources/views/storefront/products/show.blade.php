@@ -96,6 +96,7 @@
             'in_stock' => $variant->isInStock(),
             'stock' => $variant->track_stock ? (int) $variant->stock_quantity : null,
         ])->values();
+        $youtubeEmbedUrl = method_exists($product, 'getYouTubeEmbedUrl') ? $product->getYouTubeEmbedUrl() : null;
     @endphp
 
     <section class="scp-product-details-section">
@@ -375,6 +376,26 @@
                     @endif
                 </div>
             </div>
+
+            @if($youtubeEmbedUrl)
+                <section class="scp-product-video-card" aria-labelledby="scp-product-video-title">
+                    <div class="scp-product-video-copy">
+                        <span>{{ __('storefront.product_details.video_badge') }}</span>
+                        <h2 id="scp-product-video-title">{{ __('storefront.product_details.video_title') }}</h2>
+                        <p>{{ __('storefront.product_details.video_description') }}</p>
+                    </div>
+                    <div class="scp-product-video-frame">
+                        <iframe
+                            src="{{ $youtubeEmbedUrl }}"
+                            title="{{ $product->getName($locale) }} — {{ __('storefront.product_details.video_title') }}"
+                            loading="lazy"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                        ></iframe>
+                    </div>
+                </section>
+            @endif
 
             @if(is_array($notes) && count($notes))
                 <div class="scp-product-content-card">
