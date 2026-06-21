@@ -109,6 +109,9 @@ return [
 
 
 'product_details' => [
+    'selected_variant' => 'הגרסה שנבחרה',
+    'variant_required' => 'יש לבחור אפשרות מוצר לפני ההוספה לסל.',
+    'view_image' => 'הצגת תמונת מוצר :number',
     'type' => 'סוג',
     'status' => 'סטטוס',
     'stock' => 'מלאי',

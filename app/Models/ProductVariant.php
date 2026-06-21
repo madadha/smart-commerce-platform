@@ -50,6 +50,19 @@ class ProductVariant extends Model
         'sort_order' => 'integer',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (ProductVariant $variant): void {
+            if ($variant->is_default) {
+                static::query()
+                    ->where('product_id', $variant->product_id)
+                    ->whereKeyNot($variant->id)
+                    ->where('is_default', true)
+                    ->update(['is_default' => false]);
+            }
+        });
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

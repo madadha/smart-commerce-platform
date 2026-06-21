@@ -235,8 +235,9 @@ class StorefrontController extends Controller
                 'brand',
                 'currency',
                 'categories',
-                'variants',
-                'media',
+                'options' => fn ($query) => $query->where('is_active', true),
+                'variants' => fn ($query) => $query->where('is_active', true)->with('mediaFile'),
+                'media' => fn ($query) => $query->where('is_active', true)->with('mediaFile'),
                 'approvedReviews',
                 'approvedQuestions',
             ])

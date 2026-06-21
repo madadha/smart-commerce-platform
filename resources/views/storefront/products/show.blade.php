@@ -3,11 +3,7 @@
 @section('content')
     @php
         $productImage = function ($product) {
-            if (! empty($product->main_image)) {
-                return asset('storage/' . $product->main_image);
-            }
-
-            return null;
+            return method_exists($product, 'getImageUrl') ? $product->getImageUrl() : null;
         };
 
         $productPrice = function ($product) {
@@ -58,7 +54,48 @@
             }
         }
 
-        $isOutOfStock = $stockValue !== null && $stockValue <= 0;
+        $galleryImages = collect();
+
+        if ($productImage($product)) {
+            $galleryImages->push([
+                'url' => $productImage($product),
+                'alt' => $product->getName($locale),
+            ]);
+        }
+
+        if ($product->relationLoaded('media')) {
+            foreach ($product->media as $mediaItem) {
+                $mediaUrl = method_exists($mediaItem, 'getUrl') ? $mediaItem->getUrl() : null;
+
+                if ($mediaUrl) {
+                    $galleryImages->push([
+                        'url' => $mediaUrl,
+                        'alt' => method_exists($mediaItem, 'getAltText')
+                            ? $mediaItem->getAltText($locale)
+                            : $product->getName($locale),
+                    ]);
+                }
+            }
+        }
+
+        $galleryImages = $galleryImages->unique('url')->values();
+        $activeVariants = $product->variants->where('is_active', true)->values();
+        $selectedVariant = $activeVariants->firstWhere('is_default', true) ?? $activeVariants->first();
+        $selectedStockOwner = $selectedVariant ?: $product;
+        $selectedStock = $selectedStockOwner->track_stock ? (int) $selectedStockOwner->stock_quantity : null;
+        $isOutOfStock = $selectedStock !== null && $selectedStock <= 0;
+
+        $variantPayload = $activeVariants->map(fn ($variant) => [
+            'id' => $variant->id,
+            'name' => $variant->getName($locale),
+            'sku' => $variant->sku,
+            'options' => $variant->getOptionValues(),
+            'price' => $variant->finalPrice(),
+            'regular_price' => $variant->price ? (float) $variant->price : (float) $product->price,
+            'image' => $variant->getImageUrl(),
+            'in_stock' => $variant->isInStock(),
+            'stock' => $variant->track_stock ? (int) $variant->stock_quantity : null,
+        ])->values();
     @endphp
 
     <section class="scp-product-details-section">
@@ -80,8 +117,12 @@
 
                 <div class="scp-product-gallery">
                     <div class="scp-product-main-image">
-                        @if($productImage($product))
-                            <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
+                        @if($galleryImages->isNotEmpty())
+                            <img
+                                src="{{ $galleryImages->first()['url'] }}"
+                                alt="{{ $galleryImages->first()['alt'] }}"
+                                data-scp-product-main-image
+                            >
                         @else
                             <div class="scp-product-placeholder big">
                                 {{ mb_substr($product->getName($locale), 0, 1) }}
@@ -102,30 +143,18 @@
                     </div>
 
                     <div class="scp-product-thumbs">
-                        @if($productImage($product))
-                            <div class="scp-product-thumb active">
-                                <img src="{{ $productImage($product) }}" alt="{{ $product->getName($locale) }}">
-                            </div>
-                        @endif
-
-                   @if($product->relationLoaded('media') && $product->media->count())
-    @foreach($product->media->take(4) as $mediaItem)
-        @php
-            $mediaPath = $mediaItem->file_path
-                ?? $mediaItem->path
-                ?? $mediaItem->url
-                ?? $mediaItem->mediaFile?->file_path
-                ?? $mediaItem->mediaFile?->path
-                ?? null;
-        @endphp
-
-        @if($mediaPath)
-            <div class="scp-product-thumb">
-                <img src="{{ asset('storage/' . $mediaPath) }}" alt="{{ $product->getName($locale) }}">
-            </div>
-        @endif
-    @endforeach
-@endif
+                        @foreach($galleryImages as $index => $galleryImage)
+                            <button
+                                type="button"
+                                class="scp-product-thumb {{ $index === 0 ? 'active' : '' }}"
+                                data-scp-product-thumb
+                                data-image="{{ $galleryImage['url'] }}"
+                                data-alt="{{ $galleryImage['alt'] }}"
+                                aria-label="{{ __('storefront.product_details.view_image', ['number' => $index + 1]) }}"
+                            >
+                                <img src="{{ $galleryImage['url'] }}" alt="{{ $galleryImage['alt'] }}">
+                            </button>
+                        @endforeach
                     </div>
                 </div>
 
@@ -133,8 +162,8 @@
                     <div class="scp-product-meta-line">
                         <span>{{ $product->brand?->getName($locale) ?? __('storefront.product.default_brand') }}</span>
 
-                        @if(! empty($product->sku))
-                            <span>SKU: {{ $product->sku }}</span>
+                        @if(! empty($product->sku) || $selectedVariant?->sku)
+                            <span>SKU: <b data-scp-product-sku>{{ $selectedVariant?->sku ?? $product->sku }}</b></span>
                         @endif
                     </div>
 
@@ -150,17 +179,23 @@
                         </p>
                     @endif
 
-                    <div class="scp-product-detail-price">
-                        <strong>
+                    <div class="scp-product-detail-price" data-scp-product-price>
+                        <strong data-scp-current-price>
                             {{ $product->currency?->symbol ?? '₪' }}
-                            {{ number_format((float) $productPrice($product), 2) }}
+                            {{ number_format((float) ($selectedVariant?->finalPrice() ?? $productPrice($product)), 2) }}
                         </strong>
 
-                        @if(! empty($product->sale_price) && (float) $product->sale_price < (float) $product->price)
-                            <span>
+                        @php
+                            $displayRegularPrice = $selectedVariant?->price ?: $product->price;
+                            $displayCurrentPrice = $selectedVariant?->finalPrice() ?? $productPrice($product);
+                        @endphp
+                        @if((float) $displayRegularPrice > (float) $displayCurrentPrice)
+                            <span data-scp-regular-price>
                                 {{ $product->currency?->symbol ?? '₪' }}
-                                {{ number_format((float) $product->price, 2) }}
+                                {{ number_format((float) $displayRegularPrice, 2) }}
                             </span>
+                        @else
+                            <span data-scp-regular-price hidden></span>
                         @endif
                     </div>
 
@@ -196,13 +231,35 @@
                         </div>
                     @endif
 
-                    @if(isset($product->variants) && $product->variants->count())
-                        <div class="scp-product-variants">
+                    @if($activeVariants->isNotEmpty())
+                        <div class="scp-product-variants" data-scp-product-configurator>
                             <strong>{{ __('storefront.product_details.variants') }}</strong>
 
+                            @if($product->options->isNotEmpty())
+                                <div class="scp-option-groups">
+                                    @foreach($product->options as $option)
+                                        <fieldset class="scp-option-group" data-option-slug="{{ $option->slug }}">
+                                            <legend>{{ $option->getName($locale) }}</legend>
+                                            <div class="scp-option-values">
+                                                @foreach($option->getValues() as $optionValue)
+                                                    @php
+                                                        $rawValue = (string) ($optionValue['value'] ?? $optionValue['en'] ?? $optionValue['ar'] ?? '');
+                                                        $optionLabel = $optionValue[$locale] ?? $optionValue['en'] ?? $optionValue['ar'] ?? $rawValue;
+                                                    @endphp
+                                                    <button type="button" class="scp-option-value" data-option-value="{{ $rawValue }}" @if(! empty($optionValue['color'])) style="--option-color: {{ $optionValue['color'] }}" @endif>
+                                                        @if(! empty($optionValue['color']))<i aria-hidden="true"></i>@endif
+                                                        {{ $optionLabel }}
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        </fieldset>
+                                    @endforeach
+                                </div>
+                            @endif
+
                             <div class="scp-variant-list">
-                                @foreach($product->variants as $variant)
-                                    <div class="scp-variant-card">
+                                @foreach($activeVariants as $variant)
+                                    <button type="button" class="scp-variant-card {{ $selectedVariant?->id === $variant->id ? 'active' : '' }}" data-scp-variant-id="{{ $variant->id }}" @disabled(! $variant->isInStock())>
                                         <span>{{ $variant->getName($locale) }}</span>
 
                                         @if(! empty($variant->sku))
@@ -215,9 +272,15 @@
                                                 {{ number_format((float) $variant->finalPrice(), 2) }}
                                             </strong>
                                         @endif
-                                    </div>
+                                        @if(! $variant->isInStock())<em>{{ __('storefront.stock.out_of_stock') }}</em>@endif
+                                    </button>
                                 @endforeach
                             </div>
+
+                            <p class="scp-variant-selection-status" data-scp-variant-status>
+                                {{ __('storefront.product_details.selected_variant') }}:
+                                <strong>{{ $selectedVariant?->getName($locale) }}</strong>
+                            </p>
                         </div>
                     @endif
 
@@ -227,6 +290,7 @@
 
         <input type="hidden" name="lang" value="{{ $locale }}">
         <input type="hidden" name="product_id" value="{{ $product->id }}">
+        <input type="hidden" name="product_variant_id" value="{{ $selectedVariant?->id }}" data-scp-selected-variant>
 
         <div class="scp-quantity-box">
             <label>{{ __('storefront.cart.quantity') }}</label>
@@ -243,6 +307,7 @@
         <button
             type="submit"
             class="scp-detail-add-to-cart"
+            data-scp-add-to-cart
             @disabled($isOutOfStock)
         >
             {{ $isOutOfStock ? (\Illuminate\Support\Facades\Lang::has('storefront.stock.out_of_stock') ? __('storefront.stock.out_of_stock') : 'نفذ المخزون') : __('storefront.product.add_to_cart') }}
@@ -416,5 +481,98 @@
         'locale' => $locale,
     ])
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var mainImage = document.querySelector('[data-scp-product-main-image]');
+            var thumbnails = Array.from(document.querySelectorAll('[data-scp-product-thumb]'));
+
+            thumbnails.forEach(function (thumbnail) {
+                thumbnail.addEventListener('click', function () {
+                    if (! mainImage) return;
+                    mainImage.src = thumbnail.dataset.image;
+                    mainImage.alt = thumbnail.dataset.alt || '';
+                    thumbnails.forEach(function (item) { item.classList.toggle('active', item === thumbnail); });
+                });
+            });
+
+            var variants = @json($variantPayload);
+            if (! variants.length) return;
+
+            var currency = @json($product->currency?->symbol ?? '');
+            var hiddenVariant = document.querySelector('[data-scp-selected-variant]');
+            var currentPrice = document.querySelector('[data-scp-current-price]');
+            var regularPrice = document.querySelector('[data-scp-regular-price]');
+            var sku = document.querySelector('[data-scp-product-sku]');
+            var addToCart = document.querySelector('[data-scp-add-to-cart]');
+            var status = document.querySelector('[data-scp-variant-status] strong');
+            var variantButtons = Array.from(document.querySelectorAll('[data-scp-variant-id]'));
+            var optionGroups = Array.from(document.querySelectorAll('[data-option-slug]'));
+            var selectedOptions = {};
+
+            function formatPrice(value) {
+                return [currency, Number(value || 0).toFixed(2)].filter(Boolean).join(' ');
+            }
+
+            function applyVariant(variant) {
+                if (! variant) return;
+
+                hiddenVariant.value = variant.id;
+                if (currentPrice) currentPrice.textContent = formatPrice(variant.price);
+                if (regularPrice) {
+                    regularPrice.textContent = formatPrice(variant.regular_price);
+                    regularPrice.hidden = Number(variant.regular_price) <= Number(variant.price);
+                }
+                if (sku) sku.textContent = variant.sku || '-';
+                if (status) status.textContent = variant.name;
+                if (addToCart) addToCart.disabled = ! variant.in_stock;
+
+                variantButtons.forEach(function (button) {
+                    button.classList.toggle('active', Number(button.dataset.scpVariantId) === Number(variant.id));
+                });
+
+                selectedOptions = Object.assign({}, variant.options || {});
+                optionGroups.forEach(function (group) {
+                    var value = selectedOptions[group.dataset.optionSlug];
+                    group.querySelectorAll('[data-option-value]').forEach(function (button) {
+                        button.classList.toggle('active', button.dataset.optionValue === String(value));
+                    });
+                });
+
+                if (variant.image && mainImage) {
+                    mainImage.src = variant.image;
+                    mainImage.alt = variant.name;
+                    thumbnails.forEach(function (item) {
+                        item.classList.toggle('active', item.dataset.image === variant.image);
+                    });
+                }
+            }
+
+            variantButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    applyVariant(variants.find(function (variant) {
+                        return Number(variant.id) === Number(button.dataset.scpVariantId);
+                    }));
+                });
+            });
+
+            optionGroups.forEach(function (group) {
+                group.querySelectorAll('[data-option-value]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        selectedOptions[group.dataset.optionSlug] = button.dataset.optionValue;
+                        var exact = variants.find(function (variant) {
+                            return Object.keys(selectedOptions).every(function (key) {
+                                return String((variant.options || {})[key]) === String(selectedOptions[key]);
+                            });
+                        });
+                        applyVariant(exact);
+                    });
+                });
+            });
+
+            applyVariant(variants.find(function (variant) {
+                return Number(variant.id) === Number(hiddenVariant.value);
+            }) || variants[0]);
+        });
+    </script>
 
 @endsection

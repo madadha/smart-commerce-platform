@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\ProductMedia;
 
 
@@ -241,9 +242,9 @@ public function activeVariants(): HasMany
         ->where('is_active', true);
 }
 
-public function defaultVariant(): HasMany
+public function defaultVariant(): HasOne
 {
-    return $this->variants()
+    return $this->hasOne(ProductVariant::class)
         ->where('is_default', true);
 }
 
@@ -267,6 +268,11 @@ public function media(): HasMany
     return $this->hasMany(ProductMedia::class)
         ->orderBy('sort_order')
         ->orderBy('id');
+}
+
+public function activeMedia(): HasMany
+{
+    return $this->media()->where('is_active', true);
 }
 
 public function reviews(): HasMany

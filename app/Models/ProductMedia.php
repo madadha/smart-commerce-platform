@@ -5,9 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Product;
-use App\Models\MediaFile;
 
 class ProductMedia extends Model
 {
@@ -68,17 +65,4 @@ class ProductMedia extends Model
         return $this->product?->getName($locale) ?? 'Product Image';
     }
 
-    public function media(): HasMany
-{
-    return $this->hasMany(ProductMedia::class)
-        ->orderBy('sort_order')
-        ->orderBy('id');
-}
-
-public function gallery(): HasMany
-{
-    return $this->media()
-        ->where('role', 'gallery')
-        ->where('is_active', true);
-}
 }

@@ -55,7 +55,7 @@ class StorefrontCartController extends Controller
         $quantity = max(1, (int) ($validated['quantity'] ?? 1));
 
         $product = Product::query()
-            ->with(['currency'])
+            ->with(['currency', 'activeVariants'])
             ->where('is_active', true)
             ->findOrFail($validated['product_id']);
 
@@ -66,6 +66,12 @@ class StorefrontCartController extends Controller
                 ->where('product_id', $product->id)
                 ->where('is_active', true)
                 ->findOrFail($validated['product_variant_id']);
+        }
+
+        if ($product->activeVariants->isNotEmpty() && ! $variant) {
+            return back()
+                ->withInput()
+                ->with('error', __('storefront.product_details.variant_required'));
         }
 
         $stockOwner = $variant ?: $product;

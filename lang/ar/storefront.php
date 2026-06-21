@@ -107,6 +107,9 @@ return [
 ],
 
 'product_details' => [
+    'selected_variant' => 'الخيار المحدد',
+    'variant_required' => 'يرجى اختيار مواصفات المنتج قبل إضافته إلى السلة.',
+    'view_image' => 'عرض صورة المنتج رقم :number',
     'type' => 'النوع',
     'status' => 'الحالة',
     'stock' => 'المخزون',
