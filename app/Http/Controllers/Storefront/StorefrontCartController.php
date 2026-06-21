@@ -37,7 +37,7 @@ class StorefrontCartController extends Controller
             'locale' => $locale,
             'direction' => $this->direction($locale),
             'cart' => $cart,
-            'pageTitle' => __('storefront.cart.page_title') . ' - Smart Commerce Platform',
+            'pageTitle' => __('storefront.cart.page_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.cart.page_description'),
         ]);
     }
@@ -292,7 +292,7 @@ class StorefrontCartController extends Controller
             'discount_total' => 0,
             'tax_total' => 0,
             'options' => $variant?->option_values,
-            'notes' => 'Added from storefront. Locale: ' . $locale,
+            'notes' => 'Added from storefront. Locale: '.$locale,
         ]);
     }
 
@@ -352,7 +352,8 @@ class StorefrontCartController extends Controller
         }
 
         return match ((string) $type) {
-            'digital', 'digital_code' => 'digital_code',
+            'digital', 'digital_code', 'digital_card' => 'digital_code',
+            'digital_file' => 'digital_file',
             'service' => 'service',
             default => 'product',
         };
@@ -377,7 +378,14 @@ class StorefrontCartController extends Controller
             $type = $type->value;
         }
 
-        return in_array((string) $type, ['digital', 'digital_code', 'service'], true);
+        return in_array((string) $type, [
+            'digital',
+            'digital_code',
+            'digital_card',
+            'digital_file',
+            'service',
+            'subscription',
+        ], true);
     }
 
     private function resolveProductName(Product $product, string $locale): string
@@ -402,7 +410,7 @@ class StorefrontCartController extends Controller
             return $name;
         }
 
-        return (string) ($product->sku ?? 'Product #' . $product->id);
+        return (string) ($product->sku ?? 'Product #'.$product->id);
     }
 
     private function resolveCustomer(): ?Customer
@@ -419,7 +427,7 @@ class StorefrontCartController extends Controller
     private function generateCartNumber(): string
     {
         do {
-            $number = 'CART-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
+            $number = 'CART-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
         } while (Cart::query()->where('cart_number', $number)->exists());
 
         return $number;

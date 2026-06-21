@@ -19,8 +19,7 @@ class CartCheckoutService
 {
     public function __construct(
         private readonly CheckoutInventoryService $checkoutInventoryService
-    ) {
-    }
+    ) {}
 
     public function convertCartToOrder(Cart $cart, array $data, ?int $userId = null): Order
     {
@@ -34,8 +33,6 @@ class CartCheckoutService
             if ($cart->items->isEmpty()) {
                 throw new RuntimeException('Cart is empty.');
             }
-
-            $this->validateCartBeforeCheckout($cart);
 
             $customer = $this->findOrCreateCustomer($data, $userId);
 
@@ -91,7 +88,7 @@ class CartCheckoutService
                 'grand_total' => $grandTotal,
 
                 'customer_notes' => $data['customer_notes'] ?? null,
-                'internal_notes' => 'Created from storefront checkout. Cart: ' . $cart->cart_number,
+                'internal_notes' => 'Created from storefront checkout. Cart: '.$cart->cart_number,
 
                 'is_active' => true,
                 'sort_order' => 0,
@@ -138,89 +135,6 @@ class CartCheckoutService
 
             return $order->refresh();
         });
-    }
-
-    private function validateCartBeforeCheckout(Cart $cart): void
-    {
-        foreach ($cart->items as $cartItem) {
-            $product = $cartItem->product;
-
-            if (! $product) {
-                throw new RuntimeException('Product not found in cart item.');
-            }
-
-            $quantity = max((int) $cartItem->quantity, 1);
-            $productType = $this->resolveProductType($product);
-
-            if ($productType === 'digital' || $productType === 'digital_code' || $cartItem->item_type === 'digital_code') {
-                $this->validateDigitalCodeAvailability($product->id, $quantity);
-                continue;
-            }
-
-            if ($cartItem->productVariant) {
-                $this->validateVariantStock($cartItem->productVariant, $quantity);
-                continue;
-            }
-
-            $this->validateProductStock($product, $quantity);
-        }
-    }
-
-    private function validateProductStock($product, int $quantity): void
-    {
-        if (! Schema::hasColumn('products', 'stock_quantity')) {
-            return;
-        }
-
-        $trackStock = Schema::hasColumn('products', 'track_stock')
-            ? (bool) $product->track_stock
-            : true;
-
-        if (! $trackStock) {
-            return;
-        }
-
-        if ((int) ($product->stock_quantity ?? 0) < $quantity) {
-            throw new RuntimeException('Insufficient stock for product: ' . ($product->sku ?? $product->id));
-        }
-    }
-
-    private function validateVariantStock($variant, int $quantity): void
-    {
-        if (! Schema::hasColumn('product_variants', 'stock_quantity')) {
-            return;
-        }
-
-        $trackStock = Schema::hasColumn('product_variants', 'track_stock')
-            ? (bool) $variant->track_stock
-            : true;
-
-        if (! $trackStock) {
-            return;
-        }
-
-        if ((int) ($variant->stock_quantity ?? 0) < $quantity) {
-            throw new RuntimeException('Insufficient stock for variant: ' . ($variant->sku ?? $variant->id));
-        }
-    }
-
-    private function validateDigitalCodeAvailability(int $productId, int $quantity): void
-    {
-        if (! Schema::hasTable('product_digital_codes')) {
-            throw new RuntimeException('Digital codes table does not exist.');
-        }
-
-        $availableCount = DB::table('product_digital_codes')
-            ->where('product_id', $productId)
-            ->where(function ($query) {
-                $query->where('status', 'available')
-                    ->orWhereNull('status');
-            })
-            ->count();
-
-        if ($availableCount < $quantity) {
-            throw new RuntimeException('Not enough digital codes available.');
-        }
     }
 
     private function findOrCreateCustomer(array $data, ?int $userId = null): ?Customer
@@ -347,7 +261,7 @@ class CartCheckoutService
     private function createModel(string $modelClass, string $table, array $attributes): Model
     {
         /** @var Model $model */
-        $model = new $modelClass();
+        $model = new $modelClass;
 
         $model->forceFill($this->filterColumns($table, $attributes));
         $model->save();
@@ -385,21 +299,10 @@ class CartCheckoutService
         return [];
     }
 
-    private function resolveProductType($product): string
-    {
-        $type = $product->product_type ?? null;
-
-        if ($type instanceof \BackedEnum) {
-            return (string) $type->value;
-        }
-
-        return (string) $type;
-    }
-
     private function generateOrderNumber(): string
     {
         do {
-            $number = 'ORD-' . now()->format('Ymd') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+            $number = 'ORD-'.now()->format('Ymd').'-'.str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
         } while (Order::query()->where('order_number', $number)->exists());
 
         return $number;
@@ -408,11 +311,11 @@ class CartCheckoutService
     private function generatePaymentNumber(): string
     {
         if (! Schema::hasTable('payments')) {
-            return 'PAY-' . strtoupper(Str::random(8));
+            return 'PAY-'.strtoupper(Str::random(8));
         }
 
         do {
-            $number = 'PAY-' . now()->format('Ymd') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+            $number = 'PAY-'.now()->format('Ymd').'-'.str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
         } while (Payment::query()->where('payment_number', $number)->exists());
 
         return $number;

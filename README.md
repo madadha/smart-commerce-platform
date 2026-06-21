@@ -395,11 +395,11 @@ Readiness percentages are planning estimates based on the current codebase, not 
 
 Target: make order creation transactional, concurrency-safe, and predictable.
 
-- [ ] Consolidate all checkout inventory handling into one service.
-- [ ] Remove duplicate product stock deduction during checkout.
-- [ ] Deduct stock from the selected variant instead of the base product when applicable.
-- [ ] Lock affected products, variants, and digital codes before validation and deduction.
-- [ ] Reserve digital codes when an order is created and mark them sold only after confirmed payment.
+- [x] Consolidate all checkout inventory handling into one service.
+- [x] Remove duplicate product stock deduction during checkout.
+- [x] Deduct stock from the selected variant instead of the base product when applicable.
+- [x] Lock affected products, variants, and digital codes before validation and deduction.
+- [x] Reserve digital codes when an order is created and mark them sold only after confirmed payment.
 - [ ] Release reserved stock and digital codes after payment failure, cancellation, or reservation expiry.
 - [ ] Define explicit inventory behavior for physical, digital, service, subscription, and bundle products.
 - [ ] Centralize subtotal, coupon, tax, shipping, and grand-total calculations.
