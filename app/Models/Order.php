@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ShippingMethod as ShippingMethodEnum;
+use App\Services\Pricing\CommerceTotalsCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -85,35 +86,30 @@ class Order extends Model
 
             if ($order->shippingMethod) {
                 $order->shipping_method = $order->shippingMethod->type?->value ?? $order->shipping_method;
-                $order->shipping_total = $order->shippingMethod->calculateCost((float) $order->subtotal);
             }
 
-            if ($order->coupon) {
-                $order->discount_total = $order->coupon->calculateDiscount(
-                    (float) $order->subtotal,
-                    (float) $order->shipping_total
-                );
-            }
-
-            $order->grand_total = max(
-                0,
-                (float) $order->subtotal
-                - (float) $order->discount_total
-                + (float) $order->tax_total
-                + (float) $order->shipping_total
+            $totals = app(CommerceTotalsCalculator::class)->calculate(
+                subtotal: (float) $order->subtotal,
+                taxTotal: (float) $order->tax_total,
+                coupon: $order->coupon,
+                shippingMethod: $order->shippingMethod,
             );
+
+            $order->discount_total = $totals['discountTotal'];
+            $order->shipping_total = $totals['shippingTotal'];
+            $order->grand_total = $totals['grandTotal'];
         });
     }
 
     public static function generateOrderNumber(): string
     {
-        $prefix = 'ORD-' . now()->format('Ymd') . '-';
+        $prefix = 'ORD-'.now()->format('Ymd').'-';
 
         $count = self::query()
             ->whereDate('created_at', today())
             ->count() + 1;
 
-        return $prefix . str_pad((string) $count, 5, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $count, 5, '0', STR_PAD_LEFT);
     }
 
     public function customer(): BelongsTo
@@ -158,7 +154,6 @@ class Order extends Model
             ->orderBy('id');
     }
 
-
     public function statusHistories(): HasMany
     {
         return $this->hasMany(OrderStatusHistory::class)
@@ -175,7 +170,6 @@ class Order extends Model
             ->orderByDesc('created_at')
             ->orderByDesc('id');
     }
-
 
     public function attachments(): HasMany
     {
@@ -213,10 +207,19 @@ class Order extends Model
     {
         $subtotal = $this->items()->sum('line_total');
 
-        $this->subtotal = $subtotal;
+        $totals = app(CommerceTotalsCalculator::class)->calculate(
+            subtotal: (float) $subtotal,
+            taxTotal: (float) $this->tax_total,
+            coupon: $this->coupon,
+            shippingMethod: $this->shippingMethod,
+        );
+
+        $this->subtotal = $totals['subtotal'];
+        $this->discount_total = $totals['discountTotal'];
+        $this->shipping_total = $totals['shippingTotal'];
+        $this->grand_total = $totals['grandTotal'];
 
         if ($this->shippingMethod) {
-            $this->shipping_total = $this->shippingMethod->calculateCost((float) $subtotal);
             $this->shipping_method = $this->shippingMethod->type?->value ?? $this->shipping_method;
         }
 
@@ -225,19 +228,7 @@ class Order extends Model
             $this->coupon_discount_type = $this->coupon->discount_type?->value ?? null;
             $this->coupon_discount_value = $this->coupon->discount_value;
 
-            $this->discount_total = $this->coupon->calculateDiscount(
-                (float) $subtotal,
-                (float) $this->shipping_total
-            );
         }
-
-        $this->grand_total = max(
-            0,
-            (float) $this->subtotal
-            - (float) $this->discount_total
-            + (float) $this->tax_total
-            + (float) $this->shipping_total
-        );
 
         $this->saveQuietly();
     }

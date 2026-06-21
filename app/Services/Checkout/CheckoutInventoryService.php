@@ -52,6 +52,10 @@ class CheckoutInventoryService
     public function fulfillOrderInventory(Order $order): void
     {
         DB::transaction(function () use ($order): void {
+            if ($order->items()->where('inventory_status', 'released')->exists()) {
+                $this->reserveOrderInventory($order);
+            }
+
             $order->load('items');
 
             foreach ($order->items as $orderItem) {

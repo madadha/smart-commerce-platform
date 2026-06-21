@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CartStatus;
+use App\Services\Pricing\CommerceTotalsCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -62,36 +63,28 @@ class Cart extends Model
                 $cart->coupon_discount_value = $cart->coupon->discount_value;
             }
 
-            if ($cart->shippingMethod) {
-                $cart->shipping_total = $cart->shippingMethod->calculateCost((float) $cart->subtotal);
-            }
-
-            if ($cart->coupon) {
-                $cart->discount_total = $cart->coupon->calculateDiscount(
-                    (float) $cart->subtotal,
-                    (float) $cart->shipping_total
-                );
-            }
-
-            $cart->grand_total = max(
-                0,
-                (float) $cart->subtotal
-                - (float) $cart->discount_total
-                + (float) $cart->tax_total
-                + (float) $cart->shipping_total
+            $totals = app(CommerceTotalsCalculator::class)->calculate(
+                subtotal: (float) $cart->subtotal,
+                taxTotal: (float) $cart->tax_total,
+                coupon: $cart->coupon,
+                shippingMethod: $cart->shippingMethod,
             );
+
+            $cart->discount_total = $totals['discountTotal'];
+            $cart->shipping_total = $totals['shippingTotal'];
+            $cart->grand_total = $totals['grandTotal'];
         });
     }
 
     public static function generateCartNumber(): string
     {
-        $prefix = 'CART-' . now()->format('Ymd') . '-';
+        $prefix = 'CART-'.now()->format('Ymd').'-';
 
         $count = self::query()
             ->whereDate('created_at', today())
             ->count() + 1;
 
-        return $prefix . str_pad((string) $count, 5, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $count, 5, '0', STR_PAD_LEFT);
     }
 
     public function user(): BelongsTo
@@ -128,30 +121,24 @@ class Cart extends Model
     {
         $subtotal = $this->items()->sum('line_total');
 
-        $this->subtotal = $subtotal;
+        $totals = app(CommerceTotalsCalculator::class)->calculate(
+            subtotal: (float) $subtotal,
+            taxTotal: (float) $this->tax_total,
+            coupon: $this->coupon,
+            shippingMethod: $this->shippingMethod,
+        );
 
-        if ($this->shippingMethod) {
-            $this->shipping_total = $this->shippingMethod->calculateCost((float) $subtotal);
-        }
+        $this->subtotal = $totals['subtotal'];
+        $this->discount_total = $totals['discountTotal'];
+        $this->shipping_total = $totals['shippingTotal'];
+        $this->grand_total = $totals['grandTotal'];
 
         if ($this->coupon) {
             $this->coupon_code = $this->coupon->code;
             $this->coupon_discount_type = $this->coupon->discount_type?->value ?? null;
             $this->coupon_discount_value = $this->coupon->discount_value;
 
-            $this->discount_total = $this->coupon->calculateDiscount(
-                (float) $subtotal,
-                (float) $this->shipping_total
-            );
         }
-
-        $this->grand_total = max(
-            0,
-            (float) $this->subtotal
-            - (float) $this->discount_total
-            + (float) $this->tax_total
-            + (float) $this->shipping_total
-        );
 
         $this->saveQuietly();
     }

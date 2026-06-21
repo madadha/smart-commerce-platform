@@ -382,11 +382,11 @@ This roadmap is the agreed execution order for taking the platform from its curr
 | --- | ---: | --- |
 | Storefront UI and localization | 85% | Responsive Arabic/Hebrew RTL and English LTR flows are available. |
 | Catalog, media, options, and variants | 80% | Product gallery, video, options, variants, and digital codes are managed from Filament. |
-| Cart and order creation | 65% | Main flow exists, but inventory and payment lifecycle hardening is required. |
-| Inventory and digital fulfillment | 50% | Concurrency, reservation, cancellation, and release rules must be completed. |
+| Cart and order creation | 80% | Totals and inventory processing are centralized; live payment integration remains. |
+| Inventory and digital fulfillment | 80% | Transactional reservation, fulfillment, cancellation, failure, and expiry rules are implemented. |
 | Live payments and refunds | 20% | Payment records exist; a real gateway and verified webhooks are not implemented yet. |
 | Admin authorization and security | 45% | Roles exist, but resource-level policies and stronger admin controls are required. |
-| Automated commerce coverage | 25% | Authentication and basic storefront tests pass; critical commerce flows need coverage. |
+| Automated commerce coverage | 40% | Inventory, variants, digital reservations, totals, authentication, and storefront basics are covered. |
 | Production operations | 50% | Deployment, queues, mail, backups, monitoring, and live credentials remain. |
 
 Readiness percentages are planning estimates based on the current codebase, not release guarantees.
@@ -400,10 +400,10 @@ Target: make order creation transactional, concurrency-safe, and predictable.
 - [x] Deduct stock from the selected variant instead of the base product when applicable.
 - [x] Lock affected products, variants, and digital codes before validation and deduction.
 - [x] Reserve digital codes when an order is created and mark them sold only after confirmed payment.
-- [ ] Release reserved stock and digital codes after payment failure, cancellation, or reservation expiry.
-- [ ] Define explicit inventory behavior for physical, digital, service, subscription, and bundle products.
-- [ ] Centralize subtotal, coupon, tax, shipping, and grand-total calculations.
-- [ ] Add tests for insufficient stock, last-item concurrency, variants, and digital-code allocation.
+- [x] Release reserved stock and digital codes after payment failure, cancellation, or reservation expiry.
+- [x] Define explicit inventory behavior for physical, digital, service, subscription, and bundle products.
+- [x] Centralize subtotal, coupon, tax, shipping, and grand-total calculations.
+- [x] Add tests for insufficient stock, last-item concurrency, variants, and digital-code allocation.
 
 Exit criteria: no double deduction, no overselling under concurrent checkout, and no digital code delivered before payment.
 

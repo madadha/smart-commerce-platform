@@ -325,22 +325,7 @@ class StorefrontCartController extends Controller
 
     private function recalculateCartTotals(Cart $cart): void
     {
-        $cart->load('items');
-
-        $subtotal = (float) $cart->items->sum(function ($item) {
-            return (float) $item->line_total;
-        });
-
-        $discountTotal = (float) ($cart->discount_total ?? 0);
-        $taxTotal = (float) ($cart->tax_total ?? 0);
-        $shippingTotal = (float) ($cart->shipping_total ?? 0);
-
-        $grandTotal = max($subtotal - $discountTotal + $taxTotal + $shippingTotal, 0);
-
-        $cart->update([
-            'subtotal' => $subtotal,
-            'grand_total' => $grandTotal,
-        ]);
+        $cart->recalculateTotals();
     }
 
     private function resolveItemType(Product $product): string

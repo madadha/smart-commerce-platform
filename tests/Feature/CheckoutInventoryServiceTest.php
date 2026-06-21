@@ -11,6 +11,8 @@ use App\Models\ProductDigitalCode;
 use App\Models\ProductVariant;
 use App\Services\Checkout\CheckoutInventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use RuntimeException;
 use Tests\TestCase;
 
 class CheckoutInventoryServiceTest extends TestCase
@@ -148,6 +150,80 @@ class CheckoutInventoryServiceTest extends TestCase
             'order_item_id' => $item->id,
             'status' => DigitalCodeStatus::Sold->value,
         ]);
+    }
+
+    public function test_insufficient_stock_rolls_back_without_changing_inventory(): void
+    {
+        $product = $this->createProduct(stock: 1);
+        [$order] = $this->createOrderItem($product, quantity: 2);
+
+        try {
+            app(CheckoutInventoryService::class)->reserveOrderInventory($order);
+            $this->fail('Expected insufficient stock exception was not thrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('Insufficient stock', $exception->getMessage());
+        }
+
+        $this->assertSame(1, $product->fresh()->stock_quantity);
+        $this->assertNull($order->items()->first()->inventory_status);
+    }
+
+    public function test_the_last_stock_unit_cannot_be_reserved_by_a_second_order(): void
+    {
+        $product = $this->createProduct(stock: 1);
+        [$firstOrder] = $this->createOrderItem($product);
+        [$secondOrder] = $this->createOrderItem($product);
+        $service = app(CheckoutInventoryService::class);
+
+        $service->reserveOrderInventory($firstOrder);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Insufficient stock');
+        $service->reserveOrderInventory($secondOrder);
+    }
+
+    public function test_terminal_failed_payment_releases_inventory_when_no_attempt_is_pending(): void
+    {
+        $product = $this->createProduct(stock: 3);
+        [$order] = $this->createOrderItem($product, quantity: 2);
+        app(CheckoutInventoryService::class)->reserveOrderInventory($order);
+        $payment = Payment::query()->forceCreate([
+            'payment_number' => 'PAY-FAILED-'.uniqid(),
+            'order_id' => $order->id,
+            'payment_method' => 'test',
+            'status' => 'pending',
+            'amount' => $order->grand_total,
+            'is_active' => true,
+        ]);
+
+        $payment->update(['status' => 'failed', 'failed_at' => now()]);
+
+        $this->assertSame(3, $product->fresh()->stock_quantity);
+        $this->assertSame('released', $order->items()->first()->inventory_status);
+    }
+
+    public function test_expired_reservation_command_releases_only_old_unpaid_orders(): void
+    {
+        Carbon::setTestNow('2026-06-22 12:00:00');
+        config(['commerce.inventory_reservation_minutes' => 30]);
+        $expiredProduct = $this->createProduct(stock: 2);
+        [$expiredOrder, $expiredItem] = $this->createOrderItem($expiredProduct);
+        $freshProduct = $this->createProduct(stock: 2);
+        [$freshOrder, $freshItem] = $this->createOrderItem($freshProduct);
+        $service = app(CheckoutInventoryService::class);
+        $service->reserveOrderInventory($expiredOrder);
+        $service->reserveOrderInventory($freshOrder);
+        $expiredItem->updateQuietly(['inventory_reserved_at' => now()->subMinutes(31)]);
+
+        $this->artisan('commerce:release-expired-reservations')
+            ->expectsOutput('Released inventory reservations for 1 order(s).')
+            ->assertSuccessful();
+
+        $this->assertSame('released', $expiredItem->fresh()->inventory_status);
+        $this->assertSame(2, $expiredProduct->fresh()->stock_quantity);
+        $this->assertSame('reserved', $freshItem->fresh()->inventory_status);
+        $this->assertSame(1, $freshProduct->fresh()->stock_quantity);
+        Carbon::setTestNow();
     }
 
     private function createProduct(int $stock, string $type = 'physical'): Product

@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\ShippingMethod;
+use App\Services\Pricing\CommerceTotalsCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -18,7 +19,8 @@ use RuntimeException;
 class CartCheckoutService
 {
     public function __construct(
-        private readonly CheckoutInventoryService $checkoutInventoryService
+        private readonly CheckoutInventoryService $checkoutInventoryService,
+        private readonly CommerceTotalsCalculator $totalsCalculator,
     ) {}
 
     public function convertCartToOrder(Cart $cart, array $data, ?int $userId = null): Order
@@ -36,15 +38,22 @@ class CartCheckoutService
 
             $customer = $this->findOrCreateCustomer($data, $userId);
 
-            $shippingTotal = $this->resolveShippingTotal($data['shipping_method_id'] ?? null);
-
             $subtotal = (float) $cart->items->sum(function ($item) {
                 return (float) ($item->line_total ?? ((float) $item->unit_price * (int) $item->quantity));
             });
-
-            $discountTotal = (float) ($cart->discount_total ?? 0);
-            $taxTotal = (float) ($cart->tax_total ?? 0);
-            $grandTotal = max($subtotal - $discountTotal + $taxTotal + $shippingTotal, 0);
+            $shippingMethod = isset($data['shipping_method_id'])
+                ? ShippingMethod::query()->where('is_active', true)->find($data['shipping_method_id'])
+                : null;
+            $totals = $this->totalsCalculator->calculate(
+                subtotal: $subtotal,
+                taxTotal: (float) ($cart->tax_total ?? 0),
+                coupon: $cart->coupon,
+                shippingMethod: $shippingMethod,
+            );
+            $discountTotal = $totals['discountTotal'];
+            $taxTotal = $totals['taxTotal'];
+            $shippingTotal = $totals['shippingTotal'];
+            $grandTotal = $totals['grandTotal'];
 
             $cart->forceFill($this->filterColumns('carts', [
                 'customer_id' => $customer?->id,
@@ -208,27 +217,6 @@ class CartCheckoutService
         $lastName = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
 
         return [$firstName, $lastName];
-    }
-
-    private function resolveShippingTotal(?int $shippingMethodId): float
-    {
-        if (! $shippingMethodId || ! Schema::hasTable('shipping_methods')) {
-            return 0;
-        }
-
-        $shippingMethod = ShippingMethod::query()->find($shippingMethodId);
-
-        if (! $shippingMethod) {
-            return 0;
-        }
-
-        foreach (['price', 'cost', 'amount', 'shipping_cost', 'base_cost'] as $column) {
-            if (Schema::hasColumn('shipping_methods', $column) && $shippingMethod->{$column} !== null) {
-                return (float) $shippingMethod->{$column};
-            }
-        }
-
-        return 0;
     }
 
     private function createPendingPaymentIfPossible(
