@@ -31,6 +31,7 @@ class PaymentProviderSettingTest extends TestCase
                 'api_key' => 'sandbox-api-secret',
                 'secret_key' => 'sandbox-private-secret',
                 'payment_page_uid' => 'sandbox-page-uid',
+                'terminal_uid' => 'sandbox-terminal-uid',
             ],
         ]);
 
@@ -53,6 +54,7 @@ class PaymentProviderSettingTest extends TestCase
                 'api_key' => 'api-key',
                 'secret_key' => 'secret-key',
                 'payment_page_uid' => 'page-uid',
+                'terminal_uid' => 'terminal-uid',
             ],
         ]);
 

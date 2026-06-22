@@ -111,6 +111,15 @@ class StorefrontCheckoutController extends Controller
 
             $this->sendOrderCreatedEmail($order, $locale);
 
+            $checkoutPayment = $order->payments()
+                ->whereNotNull('checkout_url')
+                ->latest('id')
+                ->first();
+
+            if ($checkoutPayment?->checkout_url) {
+                return redirect()->away($checkoutPayment->checkout_url);
+            }
+
             return redirect()
                 ->to(URL::signedRoute('storefront.orders.show', [
                     'order' => $order->id,

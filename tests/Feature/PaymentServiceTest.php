@@ -47,7 +47,8 @@ class PaymentServiceTest extends TestCase
         $second = $service->markPaid($first, 'provider-reference-1', ['event' => 'paid']);
 
         $this->assertSame(PaymentTransactionStatus::Paid, $second->status);
-        $this->assertSame('provider-reference-1', $second->provider_reference);
+        $this->assertSame($payment->provider_reference, $second->provider_reference);
+        $this->assertSame('provider-reference-1', $second->transaction_id);
         $this->assertSame(100.0, (float) $order->fresh()->paid_total);
         $this->assertSame('paid', $order->fresh()->payment_status->value);
     }

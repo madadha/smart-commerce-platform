@@ -55,7 +55,7 @@ class PaymentProviderSetting extends Model
     {
         $credentials = $this->activeCredentials();
         $required = match ($this->provider) {
-            'payplus' => ['api_key', 'secret_key', 'payment_page_uid'],
+            'payplus' => ['api_key', 'secret_key', 'payment_page_uid', 'terminal_uid'],
             'paypal' => ['client_id', 'client_secret', 'webhook_id'],
             'stripe' => ['publishable_key', 'secret_key', 'webhook_secret'],
             'paddle' => ['client_token', 'api_key', 'webhook_secret'],

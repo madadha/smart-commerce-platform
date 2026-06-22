@@ -42,7 +42,7 @@ jobs:
         run: composer audit --locked --no-interaction
 
       - name: Check PHP formatting
-        run: vendor/bin/pint --test app/Contracts app/Payments app/Services/Checkout app/Services/Payments app/Services/Pricing app/Observers app/Console app/Filament/Resources/PaymentProviderSettings app/Models/User.php app/Models/Payment.php app/Models/PaymentWebhookEvent.php app/Models/PaymentProviderSetting.php app/Enums/PaymentTransactionStatus.php tests
+        run: vendor/bin/pint --test app/Contracts app/Payments app/Services/Checkout app/Services/Payments app/Services/Pricing app/Observers app/Console app/Filament/Resources/PaymentProviderSettings app/Http/Controllers/Payments app/Http/Controllers/Storefront/StorefrontCheckoutController.php app/Models/User.php app/Models/Payment.php app/Models/PaymentWebhookEvent.php app/Models/PaymentProviderSetting.php app/Enums/PaymentTransactionStatus.php bootstrap/app.php routes/web.php tests
 
       - name: Run application tests
         run: php artisan test

@@ -7,11 +7,13 @@ use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\PaymentProviderSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -233,6 +235,50 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertSame(20.0, (float) $order->shipping_total);
         $this->assertSame(875.0, (float) $order->grand_total);
         $this->assertSame('CHECKOUT10', $order->coupon_code);
+    }
+
+    public function test_verified_payplus_checkout_redirects_to_the_hosted_payment_page(): void
+    {
+        Mail::fake();
+        [$product, $variant] = $this->createProductWithVariant();
+        PaymentProviderSetting::query()->where('provider', 'payplus')->firstOrFail()->update([
+            'is_enabled' => true,
+            'connection_status' => 'verified',
+            'sandbox_credentials' => [
+                'api_key' => 'sandbox-api-key',
+                'secret_key' => 'sandbox-secret-key',
+                'payment_page_uid' => 'sandbox-page-uid',
+                'terminal_uid' => 'sandbox-terminal-uid',
+            ],
+        ]);
+        Http::fake([
+            'https://restapidev.payplus.co.il/api/v1.0/PaymentPages/generateLink' => Http::response([
+                'results' => ['status' => 'success', 'code' => 0],
+                'data' => [
+                    'page_request_uid' => 'checkout-page-request',
+                    'payment_page_link' => 'https://payments.example.test/checkout-page-request',
+                ],
+            ]),
+        ]);
+        $this->post(route('storefront.cart.add'), [
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 1,
+        ]);
+
+        $this->post(route('storefront.checkout.place'), [
+            'customer_name' => 'PayPlus Customer',
+            'customer_phone' => '0504444444',
+            'city' => 'Jerusalem',
+            'address' => 'PayPlus Street 5',
+            'payment_method' => 'payplus',
+        ])->assertRedirect('https://payments.example.test/checkout-page-request');
+
+        $this->assertDatabaseHas('payments', [
+            'provider' => 'payplus',
+            'provider_reference' => 'checkout-page-request',
+            'status' => 'pending',
+        ]);
     }
 
     private function createProductWithVariant(string $suffix = 'primary'): array

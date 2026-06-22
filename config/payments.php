@@ -1,10 +1,12 @@
 <?php
 
 use App\Payments\Gateways\ManualPaymentGateway;
+use App\Payments\Gateways\PayPlusPaymentGateway;
 
 return [
     'gateways' => [
         'manual' => ManualPaymentGateway::class,
+        'payplus' => PayPlusPaymentGateway::class,
     ],
 
     'methods' => [

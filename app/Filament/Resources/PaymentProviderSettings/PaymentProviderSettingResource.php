@@ -179,6 +179,11 @@ class PaymentProviderSettingResource extends Resource
                 ->password()
                 ->revealable()
                 ->visible(fn (?PaymentProviderSetting $record): bool => $record?->provider === 'payplus'),
+            TextInput::make("{$prefix}.terminal_uid")
+                ->label('Terminal UID')
+                ->password()
+                ->revealable()
+                ->visible(fn (?PaymentProviderSetting $record): bool => $record?->provider === 'payplus'),
             TextInput::make("{$prefix}.client_id")
                 ->label('Client ID')
                 ->password()

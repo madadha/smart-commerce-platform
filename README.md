@@ -429,7 +429,7 @@ Target: integrate one production payment provider correctly before adding more g
 - [x] Define a provider-independent payment gateway contract.
 - [ ] Integrate the first selected live payment provider.
 - [x] Create and persist payment attempts with unique idempotency keys.
-- [ ] Verify webhook signatures and reject invalid callbacks.
+- [x] Verify webhook signatures and reject invalid callbacks.
 - [x] Make webhook processing idempotent so duplicate events cannot duplicate payment or fulfillment.
 - [x] Support pending, paid, failed, cancelled, partially refunded, and refunded states.
 - [x] Support full and partial refunds with an audit trail.
@@ -451,6 +451,19 @@ The Filament `Payment Providers` module manages PayPlus, PayPal, Stripe, and Pad
 - Checkout exposure only after credentials are complete, the connection is verified, and the provider integration is installed.
 
 Recommended rollout order for the current mixed physical/digital store is PayPlus, PayPal, then any globally eligible provider. Paddle should remain scoped to digital products and subscriptions.
+
+The PayPlus connector currently supports:
+
+- Staging and production API endpoints selected by provider mode.
+- Hosted payment-link creation without handling card details in this application.
+- Signed success, failure, and cancellation return URLs.
+- HMAC-SHA256/Base64 callback verification and duplicate-event protection.
+- Amount and currency validation before payment confirmation.
+- Failed-payment handling, inventory release, and paid digital fulfillment.
+- Partial and full refunds by PayPlus transaction UID.
+- Admin-side connection testing against the configured terminal.
+
+PayPlus remains hidden from checkout until Sandbox credentials are entered and `Test Connection` succeeds.
 
 ### Phase 4 — Shipping and Fulfillment
 

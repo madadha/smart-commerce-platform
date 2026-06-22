@@ -72,7 +72,7 @@ class PaymentService
 
     public function markPaid(
         Payment $payment,
-        string $providerReference,
+        string $transactionId,
         array $payload = []
     ): Payment {
         if ($payment->status === PaymentTransactionStatus::Paid) {
@@ -81,7 +81,28 @@ class PaymentService
 
         return $this->applyGatewayResult($payment, new GatewayPaymentResult(
             status: PaymentTransactionStatus::Paid,
-            providerReference: $providerReference,
+            providerReference: $payment->provider_reference ?? $transactionId,
+            transactionId: $transactionId,
+            payload: $payload,
+        ));
+    }
+
+    public function recordRefund(
+        Payment $payment,
+        float $amount,
+        string $transactionId,
+        array $payload = [],
+    ): Payment {
+        $newRefundedAmount = min((float) $payment->refunded_amount + $amount, (float) $payment->amount);
+        $payment->refunded_amount = $newRefundedAmount;
+        $payment->refunded_at = now();
+
+        return $this->applyGatewayResult($payment, new GatewayPaymentResult(
+            status: $newRefundedAmount >= (float) $payment->amount
+                ? PaymentTransactionStatus::Refunded
+                : PaymentTransactionStatus::PartiallyRefunded,
+            providerReference: $payment->provider_reference,
+            transactionId: $transactionId,
             payload: $payload,
         ));
     }
@@ -142,6 +163,9 @@ class PaymentService
         $payment->forceFill([
             'status' => $result->status,
             'provider_reference' => $result->providerReference ?? $payment->provider_reference,
+            'transaction_id' => $result->transactionId ?? $payment->transaction_id,
+            'checkout_url' => $result->redirectUrl ?? $payment->checkout_url,
+            'checkout_expires_at' => $result->redirectUrl ? now()->addMinutes(30) : $payment->checkout_expires_at,
             'provider_payload' => $payload,
             'failure_code' => $result->failureCode,
             'failure_message' => $result->failureMessage,
