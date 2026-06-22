@@ -199,6 +199,13 @@ class StorefrontCheckoutController extends Controller
     {
         return collect($this->paymentGatewayManager->enabledMethods())
             ->mapWithKeys(function (array $config, string $method): array {
+                $displayName = $config['display_name'] ?? null;
+                $locale = app()->getLocale();
+
+                if (is_array($displayName)) {
+                    return [$method => $displayName[$locale] ?? $displayName['en'] ?? ucfirst($method)];
+                }
+
                 $translationKey = $config['translation_key'] ?? null;
 
                 return [$method => $translationKey ? __($translationKey) : ucfirst(str_replace('_', ' ', $method))];

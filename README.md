@@ -438,6 +438,20 @@ Target: integrate one production payment provider correctly before adding more g
 
 Exit criteria: successful, failed, cancelled, duplicated, delayed, and refunded payment scenarios pass in the provider sandbox.
 
+#### Payment Provider Administration
+
+The Filament `Payment Providers` module manages PayPlus, PayPal, Stripe, and Paddle from one controlled screen:
+
+- Independent enable/disable and checkout ordering for each provider.
+- Separate Sandbox and Live credentials.
+- AES-encrypted credential storage using the Laravel application key.
+- Multilingual checkout names and descriptions.
+- Supported currency configuration.
+- Connection state, last test timestamp, and diagnostic error tracking.
+- Checkout exposure only after credentials are complete, the connection is verified, and the provider integration is installed.
+
+Recommended rollout order for the current mixed physical/digital store is PayPlus, PayPal, then any globally eligible provider. Paddle should remain scoped to digital products and subscriptions.
+
 ### Phase 4 — Shipping and Fulfillment
 
 Target: make physical and digital order delivery operationally complete.
