@@ -11,6 +11,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'payment_number',
+        'idempotency_key',
         'order_id',
         'customer_id',
         'currency_id',
@@ -22,6 +23,8 @@ class Payment extends Model
         'provider',
         'provider_reference',
         'provider_payload',
+        'failure_code',
+        'failure_message',
         'paid_at',
         'failed_at',
         'refunded_at',
@@ -108,12 +111,16 @@ class Payment extends Model
         foreach ($payments as $payment) {
             if (in_array($payment->status, [
                 PaymentTransactionStatus::Paid,
+                PaymentTransactionStatus::PartiallyRefunded,
                 PaymentTransactionStatus::Refunded,
             ], true)) {
                 $grossPaid += (float) $payment->amount;
             }
 
-            if ($payment->status === PaymentTransactionStatus::Refunded) {
+            if (in_array($payment->status, [
+                PaymentTransactionStatus::PartiallyRefunded,
+                PaymentTransactionStatus::Refunded,
+            ], true)) {
                 $refundedAmount = (float) $payment->refunded_amount;
                 $refundedTotal += $refundedAmount > 0 ? $refundedAmount : (float) $payment->amount;
             } else {

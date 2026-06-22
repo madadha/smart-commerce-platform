@@ -384,7 +384,7 @@ This roadmap is the agreed execution order for taking the platform from its curr
 | Catalog, media, options, and variants | 80% | Product gallery, video, options, variants, and digital codes are managed from Filament. |
 | Cart and order creation | 80% | Totals and inventory processing are centralized; live payment integration remains. |
 | Inventory and digital fulfillment | 80% | Transactional reservation, fulfillment, cancellation, failure, and expiry rules are implemented. |
-| Live payments and refunds | 20% | Payment records exist; a real gateway and verified webhooks are not implemented yet. |
+| Live payments and refunds | 55% | Gateway contracts, safe attempts, idempotency, refund states, and webhook event deduplication exist; a live provider remains. |
 | Admin authorization and security | 55% | Admin panel entry now requires explicit permission; resource-level policies remain. |
 | Automated commerce coverage | 70% | CI covers inventory, cart variants, checkout, totals, refunds, invoices, localization, auth throttling, signed URLs, and frontend builds. |
 | Production operations | 50% | Deployment, queues, mail, backups, monitoring, and live credentials remain. |
@@ -426,15 +426,15 @@ Exit criteria: all critical scenarios run automatically and must pass before a b
 
 Target: integrate one production payment provider correctly before adding more gateways.
 
-- [ ] Define a provider-independent payment gateway contract.
+- [x] Define a provider-independent payment gateway contract.
 - [ ] Integrate the first selected live payment provider.
-- [ ] Create and persist payment attempts with unique idempotency keys.
+- [x] Create and persist payment attempts with unique idempotency keys.
 - [ ] Verify webhook signatures and reject invalid callbacks.
-- [ ] Make webhook processing idempotent so duplicate events cannot duplicate payment or fulfillment.
-- [ ] Support pending, paid, failed, cancelled, partially refunded, and refunded states.
-- [ ] Support full and partial refunds with an audit trail.
+- [x] Make webhook processing idempotent so duplicate events cannot duplicate payment or fulfillment.
+- [x] Support pending, paid, failed, cancelled, partially refunded, and refunded states.
+- [x] Support full and partial refunds with an audit trail.
 - [ ] Add payment reconciliation and failed-webhook monitoring.
-- [ ] Fulfill digital orders only after a verified paid event.
+- [x] Fulfill digital orders only after a verified paid event.
 
 Exit criteria: successful, failed, cancelled, duplicated, delayed, and refunded payment scenarios pass in the provider sandbox.
 

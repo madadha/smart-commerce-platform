@@ -11,18 +11,24 @@ use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\ShippingMethod;
+use App\Payments\PaymentGatewayManager;
 use App\Services\Checkout\CartCheckoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
 
 class StorefrontCheckoutController extends Controller
 {
+    public function __construct(
+        private readonly PaymentGatewayManager $paymentGatewayManager,
+    ) {}
+
     public function index(Request $request): View
     {
         $locale = $this->resolveLocale($request);
@@ -53,6 +59,7 @@ class StorefrontCheckoutController extends Controller
             'pageTitle' => __('storefront.checkout.page_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.page_description'),
             'checkoutDefaults' => $this->checkoutDefaults(),
+            'paymentMethods' => $this->enabledPaymentMethods(),
         ]);
     }
 
@@ -75,7 +82,11 @@ class StorefrontCheckoutController extends Controller
             'city' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:500'],
             'shipping_method_id' => ['nullable', 'integer', 'exists:shipping_methods,id'],
-            'payment_method' => ['required', 'string', 'max:50'],
+            'payment_method' => [
+                'required',
+                'string',
+                Rule::in(array_keys($this->enabledPaymentMethods())),
+            ],
             'customer_notes' => ['nullable', 'string', 'max:1000'],
             'lang' => ['nullable', 'string', 'max:5'],
         ]);
@@ -182,6 +193,17 @@ class StorefrontCheckoutController extends Controller
             'address' => $customer?->street ?: $customer?->getFullAddress(),
             'customer_notes' => $customer?->address_notes,
         ];
+    }
+
+    private function enabledPaymentMethods(): array
+    {
+        return collect($this->paymentGatewayManager->enabledMethods())
+            ->mapWithKeys(function (array $config, string $method): array {
+                $translationKey = $config['translation_key'] ?? null;
+
+                return [$method => $translationKey ? __($translationKey) : ucfirst(str_replace('_', ' ', $method))];
+            })
+            ->all();
     }
 
     private function saveCustomerProfileFromCheckout(array $validated): void

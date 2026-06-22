@@ -139,6 +139,27 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertSame(5, $variant->fresh()->stock_quantity);
     }
 
+    public function test_checkout_rejects_payment_methods_without_an_enabled_gateway(): void
+    {
+        [$product, $variant] = $this->createProductWithVariant();
+        $this->post(route('storefront.cart.add'), [
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 1,
+        ]);
+
+        $this->post(route('storefront.checkout.place'), [
+            'customer_name' => 'Card Customer',
+            'customer_phone' => '0503333333',
+            'city' => 'Jerusalem',
+            'address' => 'Card Street 4',
+            'payment_method' => 'credit_card',
+        ])->assertSessionHasErrors('payment_method');
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('payments', 0);
+    }
+
     public function test_authenticated_checkout_links_the_order_and_customer_profile_to_the_user(): void
     {
         Mail::fake();

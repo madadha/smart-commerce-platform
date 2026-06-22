@@ -186,15 +186,11 @@
                                     <div class="scp-field">
                                         <label>{{ __('storefront.checkout.payment_method') }}</label>
                                         <select name="payment_method" required>
-                                            <option value="cash" @selected(old('payment_method', 'cash') === 'cash')>
-                                                {{ __('storefront.checkout.cash') }}
-                                            </option>
-                                            <option value="credit_card" @selected(old('payment_method') === 'credit_card')>
-                                                {{ __('storefront.checkout.credit_card') }}
-                                            </option>
-                                            <option value="bank_transfer" @selected(old('payment_method') === 'bank_transfer')>
-                                                {{ __('storefront.checkout.bank_transfer') }}
-                                            </option>
+                                            @foreach ($paymentMethods as $method => $label)
+                                                <option value="{{ $method }}" @selected(old('payment_method', 'cash') === $method)>
+                                                    {{ $label }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
 

@@ -7,13 +7,12 @@ use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Payment;
 use App\Models\ShippingMethod;
+use App\Services\Payments\PaymentService;
 use App\Services\Pricing\CommerceTotalsCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class CartCheckoutService
@@ -21,11 +20,12 @@ class CartCheckoutService
     public function __construct(
         private readonly CheckoutInventoryService $checkoutInventoryService,
         private readonly CommerceTotalsCalculator $totalsCalculator,
+        private readonly PaymentService $paymentService,
     ) {}
 
     public function convertCartToOrder(Cart $cart, array $data, ?int $userId = null): Order
     {
-        return DB::transaction(function () use ($cart, $data, $userId) {
+        $order = DB::transaction(function () use ($cart, $data, $userId) {
             $cart->load([
                 'items.product',
                 'items.productVariant',
@@ -134,8 +134,6 @@ class CartCheckoutService
 
             $this->checkoutInventoryService->handleOrderInventory($order);
 
-            $this->createPendingPaymentIfPossible($order, $customer, $cart, $data, $grandTotal);
-
             $cart->forceFill($this->filterColumns('carts', [
                 'status' => CartStatus::Converted->value,
                 'converted_at' => now(),
@@ -144,6 +142,16 @@ class CartCheckoutService
 
             return $order->refresh();
         });
+
+        $paymentMethod = (string) ($data['payment_method'] ?? 'cash');
+        $this->paymentService->createAttempt(
+            order: $order,
+            method: $paymentMethod,
+            idempotencyKey: "checkout:{$order->id}:{$paymentMethod}",
+            context: ['source' => 'storefront_checkout'],
+        );
+
+        return $order->fresh();
     }
 
     private function findOrCreateCustomer(array $data, ?int $userId = null): ?Customer
@@ -219,33 +227,6 @@ class CartCheckoutService
         return [$firstName, $lastName];
     }
 
-    private function createPendingPaymentIfPossible(
-        Order $order,
-        ?Customer $customer,
-        Cart $cart,
-        array $data,
-        float $amount
-    ): void {
-        if (! class_exists(Payment::class) || ! Schema::hasTable('payments')) {
-            return;
-        }
-
-        $this->createModel(Payment::class, 'payments', [
-            'payment_number' => $this->generatePaymentNumber(),
-            'order_id' => $order->id,
-            'customer_id' => $customer?->id,
-            'currency_id' => $cart->currency_id,
-            'payment_method' => $data['payment_method'] ?? 'cash',
-            'method' => $data['payment_method'] ?? 'cash',
-            'status' => 'pending',
-            'amount' => $amount,
-            'paid_at' => null,
-            'notes' => 'Created automatically from storefront checkout.',
-            'is_active' => true,
-            'sort_order' => 0,
-        ]);
-    }
-
     private function createModel(string $modelClass, string $table, array $attributes): Model
     {
         /** @var Model $model */
@@ -292,19 +273,6 @@ class CartCheckoutService
         do {
             $number = 'ORD-'.now()->format('Ymd').'-'.str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
         } while (Order::query()->where('order_number', $number)->exists());
-
-        return $number;
-    }
-
-    private function generatePaymentNumber(): string
-    {
-        if (! Schema::hasTable('payments')) {
-            return 'PAY-'.strtoupper(Str::random(8));
-        }
-
-        do {
-            $number = 'PAY-'.now()->format('Ymd').'-'.str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
-        } while (Payment::query()->where('payment_number', $number)->exists());
 
         return $number;
     }
