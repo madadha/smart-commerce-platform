@@ -18,6 +18,7 @@ class Order extends Model
         'user_id',
         'currency_id',
         'shipping_method_id',
+        'shipping_country_id',
         'coupon_id',
         'coupon_code',
         'coupon_discount_type',
@@ -30,6 +31,9 @@ class Order extends Model
         'discount_total',
         'tax_total',
         'shipping_total',
+        'shipping_weight',
+        'shipping_min_delivery_days',
+        'shipping_max_delivery_days',
         'grand_total',
         'paid_total',
         'billing_address',
@@ -52,6 +56,7 @@ class Order extends Model
         'discount_total' => 'decimal:2',
         'tax_total' => 'decimal:2',
         'shipping_total' => 'decimal:2',
+        'shipping_weight' => 'decimal:3',
         'grand_total' => 'decimal:2',
         'paid_total' => 'decimal:2',
         'coupon_discount_value' => 'decimal:2',
@@ -93,6 +98,7 @@ class Order extends Model
                 taxTotal: (float) $order->tax_total,
                 coupon: $order->coupon,
                 shippingMethod: $order->shippingMethod,
+                shippingTotalOverride: (float) $order->shipping_total,
             );
 
             $order->discount_total = $totals['discountTotal'];
@@ -130,6 +136,16 @@ class Order extends Model
     public function shippingMethod(): BelongsTo
     {
         return $this->belongsTo(ShippingMethod::class, 'shipping_method_id');
+    }
+
+    public function shippingCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'shipping_country_id');
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class)->orderByDesc('id');
     }
 
     public function coupon(): BelongsTo
@@ -212,6 +228,7 @@ class Order extends Model
             taxTotal: (float) $this->tax_total,
             coupon: $this->coupon,
             shippingMethod: $this->shippingMethod,
+            shippingTotalOverride: (float) $this->shipping_total,
         );
 
         $this->subtotal = $totals['subtotal'];

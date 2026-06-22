@@ -469,15 +469,29 @@ PayPlus remains hidden from checkout until Sandbox credentials are entered and `
 
 Target: make physical and digital order delivery operationally complete.
 
-- [ ] Add shipping zones and location-based rates.
-- [ ] Support delivery and store-pickup methods.
-- [ ] Validate shipping eligibility and cost on the server during checkout.
-- [ ] Add shipment records, carrier, tracking number, and fulfillment timestamps.
-- [ ] Define valid order and shipment status transitions.
+- [x] Add country/city shipping zones and location-based rates.
+- [x] Support delivery and store-pickup methods.
+- [x] Validate shipping eligibility and cost on the server during checkout.
+- [x] Add shipment records, carrier, tracking number, and fulfillment timestamps.
+- [x] Synchronize shipment progress with the order lifecycle and customer timeline.
 - [ ] Send localized order, payment, shipment, cancellation, and digital-delivery emails.
 - [ ] Prevent digital codes from appearing in public logs, notifications, or unauthorized screens.
 
 Exit criteria: one physical and one digital test order can be completed end-to-end from checkout to fulfillment.
+
+#### Shipping Administration and Fulfillment
+
+The Filament shipping module now separates checkout pricing from operational fulfillment:
+
+- `Shipping Methods` controls country, allowed/excluded cities, order-value limits, weight limits, base price, per-kilogram price, free-shipping threshold, delivery estimate, pickup, and external carrier details.
+- Checkout requests eligible quotes from the server as the customer enters the country and city. The selected quote is recalculated and validated again when the order is submitted.
+- Product or variant weight is multiplied by quantity; digital and service items do not add shipping weight.
+- The order stores the accepted shipping cost, total weight, destination country, and delivery estimate as a snapshot.
+- `Shipments & Tracking` supports multiple shipments per order, carrier/service, tracking number and URL, expected delivery, labels, notes, and fulfillment timestamps.
+- Every shipment status change creates a customer-visible timeline event. Delivered shipments complete the order after all of its shipments are delivered.
+- Signed order pages and phone-based order tracking show shipment progress and carrier tracking links without exposing internal notes.
+
+Automated coverage includes location and weight eligibility, server-side price calculation, shipment events, and order completion.
 
 ### Phase 5 — Authorization and Security
 

@@ -95,6 +95,8 @@
 
                 <div class="scp-order-main">
 
+                    @include('storefront.orders.partials.shipments')
+
                     <div class="scp-order-card">
                         <div class="scp-order-card-head">
                             <h2>{{ __('storefront.order_details.items') }}</h2>

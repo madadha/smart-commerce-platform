@@ -67,6 +67,10 @@ Route::prefix('store')->name('storefront.')->group(function () {
     Route::get('/checkout', [StorefrontCheckoutController::class, 'index'])
         ->name('checkout.index');
 
+    Route::get('/checkout/shipping-quotes', [StorefrontCheckoutController::class, 'shippingQuotes'])
+        ->middleware('throttle:30,1')
+        ->name('checkout.shipping-quotes');
+
     Route::post('/checkout/place-order', [StorefrontCheckoutController::class, 'placeOrder'])
         ->middleware('throttle:10,1')
         ->name('checkout.place');

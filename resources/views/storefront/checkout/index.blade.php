@@ -133,10 +133,23 @@
                                     </div>
 
                                     <div class="scp-field">
+                                        <label>{{ __('storefront.checkout.country') }}</label>
+                                        <select name="country_id" id="checkout-country">
+                                            <option value="">{{ __('storefront.checkout.select_country') }}</option>
+                                            @foreach($countries as $country)
+                                                <option value="{{ $country->id }}" @selected((string) old('country_id', $checkoutDefaults['country_id'] ?? '') === (string) $country->id)>
+                                                    {{ $country->flag }} {{ $country->getName($locale) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="scp-field">
                                         <label>{{ __('storefront.checkout.city') }}</label>
                                         <input
                                             type="text"
                                             name="city"
+                                            id="checkout-city"
                                             value="{{ old('city', $checkoutDefaults['city'] ?? '') }}"
                                             placeholder="{{ __('storefront.checkout.city_placeholder') }}"
                                             required
@@ -168,7 +181,7 @@
 
                                     <div class="scp-field">
                                         <label>{{ __('storefront.checkout.shipping_method') }}</label>
-                                        <select name="shipping_method_id">
+                                        <select name="shipping_method_id" id="checkout-shipping-method" required>
                                             <option value="">{{ __('storefront.checkout.select_shipping_method') }}</option>
 
                                             @foreach($shippingMethods as $shippingMethod)
@@ -181,6 +194,7 @@
                                                 </option>
                                             @endforeach
                                         </select>
+                                        <small id="checkout-shipping-feedback"></small>
                                     </div>
 
                                     <div class="scp-field">
@@ -279,3 +293,44 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const country = document.getElementById('checkout-country');
+    const city = document.getElementById('checkout-city');
+    const method = document.getElementById('checkout-shipping-method');
+    const feedback = document.getElementById('checkout-shipping-feedback');
+    if (!city || !method) return;
+    let timer;
+    const refresh = () => {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+            if (!city.value.trim()) return;
+            feedback.textContent = @json(__('storefront.checkout.loading_shipping'));
+            const url = new URL(@json(route('storefront.checkout.shipping-quotes')), window.location.origin);
+            url.searchParams.set('city', city.value.trim());
+            url.searchParams.set('lang', @json($locale));
+            if (country?.value) url.searchParams.set('country_id', country.value);
+            try {
+                const response = await fetch(url, {headers: {'Accept': 'application/json'}});
+                const data = await response.json();
+                const selected = method.value;
+                method.innerHTML = `<option value="">${@json(__('storefront.checkout.select_shipping_method'))}</option>`;
+                for (const quote of (data.quotes || [])) {
+                    const option = new Option(`${quote.name} — ${Number(quote.cost).toFixed(2)}`, quote.id);
+                    option.selected = String(quote.id) === String(selected);
+                    method.add(option);
+                }
+                feedback.textContent = data.quotes?.length ? @json(__('storefront.checkout.shipping_calculated')) : @json(__('storefront.checkout.no_shipping_available'));
+            } catch (error) {
+                feedback.textContent = @json(__('storefront.checkout.shipping_load_failed'));
+            }
+        }, 350);
+    };
+    city.addEventListener('input', refresh);
+    country?.addEventListener('change', refresh);
+    if (city.value.trim()) refresh();
+});
+</script>
+@endpush

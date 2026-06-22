@@ -7,9 +7,10 @@ use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ShippingMethod;
 use App\Services\Payments\PaymentService;
 use App\Services\Pricing\CommerceTotalsCalculator;
+use App\Services\Shipping\ShipmentService;
+use App\Services\Shipping\ShippingQuoteService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -21,6 +22,8 @@ class CartCheckoutService
         private readonly CheckoutInventoryService $checkoutInventoryService,
         private readonly CommerceTotalsCalculator $totalsCalculator,
         private readonly PaymentService $paymentService,
+        private readonly ShippingQuoteService $shippingQuoteService,
+        private readonly ShipmentService $shipmentService,
     ) {}
 
     public function convertCartToOrder(Cart $cart, array $data, ?int $userId = null): Order
@@ -41,14 +44,16 @@ class CartCheckoutService
             $subtotal = (float) $cart->items->sum(function ($item) {
                 return (float) ($item->line_total ?? ((float) $item->unit_price * (int) $item->quantity));
             });
-            $shippingMethod = isset($data['shipping_method_id'])
-                ? ShippingMethod::query()->where('is_active', true)->find($data['shipping_method_id'])
+            $shippingQuote = isset($data['shipping_method_id'])
+                ? $this->shippingQuoteService->requireQuote($cart, (int) $data['shipping_method_id'], $data['country_id'] ?? null, (string) ($data['city'] ?? ''))
                 : null;
+            $shippingMethod = $shippingQuote['method'] ?? null;
             $totals = $this->totalsCalculator->calculate(
                 subtotal: $subtotal,
                 taxTotal: (float) ($cart->tax_total ?? 0),
                 coupon: $cart->coupon,
                 shippingMethod: $shippingMethod,
+                shippingTotalOverride: $shippingQuote['cost'] ?? 0,
             );
             $discountTotal = $totals['discountTotal'];
             $taxTotal = $totals['taxTotal'];
@@ -58,10 +63,14 @@ class CartCheckoutService
             $cart->forceFill($this->filterColumns('carts', [
                 'customer_id' => $customer?->id,
                 'shipping_method_id' => $data['shipping_method_id'] ?? null,
+                'shipping_country_id' => $data['country_id'] ?? null,
                 'subtotal' => $subtotal,
                 'discount_total' => $discountTotal,
                 'tax_total' => $taxTotal,
                 'shipping_total' => $shippingTotal,
+                'shipping_weight' => $shippingQuote['weight'] ?? 0,
+                'shipping_min_delivery_days' => $shippingQuote['min_delivery_days'] ?? null,
+                'shipping_max_delivery_days' => $shippingQuote['max_delivery_days'] ?? null,
                 'grand_total' => $grandTotal,
                 'customer_notes' => $data['customer_notes'] ?? null,
             ]))->save();
@@ -72,6 +81,7 @@ class CartCheckoutService
                 'user_id' => $userId,
                 'currency_id' => $cart->currency_id,
                 'shipping_method_id' => $data['shipping_method_id'] ?? null,
+                'shipping_country_id' => $data['country_id'] ?? null,
 
                 'coupon_id' => $cart->coupon_id ?? null,
                 'coupon_code' => $cart->coupon_code ?? null,
@@ -94,6 +104,9 @@ class CartCheckoutService
                 'discount_total' => $discountTotal,
                 'tax_total' => $taxTotal,
                 'shipping_total' => $shippingTotal,
+                'shipping_weight' => $shippingQuote['weight'] ?? 0,
+                'shipping_min_delivery_days' => $shippingQuote['min_delivery_days'] ?? null,
+                'shipping_max_delivery_days' => $shippingQuote['max_delivery_days'] ?? null,
                 'grand_total' => $grandTotal,
 
                 'customer_notes' => $data['customer_notes'] ?? null,
@@ -133,6 +146,10 @@ class CartCheckoutService
             ]);
 
             $this->checkoutInventoryService->handleOrderInventory($order);
+
+            if ($shippingMethod && $order->items->contains(fn (OrderItem $item): bool => ! in_array(strtolower((string) $item->item_type), ['digital', 'digital_code', 'service'], true))) {
+                $this->shipmentService->createForOrder($order);
+            }
 
             $cart->forceFill($this->filterColumns('carts', [
                 'status' => CartStatus::Converted->value,

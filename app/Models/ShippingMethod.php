@@ -5,8 +5,8 @@ namespace App\Models;
 use App\Enums\ShippingMethodType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class ShippingMethod extends Model
 {
@@ -18,6 +18,11 @@ class ShippingMethod extends Model
         'country_id',
         'currency_id',
         'base_cost',
+        'per_kg_cost',
+        'min_order_total',
+        'max_order_total',
+        'min_weight',
+        'max_weight',
         'free_shipping_min_total',
         'min_delivery_days',
         'max_delivery_days',
@@ -37,6 +42,11 @@ class ShippingMethod extends Model
         'description' => 'array',
         'type' => ShippingMethodType::class,
         'base_cost' => 'decimal:2',
+        'per_kg_cost' => 'decimal:2',
+        'min_order_total' => 'decimal:2',
+        'max_order_total' => 'decimal:2',
+        'min_weight' => 'decimal:3',
+        'max_weight' => 'decimal:3',
         'free_shipping_min_total' => 'decimal:2',
         'min_delivery_days' => 'integer',
         'max_delivery_days' => 'integer',
@@ -121,7 +131,7 @@ class ShippingMethod extends Model
             ?? null;
     }
 
-    public function calculateCost(float $orderTotal): float
+    public function calculateCost(float $orderTotal, float $weight = 0): float
     {
         if (
             $this->free_shipping_min_total !== null
@@ -130,7 +140,12 @@ class ShippingMethod extends Model
             return 0;
         }
 
-        return (float) $this->base_cost;
+        return round((float) $this->base_cost + ((float) $this->per_kg_cost * max($weight, 0)), 2);
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class);
     }
 
     public function getDeliveryEstimate(): string
@@ -140,15 +155,14 @@ class ShippingMethod extends Model
         }
 
         if ($this->min_delivery_days === $this->max_delivery_days) {
-            return $this->min_delivery_days . ' day(s)';
+            return $this->min_delivery_days.' day(s)';
         }
 
-        return $this->min_delivery_days . ' - ' . $this->max_delivery_days . ' days';
+        return $this->min_delivery_days.' - '.$this->max_delivery_days.' days';
     }
 
-
     public function orders(): HasMany
-{
-    return $this->hasMany(Order::class, 'shipping_method_id');
-}
+    {
+        return $this->hasMany(Order::class, 'shipping_method_id');
+    }
 }

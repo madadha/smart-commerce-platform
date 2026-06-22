@@ -8,11 +8,14 @@ use App\Enums\CustomerType;
 use App\Http\Controllers\Controller;
 use App\Mail\StorefrontOrderCreatedMail;
 use App\Models\Cart;
+use App\Models\Country;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\ShippingMethod;
 use App\Payments\PaymentGatewayManager;
 use App\Services\Checkout\CartCheckoutService;
+use App\Services\Shipping\ShippingQuoteService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -50,17 +53,42 @@ class StorefrontCheckoutController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+        $countries = Country::query()->active()->ordered()->get();
 
         return view('storefront.checkout.index', [
             'locale' => $locale,
             'direction' => $this->direction($locale),
             'cart' => $cart,
             'shippingMethods' => $shippingMethods,
+            'countries' => $countries,
             'pageTitle' => __('storefront.checkout.page_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.page_description'),
             'checkoutDefaults' => $this->checkoutDefaults(),
             'paymentMethods' => $this->enabledPaymentMethods(),
         ]);
+    }
+
+    public function shippingQuotes(Request $request, ShippingQuoteService $shippingQuoteService): JsonResponse
+    {
+        $validated = $request->validate([
+            'country_id' => ['nullable', 'integer', 'exists:countries,id'],
+            'city' => ['required', 'string', 'max:255'],
+        ]);
+        $cart = $this->getCurrentCart();
+        if (! $cart) {
+            return response()->json(['quotes' => []]);
+        }
+
+        $quotes = $shippingQuoteService->quoteCart($cart, $validated['country_id'] ?? null, $validated['city'])
+            ->map(fn (array $quote) => [
+                'id' => $quote['method']->id,
+                'name' => $quote['method']->getName(app()->getLocale()),
+                'cost' => $quote['cost'],
+                'min_delivery_days' => $quote['min_delivery_days'],
+                'max_delivery_days' => $quote['max_delivery_days'],
+            ])->all();
+
+        return response()->json(['quotes' => $quotes]);
     }
 
     public function placeOrder(Request $request, CartCheckoutService $checkoutService): RedirectResponse
@@ -80,8 +108,9 @@ class StorefrontCheckoutController extends Controller
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:50'],
             'city' => ['required', 'string', 'max:255'],
+            'country_id' => ['nullable', 'integer', 'exists:countries,id'],
             'address' => ['required', 'string', 'max:500'],
-            'shipping_method_id' => ['nullable', 'integer', 'exists:shipping_methods,id'],
+            'shipping_method_id' => [Rule::requiredIf(ShippingMethod::query()->active()->exists()), 'nullable', 'integer', 'exists:shipping_methods,id'],
             'payment_method' => [
                 'required',
                 'string',

@@ -172,11 +172,18 @@ return [
     'email' => 'البريد الإلكتروني',
     'phone' => 'رقم الهاتف',
     'city' => 'المدينة',
+    'country' => 'الدولة',
+    'select_country' => 'اختر الدولة',
     'city_placeholder' => 'اكتب اسم المدينة',
     'address' => 'العنوان الكامل',
     'address_placeholder' => 'الشارع، رقم البيت، تفاصيل إضافية',
     'shipping_method' => 'طريقة الشحن',
     'select_shipping_method' => 'اختر طريقة الشحن',
+    'loading_shipping' => 'جارٍ حساب خيارات الشحن المتاحة…',
+    'shipping_calculated' => 'تم تحديث خيارات وأسعار الشحن.',
+    'no_shipping_available' => 'لا توجد طريقة شحن متاحة لهذا العنوان.',
+    'shipping_load_failed' => 'تعذر تحميل خيارات الشحن. حاول مرة أخرى.',
+    'shipping_unavailable' => 'طريقة الشحن المختارة غير متاحة لهذا العنوان أو وزن الطلب.',
     'payment_method' => 'طريقة الدفع',
     'cash' => 'دفع عند الاستلام',
     'credit_card' => 'بطاقة ائتمان',
@@ -395,5 +402,4 @@ return [
 
 
 ];
-
 
