@@ -90,6 +90,7 @@ class CartCheckoutService
 
                 'status' => 'pending',
                 'payment_status' => 'unpaid',
+                'locale' => in_array(($data['lang'] ?? 'ar'), ['ar', 'he', 'en'], true) ? ($data['lang'] ?? 'ar') : 'ar',
 
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_email' => $data['customer_email'] ?? null,

@@ -3,15 +3,18 @@
 namespace Tests\Feature;
 
 use App\Enums\ShipmentStatus;
+use App\Mail\ShipmentStatusUpdatedMail;
 use App\Models\Cart;
 use App\Models\Country;
 use App\Models\Currency;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Services\Shipping\ShipmentService;
 use App\Services\Shipping\ShippingQuoteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ShippingWorkflowTest extends TestCase
@@ -48,8 +51,14 @@ class ShippingWorkflowTest extends TestCase
 
     public function test_shipment_status_creates_customer_timeline_and_completes_order(): void
     {
+        Mail::fake();
+        $customer = Customer::query()->forceCreate([
+            'first_name' => 'Shipping', 'last_name' => 'Customer',
+            'email' => 'shipping@example.test', 'status' => 'active', 'is_active' => true,
+        ]);
         $order = Order::query()->forceCreate([
             'order_number' => 'ORD-SHIPPING-1', 'status' => 'pending', 'payment_status' => 'paid',
+            'customer_id' => $customer->id, 'locale' => 'en',
             'subtotal' => 100, 'shipping_total' => 20, 'grand_total' => 120,
             'shipping_weight' => 1.25, 'shipping_address' => ['city' => 'Jerusalem'], 'is_active' => true,
         ]);
@@ -66,5 +75,9 @@ class ShippingWorkflowTest extends TestCase
             'shipment_id' => $shipment->id, 'status' => 'delivered',
             'description' => 'Received by customer', 'location' => 'Jerusalem',
         ]);
+        Mail::assertSent(ShipmentStatusUpdatedMail::class, function (ShipmentStatusUpdatedMail $mail): bool {
+            return $mail->mailLocale === 'en'
+                && $mail->shipment->tracking_number === 'TRACK-123';
+        });
     }
 }

@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Shipment;
 use App\Observers\OrderInventoryObserver;
 use App\Observers\PaymentInventoryObserver;
+use App\Observers\ShipmentNotificationObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,5 +27,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Order::observe(OrderInventoryObserver::class);
         Payment::observe(PaymentInventoryObserver::class);
+        Shipment::observe(ShipmentNotificationObserver::class);
     }
 }

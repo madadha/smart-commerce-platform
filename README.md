@@ -489,6 +489,7 @@ The Filament shipping module now separates checkout pricing from operational ful
 - The order stores the accepted shipping cost, total weight, destination country, and delivery estimate as a snapshot.
 - `Shipments & Tracking` supports multiple shipments per order, carrier/service, tracking number and URL, expected delivery, labels, notes, and fulfillment timestamps.
 - Every shipment status change creates a customer-visible timeline event. Delivered shipments complete the order after all of its shipments are delivered.
+- Shipping, in-transit, out-for-delivery, delivery, failure, return, and cancellation updates send localized Arabic, Hebrew, or English email notifications with signed order and carrier-tracking links.
 - Signed order pages and phone-based order tracking show shipment progress and carrier tracking links without exposing internal notes.
 
 Automated coverage includes location and weight eligibility, server-side price calculation, shipment events, and order completion.

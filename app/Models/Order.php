@@ -26,6 +26,7 @@ class Order extends Model
         'status',
         'payment_status',
         'payment_method',
+        'locale',
         'shipping_method',
         'subtotal',
         'discount_total',
