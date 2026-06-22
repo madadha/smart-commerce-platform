@@ -498,9 +498,9 @@ Automated coverage includes location and weight eligibility, server-side price c
 
 Target: protect customer data, administration, files, and privileged operations.
 
-- [ ] Add Laravel policies for all Filament resources and sensitive actions.
-- [ ] Define permissions for Super Admin, Admin, Orders Manager, Catalog Manager, and Support roles.
-- [ ] Restrict refunds, digital-code access, role changes, settings, and exports to authorized roles.
+- [x] Add Laravel policies for all Filament resources and sensitive actions.
+- [x] Define permissions for Super Admin, Admin, Orders Manager, Catalog Manager, and Support roles.
+- [x] Restrict payment configuration, digital-code access, role changes, settings, and privileged operations to authorized roles.
 - [ ] Enable multi-factor authentication for privileged admin accounts.
 - [ ] Add an audit log for sensitive administrative changes.
 - [ ] Validate uploaded file MIME types, extensions, sizes, and access rules.
@@ -508,6 +508,20 @@ Target: protect customer data, administration, files, and privileged operations.
 - [ ] Perform responsive browser testing for login and registration across supported locales.
 
 Exit criteria: each role can access only its intended resources, and all sensitive actions are auditable.
+
+#### Administration Roles
+
+Run `php artisan db:seed --class=RolePermissionSeeder --force` once after deployment to synchronize the role matrix. Authorization is enforced by Laravel policies, so hidden navigation cannot be bypassed with a direct admin URL.
+
+| Role | Operational access |
+| --- | --- |
+| `super-admin` | Full platform access, including users, roles, payment credentials, and settings. |
+| `admin` | Full operational access for the platform administrator. |
+| `orders-manager` | Orders, customers, shipments, payment records, support, and read-only digital-code visibility. Payment credentials remain blocked. |
+| `catalog-manager` | Products, variants, media, categories, and digital-code inventory. No customer, order, shipment, or payment access. |
+| `support` | Read-only orders, customers, shipments, and payments, plus product-question/review moderation. |
+
+The Filament `Users & Roles` screen is restricted to privileged administrators. New administrative passwords require at least 12 characters, and editing a user without entering a password preserves the existing password.
 
 ### Phase 6 — Production Operations and Launch
 

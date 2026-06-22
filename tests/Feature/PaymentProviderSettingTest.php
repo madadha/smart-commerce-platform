@@ -92,7 +92,9 @@ class PaymentProviderSettingTest extends TestCase
     {
         $user = User::factory()->create();
         Permission::findOrCreate('view admin panel', 'web');
+        Permission::findOrCreate('payments.manage', 'web');
         $user->givePermissionTo('view admin panel');
+        $user->givePermissionTo('payments.manage');
         $provider = PaymentProviderSetting::query()->where('provider', 'payplus')->firstOrFail();
 
         $this->actingAs($user)
