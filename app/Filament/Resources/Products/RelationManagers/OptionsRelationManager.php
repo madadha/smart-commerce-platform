@@ -7,12 +7,14 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -29,7 +31,7 @@ class OptionsRelationManager extends RelationManager
             TextInput::make('name.he')->label('Name (Hebrew)')->required(),
             TextInput::make('name.en')->label('Name (English)')->required(),
             TextInput::make('slug')->helperText('Stable key used by variants, e.g. storage or color')->required(),
-            Select::make('type')->options(['select' => 'Select', 'button' => 'Button', 'color' => 'Color', 'text' => 'Text'])->default('button')->required(),
+            Select::make('type')->options(['select' => 'Select', 'button' => 'Button', 'color' => 'Color', 'text' => 'Text'])->default('button')->required()->live(),
             Toggle::make('is_required')->default(true),
             Toggle::make('is_active')->default(true),
             TextInput::make('sort_order')->numeric()->default(0),
@@ -38,7 +40,11 @@ class OptionsRelationManager extends RelationManager
                 TextInput::make('ar')->label('Arabic')->required(),
                 TextInput::make('he')->label('Hebrew')->required(),
                 TextInput::make('en')->label('English')->required(),
-                TextInput::make('color')->placeholder('#000000'),
+                ColorPicker::make('color')
+                    ->label('Color')
+                    ->helperText('Choose the exact color. The hexadecimal value is saved automatically.')
+                    ->visible(fn (Get $get): bool => $get('../../type') === 'color')
+                    ->required(fn (Get $get): bool => $get('../../type') === 'color'),
             ])->columns(5)->columnSpanFull()->addActionLabel('Add option value'),
         ])->columns(2);
     }
