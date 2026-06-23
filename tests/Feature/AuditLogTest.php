@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\PaymentProviderSetting;
+use App\Models\ShippingMethod;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,5 +89,51 @@ class AuditLogTest extends TestCase
 
         $this->actingAs($superAdmin)->get('/admin/audit-logs')->assertOk();
         $this->actingAs($ordersManager)->get('/admin/audit-logs')->assertForbidden();
+    }
+
+    public function test_subject_label_handles_multilingual_array_attributes(): void
+    {
+        $shippingMethod = new ShippingMethod([
+            'name' => ['ar' => 'توصيل سريع', 'en' => 'Express Delivery'],
+        ]);
+        $shippingMethod->exists = true;
+
+        $audit = new AuditLog([
+            'subject_type' => ShippingMethod::class,
+            'subject_id' => 1,
+        ]);
+        $audit->setRelation('subject', $shippingMethod);
+
+        $this->assertSame('ShippingMethod توصيل سريع', $audit->subject_label);
+    }
+
+    public function test_audit_log_index_renders_when_subject_name_is_multilingual(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('super-admin');
+
+        $shippingMethod = ShippingMethod::query()->forceCreate([
+            'name' => ['ar' => 'توصيل سريع', 'en' => 'Express Delivery'],
+            'slug' => 'express-audit-test',
+            'type' => 'express',
+            'base_cost' => 25,
+            'is_active' => true,
+        ]);
+
+        AuditLog::query()->forceCreate([
+            'user_id' => $admin->id,
+            'event' => 'updated',
+            'subject_type' => ShippingMethod::class,
+            'subject_id' => $shippingMethod->id,
+            'old_values' => ['base_cost' => 20],
+            'new_values' => ['base_cost' => 25],
+            'metadata' => [],
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/audit-logs')
+            ->assertOk()
+            ->assertSee('توصيل سريع');
     }
 }

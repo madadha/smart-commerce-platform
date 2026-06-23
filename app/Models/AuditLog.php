@@ -64,14 +64,47 @@ class AuditLog extends Model
             'provider',
             'key',
         ] as $attribute) {
-            $value = $subject->{$attribute} ?? null;
+            $value = $this->subjectLabelValue($subject->{$attribute} ?? null);
 
-            if (filled($value)) {
+            if ($value !== null) {
                 return class_basename($subject::class).' '.$value;
             }
         }
 
         return class_basename($subject::class).' #'.($subject->getKey() ?? 'n/a');
+    }
+
+    private function subjectLabelValue(mixed $value): ?string
+    {
+        if ($value instanceof \BackedEnum) {
+            $value = $value->value;
+        }
+
+        if (is_array($value)) {
+            foreach (['ar', 'en', 'he'] as $locale) {
+                $localizedValue = $value[$locale] ?? null;
+
+                if (is_scalar($localizedValue) && filled($localizedValue)) {
+                    return (string) $localizedValue;
+                }
+            }
+
+            foreach ($value as $item) {
+                $resolved = $this->subjectLabelValue($item);
+
+                if ($resolved !== null) {
+                    return $resolved;
+                }
+            }
+
+            return null;
+        }
+
+        if (is_object($value) && method_exists($value, '__toString')) {
+            $value = (string) $value;
+        }
+
+        return is_scalar($value) && filled($value) ? (string) $value : null;
     }
 
     public function getChangedFieldsAttribute(): array
