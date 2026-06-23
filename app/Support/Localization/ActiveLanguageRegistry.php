@@ -4,15 +4,12 @@ namespace App\Support\Localization;
 
 use App\Models\Language;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class ActiveLanguageRegistry
 {
     public const SUPPORTED_CODES = ['ar', 'he', 'en'];
-
-    private const CACHE_KEY = 'storefront.active-languages';
 
     /**
      * @return Collection<int, Language>
@@ -24,11 +21,11 @@ class ActiveLanguageRegistry
                 return collect();
             }
 
-            return Cache::rememberForever(self::CACHE_KEY, fn (): Collection => Language::query()
+            return Language::query()
                 ->active()
                 ->ordered()
                 ->whereIn('code', self::SUPPORTED_CODES)
-                ->get());
+                ->get();
         } catch (Throwable) {
             return collect();
         }
@@ -80,6 +77,7 @@ class ActiveLanguageRegistry
 
     public function forget(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        // Languages are read directly because this small configuration table must
+        // reflect an admin enable/disable action immediately on every request.
     }
 }
