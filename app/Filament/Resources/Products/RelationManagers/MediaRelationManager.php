@@ -25,7 +25,7 @@ class MediaRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            FileUpload::make('image')->image()->disk('public')->directory('products/gallery')->visibility('public')->imageEditor()->requiredWithout('media_file_id'),
+            FileUpload::make('image')->image()->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->disk('public')->directory('products/gallery')->visibility('public')->maxSize(5120)->imageEditor()->requiredWithout('media_file_id'),
             Select::make('role')->options(['main' => 'Featured / Main', 'gallery' => 'Gallery', 'detail' => 'Detail', 'look' => 'Lifestyle', 'banner' => 'Banner', 'package' => 'Package'])->default('gallery')->required(),
             TextInput::make('alt_text.ar')->label('Alt text (Arabic)'),
             TextInput::make('alt_text.he')->label('Alt text (Hebrew)'),

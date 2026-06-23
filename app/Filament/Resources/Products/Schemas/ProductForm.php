@@ -80,6 +80,7 @@ class ProductForm
                         FileUpload::make('main_image')
                             ->label('Upload Product Image')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                             ->disk('public')
                             ->directory('products/main-images')
                             ->visibility('public')

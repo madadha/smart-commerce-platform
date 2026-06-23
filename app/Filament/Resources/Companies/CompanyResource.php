@@ -92,7 +92,11 @@ class CompanyResource extends Resource
                         FileUpload::make('logo')
                             ->label('Logo')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->disk('public')
                             ->directory('companies/logos')
+                            ->visibility('public')
+                            ->maxSize(5120)
                             ->imageEditor(),
 
                         TextInput::make('email')

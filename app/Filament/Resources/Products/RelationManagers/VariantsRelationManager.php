@@ -30,7 +30,7 @@ class VariantsRelationManager extends RelationManager
             TextInput::make('name.en')->label('Name (English)'),
             TextInput::make('sku')->unique(ignoreRecord: true),
             KeyValue::make('option_values')->keyLabel('Option slug')->valueLabel('Technical value')->helperText('Must match Product Options, e.g. storage = 256gb')->columnSpanFull(),
-            FileUpload::make('image')->image()->disk('public')->directory('products/variants')->visibility('public')->imageEditor(),
+            FileUpload::make('image')->image()->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->disk('public')->directory('products/variants')->visibility('public')->maxSize(5120)->imageEditor(),
             TextInput::make('price')->numeric()->helperText('Leave empty to use the product price.'),
             TextInput::make('sale_price')->numeric(),
             Toggle::make('track_stock')->default(true),

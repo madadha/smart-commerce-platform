@@ -63,13 +63,21 @@ class BrandResource extends Resource
                         FileUpload::make('logo')
                             ->label('Logo')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->disk('public')
                             ->directory('brands/logos')
+                            ->visibility('public')
+                            ->maxSize(5120)
                             ->imageEditor(),
 
                         FileUpload::make('banner_image')
                             ->label('Banner Image')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->disk('public')
                             ->directory('brands/banners')
+                            ->visibility('public')
+                            ->maxSize(5120)
                             ->imageEditor(),
 
                         Textarea::make('description.ar')

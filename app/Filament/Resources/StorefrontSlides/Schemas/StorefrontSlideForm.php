@@ -37,6 +37,9 @@ class StorefrontSlideForm
                         ->disk('public')
                         ->directory('storefront/slides')
                         ->image()
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->visibility('public')
+                        ->maxSize(5120)
                         ->imageEditor()
                         ->nullable(),
                 ]),

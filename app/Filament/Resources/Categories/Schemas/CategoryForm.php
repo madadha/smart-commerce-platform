@@ -72,19 +72,31 @@ class CategoryForm
                         FileUpload::make('image')
                             ->label('Image')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->disk('public')
                             ->directory('categories/images')
+                            ->visibility('public')
+                            ->maxSize(5120)
                             ->imageEditor(),
 
                         FileUpload::make('icon')
                             ->label('Icon')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->disk('public')
                             ->directory('categories/icons')
+                            ->visibility('public')
+                            ->maxSize(5120)
                             ->imageEditor(),
 
                         FileUpload::make('banner_image')
                             ->label('Banner Image')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->disk('public')
                             ->directory('categories/banners')
+                            ->visibility('public')
+                            ->maxSize(5120)
                             ->imageEditor(),
 
                         Toggle::make('is_active')

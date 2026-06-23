@@ -39,6 +39,9 @@ class StorefrontSettingForm
                             ->disk('public')
                             ->directory('storefront/branding')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->visibility('public')
+                            ->maxSize(5120)
                             ->imageEditor()
                             ->nullable(),
                         FileUpload::make('favicon_path')
@@ -46,6 +49,9 @@ class StorefrontSettingForm
                             ->disk('public')
                             ->directory('storefront/branding')
                             ->image()
+                            ->acceptedFileTypes(['image/x-icon', 'image/vnd.microsoft.icon', 'image/png', 'image/webp'])
+                            ->visibility('public')
+                            ->maxSize(1024)
                             ->imageEditor()
                             ->nullable(),
                     ]),

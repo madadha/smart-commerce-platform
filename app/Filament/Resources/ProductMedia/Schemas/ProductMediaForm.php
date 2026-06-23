@@ -49,6 +49,7 @@ class ProductMediaForm
                         FileUpload::make('image')
                             ->label('Upload Image')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                             ->disk('public')
                             ->directory('products/gallery')
                             ->visibility('public')

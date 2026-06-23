@@ -85,6 +85,7 @@ class ProductVariantForm
                         FileUpload::make('image')
                             ->label('Upload Variant Image')
                             ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                             ->disk('public')
                             ->directory('products/variants')
                             ->visibility('public')
