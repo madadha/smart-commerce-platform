@@ -375,7 +375,7 @@ class EditOrder extends EditRecord
 
             if (! empty($customerEmail)) {
                 Mail::to($customerEmail)->send(
-                    new StorefrontOrderCompletedMail($order, app()->getLocale() ?: 'ar')
+                    new StorefrontOrderCompletedMail($order, $order->locale ?: 'ar')
                 );
             }
         } catch (Throwable $exception) {
