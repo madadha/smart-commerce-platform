@@ -1,26 +1,70 @@
-/* Stage 74 - Customer Profile + Checkout Saved Info */
+/* Customer profile - aligned with storefront light theme */
 
-.scp-mini-account-nav {
+.scp-profile-page {
+    padding: 26px 0 72px;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.scp-profile-page .scp-container {
+    width: min(100% - 24px, 1320px);
+}
+
+.scp-profile-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 18px;
+    padding: 24px 28px;
+    border-radius: 28px;
     background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 12px 0;
-}
-
-.scp-mini-account-nav .scp-container,
-.scp-mini-account-nav .scp-container > div {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
-}
-
-.scp-mini-account-nav a,
-.scp-mini-account-nav button {
-    min-height: 40px;
-    border-radius: 14px;
-    padding: 0 14px;
     border: 1px solid #e5e7eb;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+    margin-bottom: 18px;
+}
+
+.scp-profile-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.scp-profile-hero h1 {
+    margin: 14px 0 0;
+    color: #0f172a;
+    font-size: clamp(28px, 3.4vw, 50px);
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+}
+
+.scp-profile-hero p {
+    margin: 14px 0 0;
+    color: #475569;
+    line-height: 1.8;
+    font-size: 15px;
+    max-width: 760px;
+}
+
+.scp-profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.scp-profile-actions a,
+.scp-profile-actions button,
+.scp-profile-submit,
+.scp-profile-delete {
+    min-height: 44px;
+    border-radius: 14px;
+    padding: 0 16px;
+    border: 1px solid #e2e8f0;
     background: #ffffff;
     color: #0f172a;
     font-size: 13px;
@@ -28,147 +72,66 @@
     cursor: pointer;
 }
 
-.scp-profile-page {
-    padding: 42px 0 80px;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at top left, rgba(245, 185, 76, 0.13), transparent 30%),
-        radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 32%),
-        linear-gradient(135deg, #05070b 0%, #090b10 56%, #0b1120 100%);
-}
-
-.scp-profile-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 24px;
-    padding: 38px;
-    border-radius: 36px;
-    color: #ffffff;
-    background:
-        radial-gradient(circle at 14% 18%, rgba(245, 185, 76, 0.17), transparent 30%),
-        radial-gradient(circle at 88% 22%, rgba(37, 99, 235, 0.13), transparent 36%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(5, 7, 11, 0.98));
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
-    margin-bottom: 24px;
-}
-
-.scp-profile-badge {
-    display: inline-grid;
-    place-items: center;
-    min-height: 35px;
-    padding: 0 15px;
-    border-radius: 999px;
-    background: rgba(245, 185, 76, 0.13);
-    border: 1px solid rgba(245, 185, 76, 0.28);
-    color: #f7d37a;
-    font-size: 12px;
-    font-weight: 950;
-    margin-bottom: 16px;
-}
-
-.scp-profile-hero h1 {
-    margin: 0;
-    max-width: 850px;
-    font-size: clamp(34px, 4.4vw, 62px);
-    font-weight: 950;
-    line-height: 1.06;
-    letter-spacing: -0.06em;
-    background: linear-gradient(135deg, #ffffff, #f7d37a, #f5b94c);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-.scp-profile-hero p {
-    max-width: 780px;
-    margin: 16px 0 0;
-    color: rgba(255, 255, 255, 0.76);
-    line-height: 1.9;
-    font-size: 15px;
-}
-
-.scp-profile-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 26px;
-}
-
-.scp-profile-actions a,
-.scp-profile-actions button {
-    min-height: 48px;
-    border-radius: 18px;
-    display: inline-grid;
-    place-items: center;
-    padding: 0 18px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.09);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 950;
-    cursor: pointer;
-}
-
 .scp-profile-actions a:first-child {
-    background: linear-gradient(135deg, #f7d37a, #f5b94c);
-    color: #111827;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
     border-color: transparent;
 }
 
 .scp-profile-user-card {
-    align-self: stretch;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 12px;
-    padding: 26px;
-    border-radius: 30px;
-    background: rgba(255, 255, 255, 0.075);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 20px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, #f8fafc, #ffffff);
+    border: 1px solid #e5e7eb;
 }
 
 .scp-profile-avatar {
-    width: 82px;
-    height: 82px;
-    border-radius: 28px;
+    width: 72px;
+    height: 72px;
+    border-radius: 24px;
     display: grid;
     place-items: center;
-    background: linear-gradient(135deg, #f7d37a, #f5b94c);
-    color: #111827;
-    font-size: 34px;
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    color: #ffffff;
+    font-size: 30px;
     font-weight: 950;
 }
 
 .scp-profile-user-card strong {
-    color: #ffffff;
-    font-size: 20px;
+    display: block;
+    color: #0f172a;
+    font-size: 18px;
     font-weight: 950;
 }
 
 .scp-profile-user-card span,
 .scp-profile-user-card small {
-    color: rgba(255, 255, 255, 0.70);
+    display: block;
+    color: #64748b;
     font-size: 13px;
     font-weight: 800;
     word-break: break-word;
 }
 
 .scp-profile-success {
-    margin-bottom: 18px;
-    border-radius: 20px;
-    padding: 15px 18px;
+    margin-bottom: 16px;
+    border-radius: 18px;
+    padding: 14px 16px;
     background: #ecfdf5;
     color: #166534;
     border: 1px solid #bbf7d0;
     font-size: 14px;
-    font-weight: 950;
+    font-weight: 900;
 }
 
 .scp-profile-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 370px;
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 18px;
     align-items: start;
 }
 
@@ -180,15 +143,15 @@
 
 .scp-profile-sidebar {
     position: sticky;
-    top: 130px;
+    top: 120px;
 }
 
 .scp-profile-card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), #f8fafc);
-    border: 1px solid rgba(226, 232, 240, 0.95);
-    border-radius: 32px;
-    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.22);
-    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+    padding: 22px;
 }
 
 .scp-profile-card.danger {
@@ -200,21 +163,20 @@
     justify-content: space-between;
     gap: 14px;
     align-items: flex-start;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .scp-profile-card-head-tight {
-    margin-top: 10px;
-    margin-bottom: 14px;
+    margin-top: 8px;
+    margin-bottom: 12px;
 }
 
 .scp-profile-card h2,
 .scp-profile-card h3 {
     margin: 0;
-    color: #111827;
-    font-size: 23px;
+    color: #0f172a;
+    font-size: 22px;
     font-weight: 950;
-    letter-spacing: -0.03em;
 }
 
 .scp-profile-card p {
@@ -227,7 +189,7 @@
 
 .scp-profile-form {
     display: grid;
-    gap: 18px;
+    gap: 16px;
 }
 
 .scp-profile-form-grid {
@@ -255,8 +217,9 @@
 .scp-profile-field textarea,
 .scp-profile-field select {
     width: 100%;
-    border: 1px solid #e2e8f0;
-    border-radius: 17px;
+    box-sizing: border-box;
+    border: 1px solid #dbe2ea;
+    border-radius: 14px;
     background: #ffffff;
     color: #0f172a;
     outline: none;
@@ -266,7 +229,7 @@
 
 .scp-profile-field input,
 .scp-profile-field select {
-    min-height: 50px;
+    min-height: 48px;
     padding: 0 14px;
 }
 
@@ -279,18 +242,13 @@
 .scp-profile-field textarea:focus,
 .scp-profile-field select:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
 }
 
 .scp-profile-error {
     color: #dc2626;
     font-weight: 850;
     font-size: 12px;
-}
-
-.scp-profile-field input,
-.scp-profile-field textarea {
-    box-sizing: border-box;
 }
 
 .scp-profile-submit-row {
@@ -300,21 +258,11 @@
     flex-wrap: wrap;
 }
 
-.scp-profile-submit,
-.scp-profile-delete {
-    min-height: 50px;
-    border: 0;
-    border-radius: 18px;
-    padding: 0 22px;
-    font-size: 14px;
-    font-weight: 950;
-    cursor: pointer;
-}
-
 .scp-profile-submit {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #ffffff;
-    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.18);
+    border: 0;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
 }
 
 .scp-profile-submit.secondary {
@@ -324,97 +272,41 @@
 .scp-profile-delete {
     background: #fee2e2;
     color: #991b1b;
-}
-
-.scp-profile-warning {
-    border-radius: 18px;
-    padding: 14px;
-    background: #fffbeb;
-    color: #92400e;
-    border: 1px solid #fde68a;
-    font-size: 13px;
-    font-weight: 850;
-}
-
-.scp-profile-warning button {
-    border: 0;
-    background: transparent;
-    color: #c2410c;
-    font-weight: 950;
-    cursor: pointer;
-    text-decoration: underline;
+    border: 1px solid #fecaca;
 }
 
 .scp-profile-summary {
     display: grid;
     gap: 12px;
-    margin-top: 18px;
+    margin-top: 16px;
 }
 
 .scp-profile-summary div {
     border: 1px solid #e2e8f0;
     background: #f8fafc;
-    border-radius: 18px;
-    padding: 13px;
+    border-radius: 14px;
+    padding: 12px;
 }
 
 .scp-profile-summary span {
     display: block;
     color: #64748b;
     font-size: 12px;
-    font-weight: 950;
+    font-weight: 900;
     margin-bottom: 6px;
 }
 
 .scp-profile-summary strong {
     display: block;
-    color: #111827;
-    font-size: 13px;
-    font-weight: 950;
-    line-height: 1.7;
-}
-
-/* Checkout saved info */
-.scp-checkout-saved-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 18px;
-    padding: 18px;
-    border-radius: 24px;
-    background: linear-gradient(135deg, #ecfdf5, #eff6ff);
-    border: 1px solid #bfdbfe;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.05);
-}
-
-.scp-checkout-saved-info strong {
-    display: block;
     color: #0f172a;
-    font-size: 16px;
-    font-weight: 950;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.6;
 }
 
-.scp-checkout-saved-info p {
-    margin: 6px 0 0;
-    color: #475569;
-    line-height: 1.7;
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.scp-checkout-saved-info a {
-    min-height: 44px;
-    border-radius: 16px;
-    display: grid;
-    place-items: center;
-    padding: 0 16px;
-    background: #ffffff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
-    font-size: 13px;
-    font-weight: 950;
-    white-space: nowrap;
+.scp-profile-field input::placeholder,
+.scp-profile-field textarea::placeholder {
+    color: #94a3b8;
 }
 
 @media (max-width: 1100px) {
@@ -430,20 +322,24 @@
 
 @media (max-width: 700px) {
     .scp-profile-page {
-        padding: 28px 0 62px;
+        padding: 18px 0 56px;
+    }
+
+    .scp-profile-page .scp-container {
+        width: min(100% - 18px, 1320px);
     }
 
     .scp-profile-hero {
-        padding: 24px 18px;
-        border-radius: 28px;
+        padding: 18px;
+        border-radius: 22px;
     }
 
     .scp-profile-hero h1 {
-        font-size: 32px;
+        font-size: 28px;
     }
 
     .scp-profile-card {
-        border-radius: 26px;
+        border-radius: 20px;
         padding: 18px;
     }
 
@@ -463,125 +359,6 @@
     .scp-profile-actions button,
     .scp-profile-submit,
     .scp-profile-delete {
-        width: 100%;
-    }
-
-    .scp-checkout-saved-info {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .scp-checkout-saved-info a {
-        width: 100%;
-    }
-}
-
-
-/* =========================================================
-   Stage 75 Profile + Checkout Mobile Polish
-========================================================= */
-.scp-profile-page .scp-container {
-    max-width: 1320px;
-}
-
-.scp-profile-card,
-.scp-profile-user-card,
-.scp-profile-hero {
-    transform: translateZ(0);
-}
-
-.scp-profile-field input::placeholder,
-.scp-profile-field textarea::placeholder {
-    color: #94a3b8;
-}
-
-.scp-profile-field input:-webkit-autofill,
-.scp-profile-field textarea:-webkit-autofill {
-    -webkit-text-fill-color: #0f172a !important;
-    box-shadow: 0 0 0 1000px #ffffff inset !important;
-}
-
-.scp-profile-small-note {
-    display: block;
-    margin-top: 8px;
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1.7;
-}
-
-.scp-profile-actions form {
-    margin: 0;
-}
-
-.scp-profile-actions form button {
-    min-width: 130px;
-}
-
-.scp-checkout-saved-info {
-    position: relative;
-    overflow: hidden;
-}
-
-.scp-checkout-saved-info::after {
-    content: "";
-    position: absolute;
-    width: 130px;
-    height: 130px;
-    border-radius: 999px;
-    background: rgba(37, 99, 235, 0.08);
-    inset-inline-end: -40px;
-    top: -50px;
-}
-
-.scp-checkout-saved-info > * {
-    position: relative;
-    z-index: 1;
-}
-
-@media (max-width: 700px) {
-    .scp-profile-page .scp-container {
-        width: min(100% - 18px, 1320px);
-    }
-
-    .scp-profile-hero {
-        gap: 18px;
-        margin-bottom: 18px;
-    }
-
-    .scp-profile-hero p {
-        font-size: 14px;
-    }
-
-    .scp-profile-user-card {
-        padding: 18px;
-        border-radius: 24px;
-    }
-
-    .scp-profile-avatar {
-        width: 66px;
-        height: 66px;
-        border-radius: 22px;
-        font-size: 28px;
-    }
-
-    .scp-profile-card-head {
-        flex-direction: column;
-    }
-
-    .scp-profile-field input,
-    .scp-profile-field select,
-    .scp-profile-field textarea {
-        font-size: 16px;
-    }
-
-    .scp-mini-account-nav .scp-container,
-    .scp-mini-account-nav .scp-container > div {
-        align-items: stretch;
-    }
-
-    .scp-mini-account-nav a,
-    .scp-mini-account-nav button {
         width: 100%;
         justify-content: center;
     }

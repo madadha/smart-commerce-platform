@@ -54,6 +54,7 @@
 
     <link rel="stylesheet" href="{{ asset('css/storefront/storefront.css') }}?v={{ filemtime(public_path('css/storefront/storefront.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/storefront/design-overrides.css') }}?v={{ filemtime(public_path('css/storefront/design-overrides.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/storefront/customer-profile.css') }}?v={{ file_exists(public_path('css/storefront/customer-profile.css')) ? filemtime(public_path('css/storefront/customer-profile.css')) : time() }}">
     @if($faviconUrl)
         <link rel="icon" href="{{ $faviconUrl }}">
     @endif
