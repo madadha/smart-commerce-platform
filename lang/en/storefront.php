@@ -108,6 +108,7 @@ return [
 'price_filter' => 'Price filter',
 'specification_filters' => 'Specification filters',
 'all_values' => 'All values',
+'loading_more' => 'Loading more products...',
 ],
 
 

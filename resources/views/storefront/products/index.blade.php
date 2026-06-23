@@ -199,8 +199,9 @@
                         </div>
                     @endif
                 </div>
+            </form>
 
-                <div class="scp-products-layout">
+            <div class="scp-products-layout">
                     <aside class="scp-products-sidebar">
                         <div class="scp-sidebar-card">
                             <h3>{{ __('storefront.products_page.categories_filter') }}</h3>
@@ -241,9 +242,9 @@
                             </a>
                         @endforeach
                     </div>
-                    </aside>
+                </aside>
 
-                    <div class="scp-products-main">
+                <div class="scp-products-main">
                         <div class="scp-products-summary">
                         <div>
                             <strong>{{ $products->total() }}</strong>
@@ -258,7 +259,7 @@
                         @endif
                     </div>
 
-                        <div class="scp-product-grid">
+                        <div class="scp-product-grid" id="products-grid">
                         @forelse($products as $product)
                             @php
                                 $stockValue = null;
@@ -398,12 +399,19 @@
                         @endforelse
                     </div>
 
-                        <div class="scp-pagination">
-                            {{ $products->links() }}
-                        </div>
-                    </div>
+                        @if($products->hasMorePages())
+                            <div
+                                id="products-infinite-scroll"
+                                class="scp-infinite-scroll"
+                                data-next-page="{{ $products->nextPageUrl() }}"
+                                aria-live="polite"
+                            >
+                                <span class="scp-infinite-scroll-spinner" aria-hidden="true"></span>
+                                <span>{{ __('storefront.products_page.loading_more') }}</span>
+                            </div>
+                        @endif
                 </div>
-            </form>
+            </div>
 
         </div>
     </section>
@@ -412,6 +420,72 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const productsGrid = document.getElementById('products-grid');
+            const infiniteScroll = document.getElementById('products-infinite-scroll');
+
+            if (productsGrid && infiniteScroll && window.IntersectionObserver) {
+                let isLoading = false;
+
+                const loadNextPage = async () => {
+                    const nextPage = infiniteScroll.dataset.nextPage;
+
+                    if (!nextPage || isLoading) {
+                        return;
+                    }
+
+                    isLoading = true;
+                    infiniteScroll.classList.add('is-loading');
+
+                    try {
+                        const response = await fetch(nextPage, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Unable to load products.');
+                        }
+
+                        const documentHtml = await response.text();
+                        const nextDocument = new DOMParser().parseFromString(documentHtml, 'text/html');
+                        const nextGrid = nextDocument.getElementById('products-grid');
+                        const nextLoader = nextDocument.getElementById('products-infinite-scroll');
+
+                        if (!nextGrid) {
+                            throw new Error('Products grid is missing.');
+                        }
+
+                        const nextProducts = nextGrid.querySelectorAll('.scp-product-card');
+                        nextProducts.forEach((product) => {
+                            productsGrid.appendChild(product);
+                        });
+
+                        if (nextLoader?.dataset.nextPage) {
+                            infiniteScroll.dataset.nextPage = nextLoader.dataset.nextPage;
+                        } else {
+                            observer.unobserve(infiniteScroll);
+                            infiniteScroll.remove();
+                        }
+                    } catch (error) {
+                        infiniteScroll.classList.add('has-error');
+                    } finally {
+                        isLoading = false;
+                        infiniteScroll.classList.remove('is-loading');
+                    }
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries.some((entry) => entry.isIntersecting)) {
+                        loadNextPage();
+                    }
+                }, {
+                    rootMargin: '480px 0px',
+                });
+
+                observer.observe(infiniteScroll);
+            }
+
             const minInput = document.getElementById('products-min-price');
             const maxInput = document.getElementById('products-max-price');
             const minLabel = document.getElementById('products-min-price-label');

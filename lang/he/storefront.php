@@ -108,6 +108,7 @@ return [
 'price_filter' => 'סינון מחירים',
 'specification_filters' => 'סינון מפרטים',
 'all_values' => 'כל הערכים',
+'loading_more' => 'טוען מוצרים נוספים...',
 ],
 
 

@@ -107,6 +107,7 @@ return [
 'price_filter' => 'فلترة الأسعار',
 'specification_filters' => 'فلترة المواصفات',
 'all_values' => 'كل القيم',
+'loading_more' => 'جارٍ تحميل المزيد من المنتجات...',
 ],
 
 'product_details' => [
