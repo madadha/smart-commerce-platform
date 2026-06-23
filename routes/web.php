@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\InvoicePdfController;
+use App\Http\Controllers\Admin\OrderAttachmentDownloadController;
 use App\Http\Controllers\Payments\PayPlusPaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Storefront\StorefrontCartController;
@@ -148,6 +149,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin/invoices/{invoice}/pdf', [InvoicePdfController::class, 'show'])
         ->name('admin.invoices.pdf');
+
+    Route::get('/admin/order-attachments/{attachment}/download', OrderAttachmentDownloadController::class)
+        ->name('admin.orders.attachments.download');
 });
 
 require __DIR__.'/auth.php';

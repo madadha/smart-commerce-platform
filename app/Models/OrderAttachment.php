@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class OrderAttachment extends Model
 {
@@ -51,6 +50,6 @@ class OrderAttachment extends Model
             return null;
         }
 
-        return Storage::disk($this->disk ?: 'public')->url($this->file_path);
+        return route('admin.orders.attachments.download', $this);
     }
 }

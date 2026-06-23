@@ -38,14 +38,7 @@
         ['label' => 'Attachments', 'value' => $attachments->count(), 'hint' => 'Admin internal files'],
     ];
 
-    $attachmentUrl = null;
-    if ($lastAttachment && ! empty($lastAttachment->file_path)) {
-        try {
-            $attachmentUrl = \Illuminate\Support\Facades\Storage::disk($lastAttachment->disk ?: 'public')->url($lastAttachment->file_path);
-        } catch (\Throwable $exception) {
-            $attachmentUrl = null;
-        }
-    }
+    $attachmentUrl = $lastAttachment?->url;
 @endphp
 
 <div class="space-y-5">

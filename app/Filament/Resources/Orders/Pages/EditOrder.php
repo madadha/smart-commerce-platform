@@ -226,9 +226,22 @@ class EditOrder extends EditRecord
 
                     FileUpload::make('file')
                         ->label('File')
-                        ->disk('public')
+                        ->disk('local')
                         ->directory('order-attachments')
-                        ->preserveFilenames()
+                        ->visibility('private')
+                        ->preserveFilenames(false)
+                        ->acceptedFileTypes([
+                            'application/pdf',
+                            'image/jpeg',
+                            'image/png',
+                            'image/webp',
+                            'text/plain',
+                            'text/csv',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/vnd.ms-excel',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        ])
                         ->downloadable()
                         ->openable()
                         ->required()
@@ -242,7 +255,9 @@ class EditOrder extends EditRecord
                     Toggle::make('is_private')
                         ->label('Private admin file')
                         ->default(true)
-                        ->helperText('Attachments are for admin use only and are not shown to customers.'),
+                        ->disabled()
+                        ->dehydrated()
+                        ->helperText('Attachments are stored privately and are only available to authorized administrators.'),
                 ])
                 ->modalContent(fn () => view('filament.orders.attachments-modal', [
                     'order' => $this->record->fresh(['attachments.user']),
@@ -259,7 +274,7 @@ class EditOrder extends EditRecord
                         return;
                     }
 
-                    $disk = 'public';
+                    $disk = 'local';
                     $originalName = basename((string) $filePath);
                     $mimeType = null;
                     $sizeBytes = null;
@@ -282,7 +297,7 @@ class EditOrder extends EditRecord
                         'mime_type' => $mimeType,
                         'size_bytes' => $sizeBytes,
                         'notes' => $data['notes'] ?? null,
-                        'is_private' => (bool) ($data['is_private'] ?? true),
+                        'is_private' => true,
                     ]);
 
                     $this->record->orderActivities()->create([
