@@ -27,6 +27,16 @@
 
             return (string) $type;
         };
+
+        $priceBounds = $priceBounds ?? ['min' => 0, 'max' => 0];
+        $sliderMin = 0;
+        $sliderMax = max(1000, (float) ($priceBounds['max'] ?? 0));
+        $selectedMinPrice = is_numeric($filters['min_price'] ?? null) ? (float) $filters['min_price'] : $sliderMin;
+        $selectedMaxPrice = is_numeric($filters['max_price'] ?? null) ? (float) $filters['max_price'] : $sliderMax;
+
+        if ($selectedMinPrice > $selectedMaxPrice) {
+            [$selectedMinPrice, $selectedMaxPrice] = [$selectedMaxPrice, $selectedMinPrice];
+        }
     @endphp
 
     <section class="scp-products-hero">
@@ -67,7 +77,7 @@
     <section class="scp-products-section">
         <div class="scp-container">
 
-            <form method="GET" action="{{ route('storefront.products.index') }}" class="scp-products-toolbar">
+            <form method="GET" action="{{ route('storefront.products.index') }}" class="scp-products-toolbar scp-products-filter-form">
                 <input type="hidden" name="lang" value="{{ $locale }}">
 
                 <div class="scp-products-search">
@@ -132,12 +142,68 @@
                 <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-products-reset">
                     {{ __('storefront.products_page.reset') }}
                 </a>
-            </form>
+                <div class="scp-filter-blocks">
+                    <div class="scp-sidebar-card scp-price-filter-card">
+                        <h3>{{ __('storefront.products_page.price_filter') }}</h3>
 
-            <div class="scp-products-layout">
-                <aside class="scp-products-sidebar">
-                    <div class="scp-sidebar-card">
-                        <h3>{{ __('storefront.products_page.categories_filter') }}</h3>
+                        <div class="scp-price-range-group">
+                            <label>
+                                <span>{{ __('storefront.products_page.min_price') }}</span>
+                                <input
+                                    type="range"
+                                    name="min_price"
+                                    min="{{ $sliderMin }}"
+                                    max="{{ $sliderMax }}"
+                                    step="0.01"
+                                    value="{{ $selectedMinPrice }}"
+                                    id="products-min-price"
+                                >
+                                <small id="products-min-price-label">{{ $selectedMinPrice }}</small>
+                            </label>
+
+                            <label>
+                                <span>{{ __('storefront.products_page.max_price') }}</span>
+                                <input
+                                    type="range"
+                                    name="max_price"
+                                    min="{{ $sliderMin }}"
+                                    max="{{ $sliderMax }}"
+                                    step="0.01"
+                                    value="{{ $selectedMaxPrice }}"
+                                    id="products-max-price"
+                                >
+                                <small id="products-max-price-label">{{ $selectedMaxPrice }}</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    @if(!empty($availableOptionFilters))
+                        <div class="scp-sidebar-card">
+                            <h3>{{ __('storefront.products_page.specification_filters') }}</h3>
+
+                            @foreach($availableOptionFilters as $optionFilter)
+                                <label class="scp-option-filter">
+                                    <span>{{ $optionFilter['name'] }}</span>
+
+                                    <select name="options[{{ $optionFilter['slug'] }}]">
+                                        <option value="">{{ __('storefront.products_page.all_values') }}</option>
+
+                                        @foreach($optionFilter['values'] as $value)
+                                            <option value="{{ $value['value'] }}" @selected((string) ($optionFilters[$optionFilter['slug']] ?? '') === (string) $value['value'])>
+                                                {{ $value['label'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="scp-products-layout">
+                    <aside class="scp-products-sidebar">
+                        <div class="scp-sidebar-card">
+                            <h3>{{ __('storefront.products_page.categories_filter') }}</h3>
 
                         <a
                             href="{{ route('storefront.products.index', array_filter(['lang' => $locale, 'q' => $filters['q'], 'brand' => $filters['brand'], 'type' => $filters['type'], 'sort' => $filters['sort']])) }}"
@@ -175,10 +241,10 @@
                             </a>
                         @endforeach
                     </div>
-                </aside>
+                    </aside>
 
-                <div class="scp-products-main">
-                    <div class="scp-products-summary">
+                    <div class="scp-products-main">
+                        <div class="scp-products-summary">
                         <div>
                             <strong>{{ $products->total() }}</strong>
                             <span>{{ __('storefront.products_page.products_found') }}</span>
@@ -192,7 +258,7 @@
                         @endif
                     </div>
 
-                    <div class="scp-product-grid">
+                        <div class="scp-product-grid">
                         @forelse($products as $product)
                             @php
                                 $stockValue = null;
@@ -332,12 +398,52 @@
                         @endforelse
                     </div>
 
-                    <div class="scp-pagination">
-                        {{ $products->links() }}
+                        <div class="scp-pagination">
+                            {{ $products->links() }}
+                        </div>
                     </div>
                 </div>
-            </div>
+            </form>
 
         </div>
     </section>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const minInput = document.getElementById('products-min-price');
+            const maxInput = document.getElementById('products-max-price');
+            const minLabel = document.getElementById('products-min-price-label');
+            const maxLabel = document.getElementById('products-max-price-label');
+
+            if (!minInput || !maxInput || !minLabel || !maxLabel) {
+                return;
+            }
+
+            const locale = @json($locale === 'ar' ? 'ar-EG' : ($locale === 'he' ? 'he-IL' : 'en-US'));
+            const formatter = new Intl.NumberFormat(locale, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+            });
+
+            const syncLabels = () => {
+                let minValue = Number(minInput.value || 0);
+                let maxValue = Number(maxInput.value || 0);
+
+                if (minValue > maxValue) {
+                    [minValue, maxValue] = [maxValue, minValue];
+                    minInput.value = String(minValue);
+                    maxInput.value = String(maxValue);
+                }
+
+                minLabel.textContent = formatter.format(minValue);
+                maxLabel.textContent = formatter.format(maxValue);
+            };
+
+            minInput.addEventListener('input', syncLabels);
+            maxInput.addEventListener('input', syncLabels);
+            syncLabels();
+        });
+    </script>
+@endpush

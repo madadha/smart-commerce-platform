@@ -105,6 +105,9 @@ return [
 'on_sale_only' => 'On Sale Only',
 'sort_rating_high' => 'Highest Rated',
 'sort_rating_low' => 'Lowest Rated',
+'price_filter' => 'Price filter',
+'specification_filters' => 'Specification filters',
+'all_values' => 'All values',
 ],
 
 

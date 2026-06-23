@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductOption;
 use App\Models\StorefrontSetting;
 use App\Models\StorefrontSlide;
 use Illuminate\Database\Eloquent\Builder;
@@ -100,6 +101,7 @@ class StorefrontController extends Controller
         $rating = $request->query('rating');
         $inStock = $request->boolean('in_stock');
         $onSale = $request->boolean('on_sale');
+        $optionFilters = $this->normalizeOptionFilters($request->input('options', []));
 
         $productsQuery = Product::query()
             ->with([
@@ -167,6 +169,8 @@ class StorefrontController extends Controller
                 ->whereColumn('sale_price', '<', 'price');
         }
 
+        $this->applyOptionFilters($productsQuery, $optionFilters);
+
         $needsRatingAverage = ($rating !== null && $rating !== '')
             || in_array($sort, ['rating_high', 'rating_low'], true);
 
@@ -188,6 +192,25 @@ class StorefrontController extends Controller
             'rating_low' => $this->applyRatingSort($productsQuery, 'asc'),
             default => $productsQuery->latest(),
         };
+
+        $priceBoundsQuery = Product::query()->where('is_active', true);
+
+        if (Schema::hasColumn('products', 'sale_price') && Schema::hasColumn('products', 'price')) {
+            $priceBounds = $priceBoundsQuery->selectRaw(
+                'MIN(COALESCE(NULLIF(sale_price, 0), price)) as min_price, MAX(COALESCE(NULLIF(sale_price, 0), price)) as max_price'
+            )->first();
+        } else {
+            $priceBounds = $priceBoundsQuery->selectRaw('MIN(price) as min_price, MAX(price) as max_price')->first();
+        }
+
+        $availableOptionFilters = $this->buildAvailableOptionFilters(
+            (clone $productsQuery)
+                ->select('products.id')
+                ->distinct()
+                ->pluck('id')
+                ->all(),
+            $locale
+        );
 
         $products = $productsQuery
             ->paginate(12)
@@ -222,6 +245,12 @@ class StorefrontController extends Controller
                 'rating' => $rating,
                 'in_stock' => $inStock,
                 'on_sale' => $onSale,
+            ],
+            'optionFilters' => $optionFilters,
+            'availableOptionFilters' => $availableOptionFilters,
+            'priceBounds' => [
+                'min' => (float) ($priceBounds->min_price ?? 0),
+                'max' => (float) ($priceBounds->max_price ?? 0),
             ],
         ]);
     }
@@ -369,6 +398,79 @@ class StorefrontController extends Controller
         }
 
         return $query->latest();
+    }
+
+    private function normalizeOptionFilters(mixed $filters): array
+    {
+        if (! is_array($filters)) {
+            return [];
+        }
+
+        return collect($filters)
+            ->filter(fn ($value) => is_scalar($value) && trim((string) $value) !== '')
+            ->mapWithKeys(fn ($value, $slug) => [trim((string) $slug) => trim((string) $value)])
+            ->all();
+    }
+
+    private function applyOptionFilters(Builder $query, array $filters): void
+    {
+        foreach ($filters as $slug => $value) {
+            if ($value === '') {
+                continue;
+            }
+
+            $query->whereHas('variants', function (Builder $variantQuery) use ($slug, $value) {
+                $variantQuery->where('is_active', true)
+                    ->whereJsonContains("option_values->{$slug}", $value);
+            });
+        }
+    }
+
+    private function buildAvailableOptionFilters(array $productIds, string $locale): array
+    {
+        if ($productIds === []) {
+            return [];
+        }
+
+        return ProductOption::query()
+            ->where('is_active', true)
+            ->whereIn('product_id', $productIds)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('slug')
+            ->map(function ($options, string $slug) use ($locale): array {
+                $first = $options->first();
+                $values = collect();
+
+                foreach ($options as $option) {
+                    foreach ($option->getValues() as $value) {
+                        $technicalValue = trim((string) ($value['value'] ?? ''));
+
+                        if ($technicalValue === '') {
+                            continue;
+                        }
+
+                        $label = $value[$locale] ?? $value['en'] ?? $value['ar'] ?? $technicalValue;
+
+                        $values[$technicalValue] = [
+                            'value' => $technicalValue,
+                            'label' => $label,
+                            'color' => $value['color'] ?? null,
+                        ];
+                    }
+                }
+
+                return [
+                    'slug' => $slug,
+                    'name' => $first?->getName($locale) ?? $slug,
+                    'type' => $first?->type ?? 'select',
+                    'values' => $values->values()->sortBy('label')->values()->all(),
+                ];
+            })
+            ->filter(fn (array $option) => $option['values'] !== [])
+            ->values()
+            ->all();
     }
 
     private function resolveLocale(Request $request): string

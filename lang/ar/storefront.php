@@ -104,6 +104,9 @@ return [
 'on_sale_only' => 'العروض فقط',
 'sort_rating_high' => 'الأعلى تقييمًا',
 'sort_rating_low' => 'الأقل تقييمًا',
+'price_filter' => 'فلترة الأسعار',
+'specification_filters' => 'فلترة المواصفات',
+'all_values' => 'كل القيم',
 ],
 
 'product_details' => [
@@ -402,4 +405,3 @@ return [
 
 
 ];
-

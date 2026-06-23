@@ -105,6 +105,9 @@ return [
 'on_sale_only' => 'מבצעים בלבד',
 'sort_rating_high' => 'דירוג גבוה קודם',
 'sort_rating_low' => 'דירוג נמוך קודם',
+'price_filter' => 'סינון מחירים',
+'specification_filters' => 'סינון מפרטים',
+'all_values' => 'כל הערכים',
 ],
 
 
