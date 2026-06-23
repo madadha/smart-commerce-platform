@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Resources\AuditLogs\AuditLogResource;
+use App\Http\Middleware\SetAdminLocale;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,8 +12,10 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
+use Illuminate\Support\HtmlString;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -29,6 +32,12 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName(fn (): string => __('admin.brand_name'))
+            ->sidebarCollapsibleOnDesktop()
+            ->renderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                fn (): HtmlString => new HtmlString('<link rel="stylesheet" href="'.asset('css/filament-admin.css').'?v='.filemtime(public_path('css/filament-admin.css')).'">'),
+            )
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -46,6 +55,7 @@ class AdminPanelProvider extends PanelProvider
                 FilamentInfoWidget::class,
             ])
             ->middleware([
+                SetAdminLocale::class,
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
