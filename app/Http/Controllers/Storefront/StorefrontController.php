@@ -205,6 +205,7 @@ class StorefrontController extends Controller
 
         $availableOptionFilters = $this->buildAvailableOptionFilters(
             (clone $productsQuery)
+                ->reorder()
                 ->select('products.id')
                 ->distinct()
                 ->pluck('id')
