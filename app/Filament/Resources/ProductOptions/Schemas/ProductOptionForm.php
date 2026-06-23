@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\ProductOptions\Schemas;
 
 use App\Models\Product;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class ProductOptionForm
@@ -62,6 +64,7 @@ class ProductOptionForm
                                 'button' => 'Button',
                             ])
                             ->required()
+                            ->live()
                             ->default('select'),
 
                         Toggle::make('is_required')
@@ -100,9 +103,11 @@ class ProductOptionForm
                                     ->label('Value')
                                     ->required(),
 
-                                TextInput::make('color')
+                                ColorPicker::make('color')
                                     ->label('Color')
-                                    ->placeholder('#000000'),
+                                    ->helperText('Choose the exact color. The hexadecimal value is saved automatically.')
+                                    ->visible(fn (Get $get): bool => $get('../../type') === 'color')
+                                    ->required(fn (Get $get): bool => $get('../../type') === 'color'),
                             ])
                             ->columns(5)
                             ->columnSpanFull(),
