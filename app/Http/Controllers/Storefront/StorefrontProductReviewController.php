@@ -44,17 +44,13 @@ class StorefrontProductReviewController extends Controller
 
     private function resolveLocale(Request $request): string
     {
-        $allowedLocales = ['ar', 'he', 'en'];
-
         $locale = $request->input('lang')
             ?? $request->query('lang')
             ?? session('storefront_locale')
             ?? app()->getLocale()
             ?? 'ar';
 
-        if (! in_array($locale, $allowedLocales, true)) {
-            $locale = 'ar';
-        }
+        $locale = app(\App\Support\Localization\ActiveLanguageRegistry::class)->resolve($locale);
 
         session(['storefront_locale' => $locale]);
 

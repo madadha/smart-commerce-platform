@@ -34,7 +34,7 @@ class ProfileController extends Controller
             'user' => $user,
             'customer' => $customer,
             'locale' => $locale,
-            'direction' => in_array($locale, ['ar', 'he'], true) ? 'rtl' : 'ltr',
+            'direction' => app(\App\Support\Localization\ActiveLanguageRegistry::class)->direction($locale),
             'pageTitle' => 'Profile - Smart Commerce Platform',
         ]);
     }
@@ -107,9 +107,7 @@ class ProfileController extends Controller
             ?? app()->getLocale()
             ?? 'ar';
 
-        if (! in_array($locale, ['ar', 'he', 'en'], true)) {
-            $locale = 'ar';
-        }
+        $locale = app(\App\Support\Localization\ActiveLanguageRegistry::class)->resolve($locale);
 
         session(['storefront_locale' => $locale]);
         App::setLocale($locale);

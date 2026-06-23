@@ -2,8 +2,9 @@
 
 @section('content')
 @php
-    $locale = $locale ?? request('lang', session('storefront_locale', app()->getLocale() ?: 'ar'));
-    $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
+    $locale = app(\App\Support\Localization\ActiveLanguageRegistry::class)->resolve(
+        $locale ?? request('lang', session('storefront_locale', app()->getLocale() ?: 'ar'))
+    );
     $customer = $customer ?? auth()->user()?->customer ?? null;
     $user = $user ?? auth()->user();
 

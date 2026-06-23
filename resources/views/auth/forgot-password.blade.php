@@ -1,5 +1,5 @@
 <x-guest-layout>
-    @php $locale = request('lang', session('storefront_locale', 'ar')); $locale = in_array($locale, ['ar','he','en'], true) ? $locale : 'ar'; @endphp
+    @php $locale = app(\App\Support\Localization\ActiveLanguageRegistry::class)->resolve(request('lang', session('storefront_locale', 'ar'))); @endphp
     <div class="scp-auth-heading">
         <h2>{{ $locale === 'ar' ? 'استعادة كلمة المرور' : ($locale === 'he' ? 'איפוס סיסמה' : 'Forgot password') }}</h2>
         <p>{{ $locale === 'ar' ? 'اكتب بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور.' : ($locale === 'he' ? 'הזן אימייל ונשלח קישור לאיפוס הסיסמה.' : 'Enter your email and we will send a password reset link.') }}</p>

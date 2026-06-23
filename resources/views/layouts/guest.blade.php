@@ -1,7 +1,8 @@
 @php
-    $locale = request('lang', session('storefront_locale', app()->getLocale() ?: 'ar'));
-    $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
-    $direction = in_array($locale, ['ar', 'he'], true) ? 'rtl' : 'ltr';
+    $languageRegistry = app(\App\Support\Localization\ActiveLanguageRegistry::class);
+    $locale = $languageRegistry->resolve(request('lang', session('storefront_locale', app()->getLocale() ?: 'ar')));
+    $direction = $languageRegistry->direction($locale);
+    $activeLanguages = $languageRegistry->active();
     $storefrontSettings = \App\Models\StorefrontSetting::current();
     $storeName = $storefrontSettings?->localized('store_name', $locale, 'Smart Commerce') ?: 'Smart Commerce';
     $storeTagline = $storefrontSettings?->localized('store_tagline', $locale, 'Marketplace Platform') ?: 'Marketplace Platform';
@@ -51,9 +52,13 @@
             </div>
 
             <div class="scp-auth-language-switcher">
-                <a href="{{ request()->fullUrlWithQuery(['lang' => 'ar']) }}" class="{{ $locale === 'ar' ? 'active' : '' }}">AR</a>
-                <a href="{{ request()->fullUrlWithQuery(['lang' => 'he']) }}" class="{{ $locale === 'he' ? 'active' : '' }}">HE</a>
-                <a href="{{ request()->fullUrlWithQuery(['lang' => 'en']) }}" class="{{ $locale === 'en' ? 'active' : '' }}">EN</a>
+                @forelse($activeLanguages as $language)
+                    <a href="{{ request()->fullUrlWithQuery(['lang' => $language->code]) }}" class="{{ $locale === $language->code ? 'active' : '' }}">{{ strtoupper($language->code) }}</a>
+                @empty
+                    @foreach(\App\Support\Localization\ActiveLanguageRegistry::SUPPORTED_CODES as $languageCode)
+                        <a href="{{ request()->fullUrlWithQuery(['lang' => $languageCode]) }}" class="{{ $locale === $languageCode ? 'active' : '' }}">{{ strtoupper($languageCode) }}</a>
+                    @endforeach
+                @endforelse
             </div>
         </div>
 

@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\Localization\ActiveLanguageRegistry;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class Language extends Model
 {
@@ -40,5 +42,32 @@ class Language extends Model
     public function isLtr(): bool
     {
         return $this->direction === 'ltr';
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Language $language): void {
+            if (! $language->is_active && $language->is_default) {
+                throw ValidationException::withMessages([
+                    'is_active' => 'The default language must remain active.',
+                ]);
+            }
+
+            if ($language->exists && $language->isDirty('is_active') && ! $language->is_active) {
+                $hasAnotherActiveLanguage = static::query()
+                    ->whereKeyNot($language->getKey())
+                    ->where('is_active', true)
+                    ->exists();
+
+                if (! $hasAnotherActiveLanguage) {
+                    throw ValidationException::withMessages([
+                        'is_active' => 'At least one storefront language must remain active.',
+                    ]);
+                }
+            }
+        });
+
+        static::saved(fn (): mixed => app(ActiveLanguageRegistry::class)->forget());
+        static::deleted(fn (): mixed => app(ActiveLanguageRegistry::class)->forget());
     }
 }

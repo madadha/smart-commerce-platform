@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\StorefrontSetting;
 use App\Models\StorefrontSlide;
+use App\Support\Localization\ActiveLanguageRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -476,17 +477,13 @@ class StorefrontController extends Controller
 
     private function resolveLocale(Request $request): string
     {
-        $allowedLocales = ['ar', 'he', 'en'];
-
         $locale = $request->input('lang')
             ?? $request->query('lang')
             ?? session('storefront_locale')
             ?? app()->getLocale()
             ?? 'ar';
 
-        if (! in_array($locale, $allowedLocales, true)) {
-            $locale = 'ar';
-        }
+        $locale = app(ActiveLanguageRegistry::class)->resolve($locale);
 
         session(['storefront_locale' => $locale]);
 
@@ -497,6 +494,6 @@ class StorefrontController extends Controller
 
     private function direction(string $locale): string
     {
-        return in_array($locale, ['ar', 'he'], true) ? 'rtl' : 'ltr';
+        return app(ActiveLanguageRegistry::class)->direction($locale);
     }
 }

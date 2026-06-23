@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 @php
-    $currentLocale = $locale ?? request('lang', session('storefront_locale', app()->getLocale() ?? 'ar'));
-    $allowedLocales = ['ar', 'he', 'en'];
-
-    if (! in_array($currentLocale, $allowedLocales, true)) {
-        $currentLocale = 'ar';
-    }
-
-    $currentDirection = in_array($currentLocale, ['ar', 'he'], true) ? 'rtl' : 'ltr';
+    $languageRegistry = app(\App\Support\Localization\ActiveLanguageRegistry::class);
+    $activeLanguages = $languageRegistry->active();
+    $currentLocale = $languageRegistry->resolve($locale ?? request('lang', session('storefront_locale', app()->getLocale() ?? 'ar')));
+    $currentDirection = $languageRegistry->direction($currentLocale);
 
     $authLabels = [
         'ar' => [
@@ -77,9 +73,17 @@
             </div>
 
             <div class="scp-language-switcher">
-                <a href="{{ request()->fullUrlWithQuery(['lang' => 'ar']) }}" class="{{ $currentLocale === 'ar' ? 'active' : '' }}">AR</a>
-                <a href="{{ request()->fullUrlWithQuery(['lang' => 'he']) }}" class="{{ $currentLocale === 'he' ? 'active' : '' }}">HE</a>
-                <a href="{{ request()->fullUrlWithQuery(['lang' => 'en']) }}" class="{{ $currentLocale === 'en' ? 'active' : '' }}">EN</a>
+                @forelse($activeLanguages as $language)
+                    <a href="{{ request()->fullUrlWithQuery(['lang' => $language->code]) }}" class="{{ $currentLocale === $language->code ? 'active' : '' }}">
+                        {{ strtoupper($language->code) }}
+                    </a>
+                @empty
+                    @foreach(\App\Support\Localization\ActiveLanguageRegistry::SUPPORTED_CODES as $languageCode)
+                        <a href="{{ request()->fullUrlWithQuery(['lang' => $languageCode]) }}" class="{{ $currentLocale === $languageCode ? 'active' : '' }}">
+                            {{ strtoupper($languageCode) }}
+                        </a>
+                    @endforeach
+                @endforelse
             </div>
         </div>
 

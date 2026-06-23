@@ -1,7 +1,7 @@
 @php
-    $locale = request('lang', session('storefront_locale', app()->getLocale() ?: 'ar'));
-    $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
-    $direction = in_array($locale, ['ar', 'he'], true) ? 'rtl' : 'ltr';
+    $languageRegistry = app(\App\Support\Localization\ActiveLanguageRegistry::class);
+    $locale = $languageRegistry->resolve(request('lang', session('storefront_locale', app()->getLocale() ?: 'ar')));
+    $direction = $languageRegistry->direction($locale);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locale }}" dir="{{ $direction }}">

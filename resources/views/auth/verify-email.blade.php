@@ -1,5 +1,5 @@
 <x-guest-layout>
-    @php $locale = request('lang', session('storefront_locale', 'ar')); $locale = in_array($locale, ['ar','he','en'], true) ? $locale : 'ar'; @endphp
+    @php $locale = app(\App\Support\Localization\ActiveLanguageRegistry::class)->resolve(request('lang', session('storefront_locale', 'ar'))); @endphp
     <div class="scp-auth-heading">
         <h2>{{ $locale === 'ar' ? 'تأكيد البريد الإلكتروني' : ($locale === 'he' ? 'אימות אימייל' : 'Verify email') }}</h2>
         <p>{{ $locale === 'ar' ? 'يرجى تأكيد بريدك الإلكتروني من الرابط الذي تم إرساله إليك.' : ($locale === 'he' ? 'אנא אמת את האימייל באמצעות הקישור שנשלח אליך.' : 'Please verify your email using the link sent to you.') }}</p>

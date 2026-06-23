@@ -1,7 +1,6 @@
 <x-guest-layout>
     @php
-        $locale = request('lang', session('storefront_locale', 'ar'));
-        $locale = in_array($locale, ['ar', 'he', 'en'], true) ? $locale : 'ar';
+        $locale = app(\App\Support\Localization\ActiveLanguageRegistry::class)->resolve(request('lang', session('storefront_locale', 'ar')));
     @endphp
 
     <div class="scp-auth-heading">

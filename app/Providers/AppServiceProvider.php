@@ -36,6 +36,7 @@ use App\Observers\PaymentInventoryObserver;
 use App\Observers\ShipmentNotificationObserver;
 use App\Policies\AuditLogPolicy;
 use App\Services\Audit\AuditLogger;
+use App\Support\Localization\ActiveLanguageRegistry;
 use App\Policies\CatalogResourcePolicy;
 use App\Policies\CustomerResourcePolicy;
 use App\Policies\DigitalCodeResourcePolicy;
@@ -48,6 +49,8 @@ use App\Policies\SupportResourcePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -57,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AuditLogger::class);
+        $this->app->singleton(ActiveLanguageRegistry::class);
     }
 
     /**
@@ -64,6 +68,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        TextInput::configureUsing(function (TextInput $component): void {
+            $component->visible(fn (TextInput $component): bool => app(ActiveLanguageRegistry::class)
+                ->shouldDisplayStatePath($component->getStatePath()));
+        });
+
+        Textarea::configureUsing(function (Textarea $component): void {
+            $component->visible(fn (Textarea $component): bool => app(ActiveLanguageRegistry::class)
+                ->shouldDisplayStatePath($component->getStatePath()));
+        });
+
         Gate::before(fn (User $user): ?bool => $user->hasAnyRole(['super-admin', 'admin']) ? true : null);
 
         foreach ([Product::class, ProductMedia::class, ProductOption::class, ProductVariant::class, Category::class, Brand::class, MediaFile::class] as $model) {
