@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\InvoicePdfController;
+use App\Http\Controllers\Payments\PayPlusPaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Storefront\StorefrontCartController;
 use App\Http\Controllers\Storefront\StorefrontCheckoutController;
@@ -66,7 +67,12 @@ Route::prefix('store')->name('storefront.')->group(function () {
     Route::get('/checkout', [StorefrontCheckoutController::class, 'index'])
         ->name('checkout.index');
 
+    Route::get('/checkout/shipping-quotes', [StorefrontCheckoutController::class, 'shippingQuotes'])
+        ->middleware('throttle:30,1')
+        ->name('checkout.shipping-quotes');
+
     Route::post('/checkout/place-order', [StorefrontCheckoutController::class, 'placeOrder'])
+        ->middleware('throttle:10,1')
         ->name('checkout.place');
 
     Route::get('/checkout/success/{order}', [StorefrontCheckoutController::class, 'success'])
@@ -76,6 +82,7 @@ Route::prefix('store')->name('storefront.')->group(function () {
         ->name('orders.track');
 
     Route::post('/track-order/result', [StorefrontOrderController::class, 'trackingResult'])
+        ->middleware('throttle:20,1')
         ->name('orders.track.result');
 
     Route::get('/account', [StorefrontOrderController::class, 'dashboard'])
@@ -143,4 +150,12 @@ Route::middleware('auth')->group(function () {
         ->name('admin.invoices.pdf');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
+
+Route::get('/payments/payplus/return/{payment}/{status}', [PayPlusPaymentController::class, 'return'])
+    ->middleware('signed')
+    ->name('payments.payplus.return');
+
+Route::post('/payments/webhooks/payplus', [PayPlusPaymentController::class, 'webhook'])
+    ->middleware('throttle:60,1')
+    ->name('payments.webhooks.payplus');

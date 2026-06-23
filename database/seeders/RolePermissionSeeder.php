@@ -3,44 +3,28 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         $permissions = [
             'view admin panel',
-
-            'view users',
-            'create users',
-            'edit users',
-            'delete users',
-
-            'view settings',
-            'edit settings',
-
-            'view products',
-            'create products',
-            'edit products',
-            'delete products',
-
-            'view categories',
-            'create categories',
-            'edit categories',
-            'delete categories',
-
-            'view orders',
-            'edit orders',
-
-            'view reports',
-
-            'manage languages',
-            'manage currencies',
-            'manage shipping',
-            'manage payments',
-            'manage resellers',
+            'catalog.view', 'catalog.manage',
+            'orders.view', 'orders.manage',
+            'customers.view', 'customers.manage',
+            'shipping.view', 'shipping.manage',
+            'payments.view', 'payments.manage', 'payments.refund',
+            'digital_codes.view', 'digital_codes.manage',
+            'settings.view', 'settings.manage',
+            'support.view', 'support.manage',
+            'users.view', 'users.manage',
+            'audit.view', 'audit.manage',
         ];
 
         foreach ($permissions as $permission) {
@@ -50,58 +34,21 @@ class RolePermissionSeeder extends Seeder
             ]);
         }
 
-        $admin = Role::firstOrCreate([
-            'name' => 'admin',
-            'guard_name' => 'web',
-        ]);
+        $roles = [
+            'super-admin' => $permissions,
+            'admin' => $permissions,
+            'orders-manager' => ['view admin panel', 'orders.view', 'orders.manage', 'customers.view', 'customers.manage', 'shipping.view', 'shipping.manage', 'payments.view', 'digital_codes.view', 'support.view', 'support.manage'],
+            'catalog-manager' => ['view admin panel', 'catalog.view', 'catalog.manage', 'digital_codes.view', 'digital_codes.manage', 'settings.view'],
+            'support' => ['view admin panel', 'orders.view', 'customers.view', 'shipping.view', 'payments.view', 'support.view', 'support.manage'],
+            'customer' => [],
+            'reseller' => [],
+        ];
 
-        $manager = Role::firstOrCreate([
-            'name' => 'manager',
-            'guard_name' => 'web',
-        ]);
+        foreach ($roles as $name => $rolePermissions) {
+            Role::firstOrCreate(['name' => $name, 'guard_name' => 'web'])
+                ->syncPermissions($rolePermissions);
+        }
 
-        $employee = Role::firstOrCreate([
-            'name' => 'employee',
-            'guard_name' => 'web',
-        ]);
-
-        $reseller = Role::firstOrCreate([
-            'name' => 'reseller',
-            'guard_name' => 'web',
-        ]);
-
-        $customer = Role::firstOrCreate([
-            'name' => 'customer',
-            'guard_name' => 'web',
-        ]);
-
-        $admin->syncPermissions(Permission::all());
-
-        $manager->syncPermissions([
-            'view admin panel',
-            'view products',
-            'create products',
-            'edit products',
-            'view categories',
-            'create categories',
-            'edit categories',
-            'view orders',
-            'edit orders',
-            'view reports',
-        ]);
-
-        $employee->syncPermissions([
-            'view admin panel',
-            'view products',
-            'view categories',
-            'view orders',
-        ]);
-
-        $reseller->syncPermissions([
-            'view products',
-            'view orders',
-        ]);
-
-        $customer->syncPermissions([]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

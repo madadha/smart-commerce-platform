@@ -17,6 +17,8 @@ class ProductDigitalCode extends Model
         'expires_at',
         'reserved_by',
         'reserved_at',
+        'order_id',
+        'order_item_id',
         'sold_to',
         'sold_at',
         'internal_notes',
@@ -41,6 +43,16 @@ class ProductDigitalCode extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function orderItem(): BelongsTo
+    {
+        return $this->belongsTo(OrderItem::class);
     }
 
     public function reservedByUser(): BelongsTo
@@ -78,8 +90,8 @@ class ProductDigitalCode extends Model
         }
 
         return substr($code, 0, 4)
-            . str_repeat('*', max(strlen($code) - 8, 0))
-            . substr($code, -4);
+            .str_repeat('*', max(strlen($code) - 8, 0))
+            .substr($code, -4);
     }
 
     public function isAvailable(): bool

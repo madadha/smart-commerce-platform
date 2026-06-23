@@ -30,11 +30,12 @@ class ProfileTest extends TestCase
             ->patch('/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                'lang' => 'en',
             ]);
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
+            ->assertRedirect(route('profile.edit', ['lang' => 'en'], absolute: false));
 
         $user->refresh();
 
@@ -52,11 +53,12 @@ class ProfileTest extends TestCase
             ->patch('/profile', [
                 'name' => 'Test User',
                 'email' => $user->email,
+                'lang' => 'en',
             ]);
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
+            ->assertRedirect(route('profile.edit', ['lang' => 'en'], absolute: false));
 
         $this->assertNotNull($user->refresh()->email_verified_at);
     }

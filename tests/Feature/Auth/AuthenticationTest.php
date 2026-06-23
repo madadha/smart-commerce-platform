@@ -3,7 +3,9 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -50,5 +52,21 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertRedirect('/');
+    }
+
+    public function test_login_is_rate_limited_after_repeated_failures(): void
+    {
+        Event::fake([Lockout::class]);
+        $user = User::factory()->create();
+
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $this->post('/login', [
+                'email' => $user->email,
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        Event::assertDispatched(Lockout::class);
+        $this->assertGuest();
     }
 }

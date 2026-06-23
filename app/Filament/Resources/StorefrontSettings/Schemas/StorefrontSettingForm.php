@@ -1,0 +1,132 @@
+<?php
+
+namespace App\Filament\Resources\StorefrontSettings\Schemas;
+
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+
+class StorefrontSettingForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('Brand Identity')
+                ->schema([
+                    Grid::make(3)->schema([
+                        TextInput::make('store_name.ar')->label('Store Name AR')->default('Smart Commerce')->required(),
+                        TextInput::make('store_name.he')->label('Store Name HE')->default('Smart Commerce'),
+                        TextInput::make('store_name.en')->label('Store Name EN')->default('Smart Commerce'),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('store_tagline.ar')->label('Tagline AR')->default('Marketplace Platform'),
+                        TextInput::make('store_tagline.he')->label('Tagline HE')->default('Marketplace Platform'),
+                        TextInput::make('store_tagline.en')->label('Tagline EN')->default('Marketplace Platform'),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('topbar_text.ar')->label('Topbar AR')->default('Smart Commerce Platform — تجربة تجارة ديناميكية متعددة اللغات'),
+                        TextInput::make('topbar_text.he')->label('Topbar HE')->default('Smart Commerce Platform — חוויית מסחר דינמית ורב־לשונית'),
+                        TextInput::make('topbar_text.en')->label('Topbar EN')->default('Smart Commerce Platform — Dynamic multilingual commerce experience'),
+                    ]),
+                    Grid::make(2)->schema([
+                        FileUpload::make('logo_path')
+                            ->label('Logo')
+                            ->disk('public')
+                            ->directory('storefront/branding')
+                            ->image()
+                            ->imageEditor()
+                            ->nullable(),
+                        FileUpload::make('favicon_path')
+                            ->label('Favicon')
+                            ->disk('public')
+                            ->directory('storefront/branding')
+                            ->image()
+                            ->imageEditor()
+                            ->nullable(),
+                    ]),
+                    Toggle::make('is_active')->label('Active')->default(true),
+                ]),
+
+            Section::make('Theme Colors')
+                ->schema([
+                    Grid::make(3)->schema([
+                        ColorPicker::make('primary_color')->label('Primary')->default('#2563eb'),
+                        ColorPicker::make('primary_hover_color')->label('Primary Hover')->default('#1d4ed8'),
+                        ColorPicker::make('secondary_color')->label('Secondary')->default('#0ea5e9'),
+                        ColorPicker::make('accent_color')->label('Accent / Gold')->default('#d4a24c'),
+                        ColorPicker::make('dark_color')->label('Dark')->default('#0b1120'),
+                        ColorPicker::make('background_color')->label('Background')->default('#f8fafc'),
+                        ColorPicker::make('card_color')->label('Card')->default('#ffffff'),
+                        ColorPicker::make('text_color')->label('Text')->default('#0f172a'),
+                        ColorPicker::make('muted_text_color')->label('Muted Text')->default('#64748b'),
+                    ]),
+                ]),
+
+            Section::make('Default Hero Content')
+                ->schema([
+                    Grid::make(3)->schema([
+                        TextInput::make('hero_badge.ar')->label('Badge AR'),
+                        TextInput::make('hero_badge.he')->label('Badge HE'),
+                        TextInput::make('hero_badge.en')->label('Badge EN'),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('hero_title.ar')->label('Title AR'),
+                        TextInput::make('hero_title.he')->label('Title HE'),
+                        TextInput::make('hero_title.en')->label('Title EN'),
+                    ]),
+                    Grid::make(3)->schema([
+                        Textarea::make('hero_text.ar')->label('Text AR')->rows(3),
+                        Textarea::make('hero_text.he')->label('Text HE')->rows(3),
+                        Textarea::make('hero_text.en')->label('Text EN')->rows(3),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('hero_primary_button_text.ar')->label('Primary Button AR'),
+                        TextInput::make('hero_primary_button_text.he')->label('Primary Button HE'),
+                        TextInput::make('hero_primary_button_text.en')->label('Primary Button EN'),
+                    ]),
+                    TextInput::make('hero_primary_button_url')->label('Primary Button URL')->default('/store/products'),
+                    Grid::make(3)->schema([
+                        TextInput::make('hero_secondary_button_text.ar')->label('Secondary Button AR'),
+                        TextInput::make('hero_secondary_button_text.he')->label('Secondary Button HE'),
+                        TextInput::make('hero_secondary_button_text.en')->label('Secondary Button EN'),
+                    ]),
+                    TextInput::make('hero_secondary_button_url')->label('Secondary Button URL')->default('/store/products?on_sale=1'),
+                ]),
+
+            Section::make('Homepage Sections')
+                ->schema([
+                    Grid::make(4)->schema([
+                        Toggle::make('show_categories_section')->label('Categories')->default(true),
+                        Toggle::make('show_featured_section')->label('Featured Products')->default(true),
+                        Toggle::make('show_latest_section')->label('Latest Products')->default(true),
+                        Toggle::make('show_brands_section')->label('Brands')->default(true),
+                    ]),
+                ]),
+
+            Section::make('Footer & Contact')
+                ->schema([
+                    Grid::make(3)->schema([
+                        Textarea::make('footer_description.ar')->label('Footer AR')->rows(3),
+                        Textarea::make('footer_description.he')->label('Footer HE')->rows(3),
+                        Textarea::make('footer_description.en')->label('Footer EN')->rows(3),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('contact_email')->email()->label('Email'),
+                        TextInput::make('contact_phone')->label('Phone'),
+                        TextInput::make('whatsapp')->label('WhatsApp'),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('facebook_url')->url()->label('Facebook'),
+                        TextInput::make('instagram_url')->url()->label('Instagram'),
+                        TextInput::make('tiktok_url')->url()->label('TikTok'),
+                    ]),
+                    TextInput::make('youtube_url')->url()->label('YouTube'),
+                ]),
+        ]);
+    }
+}

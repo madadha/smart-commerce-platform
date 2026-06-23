@@ -45,7 +45,7 @@ class ShippingMethodForm
                         Select::make('type')
                             ->label('Shipping Type')
                             ->options(collect(ShippingMethodType::cases())->mapWithKeys(fn (ShippingMethodType $type) => [
-                                $type->value => $type->label() . ' - ' . $type->labelAr(),
+                                $type->value => $type->label().' - '.$type->labelAr(),
                             ])->toArray())
                             ->required()
                             ->default(ShippingMethodType::HomeDelivery->value),
@@ -57,7 +57,7 @@ class ShippingMethodForm
                                 ->orderBy('code')
                                 ->get()
                                 ->mapWithKeys(fn (Country $country) => [
-                                    $country->id => ($country->flag ? $country->flag . ' ' : '') . $country->getName('ar') . ' - ' . $country->code,
+                                    $country->id => ($country->flag ? $country->flag.' ' : '').$country->getName('ar').' - '.$country->code,
                                 ])
                                 ->toArray())
                             ->searchable()
@@ -70,7 +70,7 @@ class ShippingMethodForm
                                 ->orderBy('id')
                                 ->get()
                                 ->mapWithKeys(fn (Currency $currency) => [
-                                    $currency->id => $currency->code . ' - ' . $currency->getName('ar'),
+                                    $currency->id => $currency->code.' - '.$currency->getName('ar'),
                                 ])
                                 ->toArray())
                             ->searchable()
@@ -102,6 +102,12 @@ class ShippingMethodForm
                             ->required()
                             ->default(0),
 
+                        TextInput::make('per_kg_cost')
+                            ->label('Cost per kg')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0),
+
                         TextInput::make('free_shipping_min_total')
                             ->label('Free Shipping From')
                             ->numeric()
@@ -115,7 +121,16 @@ class ShippingMethodForm
                             ->label('Max Delivery Days')
                             ->numeric(),
                     ])
-                    ->columns(4),
+                    ->columns(3),
+
+                Section::make('Eligibility Rules')
+                    ->description('The server checks these limits again when the order is placed.')
+                    ->schema([
+                        TextInput::make('min_order_total')->label('Minimum order total')->numeric()->minValue(0),
+                        TextInput::make('max_order_total')->label('Maximum order total')->numeric()->minValue(0),
+                        TextInput::make('min_weight')->label('Minimum weight (kg)')->numeric()->minValue(0),
+                        TextInput::make('max_weight')->label('Maximum weight (kg)')->numeric()->minValue(0),
+                    ])->columns(4),
 
                 Section::make('External Shipping Company')
                     ->schema([

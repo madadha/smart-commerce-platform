@@ -7,24 +7,28 @@ use App\Models\Cart;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Payment;
-use App\Models\ShippingMethod;
+use App\Services\Payments\PaymentService;
+use App\Services\Pricing\CommerceTotalsCalculator;
+use App\Services\Shipping\ShipmentService;
+use App\Services\Shipping\ShippingQuoteService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class CartCheckoutService
 {
     public function __construct(
-        private readonly CheckoutInventoryService $checkoutInventoryService
-    ) {
-    }
+        private readonly CheckoutInventoryService $checkoutInventoryService,
+        private readonly CommerceTotalsCalculator $totalsCalculator,
+        private readonly PaymentService $paymentService,
+        private readonly ShippingQuoteService $shippingQuoteService,
+        private readonly ShipmentService $shipmentService,
+    ) {}
 
     public function convertCartToOrder(Cart $cart, array $data, ?int $userId = null): Order
     {
-        return DB::transaction(function () use ($cart, $data, $userId) {
+        $order = DB::transaction(function () use ($cart, $data, $userId) {
             $cart->load([
                 'items.product',
                 'items.productVariant',
@@ -35,27 +39,38 @@ class CartCheckoutService
                 throw new RuntimeException('Cart is empty.');
             }
 
-            $this->validateCartBeforeCheckout($cart);
-
             $customer = $this->findOrCreateCustomer($data, $userId);
-
-            $shippingTotal = $this->resolveShippingTotal($data['shipping_method_id'] ?? null);
 
             $subtotal = (float) $cart->items->sum(function ($item) {
                 return (float) ($item->line_total ?? ((float) $item->unit_price * (int) $item->quantity));
             });
-
-            $discountTotal = (float) ($cart->discount_total ?? 0);
-            $taxTotal = (float) ($cart->tax_total ?? 0);
-            $grandTotal = max($subtotal - $discountTotal + $taxTotal + $shippingTotal, 0);
+            $shippingQuote = isset($data['shipping_method_id'])
+                ? $this->shippingQuoteService->requireQuote($cart, (int) $data['shipping_method_id'], $data['country_id'] ?? null, (string) ($data['city'] ?? ''))
+                : null;
+            $shippingMethod = $shippingQuote['method'] ?? null;
+            $totals = $this->totalsCalculator->calculate(
+                subtotal: $subtotal,
+                taxTotal: (float) ($cart->tax_total ?? 0),
+                coupon: $cart->coupon,
+                shippingMethod: $shippingMethod,
+                shippingTotalOverride: $shippingQuote['cost'] ?? 0,
+            );
+            $discountTotal = $totals['discountTotal'];
+            $taxTotal = $totals['taxTotal'];
+            $shippingTotal = $totals['shippingTotal'];
+            $grandTotal = $totals['grandTotal'];
 
             $cart->forceFill($this->filterColumns('carts', [
                 'customer_id' => $customer?->id,
                 'shipping_method_id' => $data['shipping_method_id'] ?? null,
+                'shipping_country_id' => $data['country_id'] ?? null,
                 'subtotal' => $subtotal,
                 'discount_total' => $discountTotal,
                 'tax_total' => $taxTotal,
                 'shipping_total' => $shippingTotal,
+                'shipping_weight' => $shippingQuote['weight'] ?? 0,
+                'shipping_min_delivery_days' => $shippingQuote['min_delivery_days'] ?? null,
+                'shipping_max_delivery_days' => $shippingQuote['max_delivery_days'] ?? null,
                 'grand_total' => $grandTotal,
                 'customer_notes' => $data['customer_notes'] ?? null,
             ]))->save();
@@ -66,6 +81,7 @@ class CartCheckoutService
                 'user_id' => $userId,
                 'currency_id' => $cart->currency_id,
                 'shipping_method_id' => $data['shipping_method_id'] ?? null,
+                'shipping_country_id' => $data['country_id'] ?? null,
 
                 'coupon_id' => $cart->coupon_id ?? null,
                 'coupon_code' => $cart->coupon_code ?? null,
@@ -74,6 +90,7 @@ class CartCheckoutService
 
                 'status' => 'pending',
                 'payment_status' => 'unpaid',
+                'locale' => in_array(($data['lang'] ?? 'ar'), ['ar', 'he', 'en'], true) ? ($data['lang'] ?? 'ar') : 'ar',
 
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_email' => $data['customer_email'] ?? null,
@@ -88,10 +105,13 @@ class CartCheckoutService
                 'discount_total' => $discountTotal,
                 'tax_total' => $taxTotal,
                 'shipping_total' => $shippingTotal,
+                'shipping_weight' => $shippingQuote['weight'] ?? 0,
+                'shipping_min_delivery_days' => $shippingQuote['min_delivery_days'] ?? null,
+                'shipping_max_delivery_days' => $shippingQuote['max_delivery_days'] ?? null,
                 'grand_total' => $grandTotal,
 
                 'customer_notes' => $data['customer_notes'] ?? null,
-                'internal_notes' => 'Created from storefront checkout. Cart: ' . $cart->cart_number,
+                'internal_notes' => 'Created from storefront checkout. Cart: '.$cart->cart_number,
 
                 'is_active' => true,
                 'sort_order' => 0,
@@ -128,7 +148,9 @@ class CartCheckoutService
 
             $this->checkoutInventoryService->handleOrderInventory($order);
 
-            $this->createPendingPaymentIfPossible($order, $customer, $cart, $data, $grandTotal);
+            if ($shippingMethod && $order->items->contains(fn (OrderItem $item): bool => ! in_array(strtolower((string) $item->item_type), ['digital', 'digital_code', 'service'], true))) {
+                $this->shipmentService->createForOrder($order);
+            }
 
             $cart->forceFill($this->filterColumns('carts', [
                 'status' => CartStatus::Converted->value,
@@ -138,89 +160,16 @@ class CartCheckoutService
 
             return $order->refresh();
         });
-    }
 
-    private function validateCartBeforeCheckout(Cart $cart): void
-    {
-        foreach ($cart->items as $cartItem) {
-            $product = $cartItem->product;
+        $paymentMethod = (string) ($data['payment_method'] ?? 'cash');
+        $this->paymentService->createAttempt(
+            order: $order,
+            method: $paymentMethod,
+            idempotencyKey: "checkout:{$order->id}:{$paymentMethod}",
+            context: ['source' => 'storefront_checkout'],
+        );
 
-            if (! $product) {
-                throw new RuntimeException('Product not found in cart item.');
-            }
-
-            $quantity = max((int) $cartItem->quantity, 1);
-            $productType = $this->resolveProductType($product);
-
-            if ($productType === 'digital' || $productType === 'digital_code' || $cartItem->item_type === 'digital_code') {
-                $this->validateDigitalCodeAvailability($product->id, $quantity);
-                continue;
-            }
-
-            if ($cartItem->productVariant) {
-                $this->validateVariantStock($cartItem->productVariant, $quantity);
-                continue;
-            }
-
-            $this->validateProductStock($product, $quantity);
-        }
-    }
-
-    private function validateProductStock($product, int $quantity): void
-    {
-        if (! Schema::hasColumn('products', 'stock_quantity')) {
-            return;
-        }
-
-        $trackStock = Schema::hasColumn('products', 'track_stock')
-            ? (bool) $product->track_stock
-            : true;
-
-        if (! $trackStock) {
-            return;
-        }
-
-        if ((int) ($product->stock_quantity ?? 0) < $quantity) {
-            throw new RuntimeException('Insufficient stock for product: ' . ($product->sku ?? $product->id));
-        }
-    }
-
-    private function validateVariantStock($variant, int $quantity): void
-    {
-        if (! Schema::hasColumn('product_variants', 'stock_quantity')) {
-            return;
-        }
-
-        $trackStock = Schema::hasColumn('product_variants', 'track_stock')
-            ? (bool) $variant->track_stock
-            : true;
-
-        if (! $trackStock) {
-            return;
-        }
-
-        if ((int) ($variant->stock_quantity ?? 0) < $quantity) {
-            throw new RuntimeException('Insufficient stock for variant: ' . ($variant->sku ?? $variant->id));
-        }
-    }
-
-    private function validateDigitalCodeAvailability(int $productId, int $quantity): void
-    {
-        if (! Schema::hasTable('product_digital_codes')) {
-            throw new RuntimeException('Digital codes table does not exist.');
-        }
-
-        $availableCount = DB::table('product_digital_codes')
-            ->where('product_id', $productId)
-            ->where(function ($query) {
-                $query->where('status', 'available')
-                    ->orWhereNull('status');
-            })
-            ->count();
-
-        if ($availableCount < $quantity) {
-            throw new RuntimeException('Not enough digital codes available.');
-        }
+        return $order->fresh();
     }
 
     private function findOrCreateCustomer(array $data, ?int $userId = null): ?Customer
@@ -296,58 +245,10 @@ class CartCheckoutService
         return [$firstName, $lastName];
     }
 
-    private function resolveShippingTotal(?int $shippingMethodId): float
-    {
-        if (! $shippingMethodId || ! Schema::hasTable('shipping_methods')) {
-            return 0;
-        }
-
-        $shippingMethod = ShippingMethod::query()->find($shippingMethodId);
-
-        if (! $shippingMethod) {
-            return 0;
-        }
-
-        foreach (['price', 'cost', 'amount', 'shipping_cost', 'base_cost'] as $column) {
-            if (Schema::hasColumn('shipping_methods', $column) && $shippingMethod->{$column} !== null) {
-                return (float) $shippingMethod->{$column};
-            }
-        }
-
-        return 0;
-    }
-
-    private function createPendingPaymentIfPossible(
-        Order $order,
-        ?Customer $customer,
-        Cart $cart,
-        array $data,
-        float $amount
-    ): void {
-        if (! class_exists(Payment::class) || ! Schema::hasTable('payments')) {
-            return;
-        }
-
-        $this->createModel(Payment::class, 'payments', [
-            'payment_number' => $this->generatePaymentNumber(),
-            'order_id' => $order->id,
-            'customer_id' => $customer?->id,
-            'currency_id' => $cart->currency_id,
-            'payment_method' => $data['payment_method'] ?? 'cash',
-            'method' => $data['payment_method'] ?? 'cash',
-            'status' => 'pending',
-            'amount' => $amount,
-            'paid_at' => null,
-            'notes' => 'Created automatically from storefront checkout.',
-            'is_active' => true,
-            'sort_order' => 0,
-        ]);
-    }
-
     private function createModel(string $modelClass, string $table, array $attributes): Model
     {
         /** @var Model $model */
-        $model = new $modelClass();
+        $model = new $modelClass;
 
         $model->forceFill($this->filterColumns($table, $attributes));
         $model->save();
@@ -385,35 +286,11 @@ class CartCheckoutService
         return [];
     }
 
-    private function resolveProductType($product): string
-    {
-        $type = $product->product_type ?? null;
-
-        if ($type instanceof \BackedEnum) {
-            return (string) $type->value;
-        }
-
-        return (string) $type;
-    }
-
     private function generateOrderNumber(): string
     {
         do {
-            $number = 'ORD-' . now()->format('Ymd') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+            $number = 'ORD-'.now()->format('Ymd').'-'.str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
         } while (Order::query()->where('order_number', $number)->exists());
-
-        return $number;
-    }
-
-    private function generatePaymentNumber(): string
-    {
-        if (! Schema::hasTable('payments')) {
-            return 'PAY-' . strtoupper(Str::random(8));
-        }
-
-        do {
-            $number = 'PAY-' . now()->format('Ymd') . '-' . str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT);
-        } while (Payment::query()->where('payment_number', $number)->exists());
 
         return $number;
     }

@@ -11,6 +11,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'payment_number',
+        'idempotency_key',
         'order_id',
         'customer_id',
         'currency_id',
@@ -21,7 +22,11 @@ class Payment extends Model
         'transaction_id',
         'provider',
         'provider_reference',
+        'checkout_url',
+        'checkout_expires_at',
         'provider_payload',
+        'failure_code',
+        'failure_message',
         'paid_at',
         'failed_at',
         'refunded_at',
@@ -35,6 +40,7 @@ class Payment extends Model
         'amount' => 'decimal:2',
         'refunded_amount' => 'decimal:2',
         'provider_payload' => 'array',
+        'checkout_expires_at' => 'datetime',
         'paid_at' => 'datetime',
         'failed_at' => 'datetime',
         'refunded_at' => 'datetime',
@@ -61,13 +67,13 @@ class Payment extends Model
 
     public static function generatePaymentNumber(): string
     {
-        $prefix = 'PAY-' . now()->format('Ymd') . '-';
+        $prefix = 'PAY-'.now()->format('Ymd').'-';
 
         $count = self::query()
             ->whereDate('created_at', today())
             ->count() + 1;
 
-        return $prefix . str_pad((string) $count, 5, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $count, 5, '0', STR_PAD_LEFT);
     }
 
     public function order(): BelongsTo
@@ -101,13 +107,37 @@ class Payment extends Model
             return;
         }
 
-        $paidTotal = $this->order->payments()
-            ->where('status', PaymentTransactionStatus::Paid->value)
-            ->sum('amount');
+        $payments = $this->order->payments()->get(['status', 'amount', 'refunded_amount']);
+        $grossPaid = 0.0;
+        $refundedTotal = 0.0;
+
+        foreach ($payments as $payment) {
+            if (in_array($payment->status, [
+                PaymentTransactionStatus::Paid,
+                PaymentTransactionStatus::PartiallyRefunded,
+                PaymentTransactionStatus::Refunded,
+            ], true)) {
+                $grossPaid += (float) $payment->amount;
+            }
+
+            if (in_array($payment->status, [
+                PaymentTransactionStatus::PartiallyRefunded,
+                PaymentTransactionStatus::Refunded,
+            ], true)) {
+                $refundedAmount = (float) $payment->refunded_amount;
+                $refundedTotal += $refundedAmount > 0 ? $refundedAmount : (float) $payment->amount;
+            } else {
+                $refundedTotal += (float) $payment->refunded_amount;
+            }
+        }
+
+        $paidTotal = max($grossPaid - $refundedTotal, 0);
 
         $this->order->paid_total = $paidTotal;
 
-        if ((float) $paidTotal <= 0) {
+        if ($refundedTotal > 0 && $paidTotal <= 0) {
+            $this->order->payment_status = PaymentStatus::Refunded;
+        } elseif ((float) $paidTotal <= 0) {
             $this->order->payment_status = PaymentStatus::Unpaid;
         } elseif ((float) $paidTotal >= (float) $this->order->grand_total) {
             $this->order->payment_status = PaymentStatus::Paid;

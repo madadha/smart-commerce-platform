@@ -282,7 +282,7 @@
                                         @endif
                                     </div>
 
-                                    <div class="scp-product-actions">
+                            <div class="scp-product-actions">
                                      <a href="{{ route('storefront.products.show', ['slug' => $product->slug, 'lang' => $locale]) }}" class="scp-btn-small">
     {{ __('storefront.product.details') }}
 </a>
@@ -302,7 +302,27 @@
         {{ $isOutOfStock ? (\Illuminate\Support\Facades\Lang::has('storefront.stock.out_of_stock') ? __('storefront.stock.out_of_stock') : 'نفذ المخزون') : __('storefront.product.add_to_cart') }}
     </button>
 </form>
-                                    </div>
+                            </div>
+
+                            <div class="scp-product-utility-row">
+                                @if(Route::has('storefront.compare.add'))
+                                    <form
+                                        method="POST"
+                                        action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
+                                        class="scp-product-utility-form"
+                                    >
+                                        @csrf
+
+                                        <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
+                                            ⇄ <span>{{ __('storefront.compare.add_to_compare') }}</span>
+                                        </button>
+                                    </form>
+                                @endif
+
+                                @if($productTypeValue($product) === 'digital')
+                                    <span class="scp-product-utility-chip">{{ __('storefront.products_page.digital') }}</span>
+                                @endif
+                            </div>
                                 </div>
                             </article>
                         @empty

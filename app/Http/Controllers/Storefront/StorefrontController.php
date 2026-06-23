@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StorefrontSetting;
+use App\Models\StorefrontSlide;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -16,6 +18,9 @@ class StorefrontController extends Controller
     public function home(Request $request)
     {
         $locale = $this->resolveLocale($request);
+
+        $storefrontSettings = StorefrontSetting::current();
+        $storefrontSlides = StorefrontSlide::activeSlides();
 
         $featuredCategories = Category::query()
             ->where('is_active', true)
@@ -75,6 +80,8 @@ class StorefrontController extends Controller
             'featuredProducts' => $featuredProducts,
             'latestProducts' => $latestProducts,
             'brands' => $brands,
+            'storefrontSettings' => $storefrontSettings,
+            'storefrontSlides' => $storefrontSlides,
         ]);
     }
 
@@ -228,8 +235,9 @@ class StorefrontController extends Controller
                 'brand',
                 'currency',
                 'categories',
-                'variants',
-                'media',
+                'options' => fn ($query) => $query->where('is_active', true),
+                'variants' => fn ($query) => $query->where('is_active', true)->with('mediaFile'),
+                'media' => fn ($query) => $query->where('is_active', true)->with('mediaFile'),
                 'approvedReviews',
                 'approvedQuestions',
             ])

@@ -29,6 +29,7 @@ class StorefrontOrderController extends Controller
             'currency',
             'customer',
             'shippingMethod',
+            'shipments.events',
         ]);
 
         $digitalCodesByItem = $this->loadDigitalCodesByOrderItem($order);
@@ -38,7 +39,7 @@ class StorefrontOrderController extends Controller
             'direction' => $this->direction($locale),
             'order' => $order,
             'digitalCodesByItem' => $digitalCodesByItem,
-            'pageTitle' => __('storefront.order_details.page_title') . ' - ' . $order->order_number,
+            'pageTitle' => __('storefront.order_details.page_title').' - '.$order->order_number,
             'pageDescription' => __('storefront.order_details.page_description'),
         ]);
     }
@@ -55,6 +56,7 @@ class StorefrontOrderController extends Controller
             'currency',
             'customer',
             'shippingMethod',
+            'shipments.events',
         ]);
 
         $orderUrl = URL::signedRoute('storefront.orders.show', [
@@ -72,7 +74,7 @@ class StorefrontOrderController extends Controller
             ->margin(1)
             ->generate($orderUrl);
 
-        $qrCodeDataUri = 'data:image/svg+xml;base64,' . base64_encode((string) $qrSvg);
+        $qrCodeDataUri = 'data:image/svg+xml;base64,'.base64_encode((string) $qrSvg);
 
         $tempDir = storage_path('app/mpdf');
 
@@ -85,7 +87,7 @@ class StorefrontOrderController extends Controller
             'orderUrl' => $orderUrl,
             'invoiceUrl' => $invoiceUrl,
             'qrCodeDataUri' => $qrCodeDataUri,
-            'pageTitle' => 'Invoice - ' . $order->order_number,
+            'pageTitle' => 'Invoice - '.$order->order_number,
         ])->render();
 
         $mpdf = new Mpdf([
@@ -102,14 +104,14 @@ class StorefrontOrderController extends Controller
         ]);
 
         $mpdf->SetDirectionality($direction);
-        $mpdf->SetTitle('Invoice - ' . $order->order_number);
+        $mpdf->SetTitle('Invoice - '.$order->order_number);
         $mpdf->WriteHTML($html);
 
-        $fileName = 'invoice-' . $order->order_number . '.pdf';
+        $fileName = 'invoice-'.$order->order_number.'.pdf';
 
         return response($mpdf->Output($fileName, 'S'), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ]);
     }
 
@@ -120,7 +122,7 @@ class StorefrontOrderController extends Controller
         return view('storefront.orders.track', [
             'locale' => $locale,
             'direction' => $this->direction($locale),
-            'pageTitle' => __('storefront.order_tracking.page_title') . ' - Smart Commerce Platform',
+            'pageTitle' => __('storefront.order_tracking.page_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.order_tracking.page_description'),
         ]);
     }
@@ -152,7 +154,7 @@ class StorefrontOrderController extends Controller
                 'orderNotFound' => true,
                 'oldOrderNumber' => $orderNumber,
                 'oldCustomerPhone' => $validated['customer_phone'],
-                'pageTitle' => __('storefront.order_tracking.page_title') . ' - Smart Commerce Platform',
+                'pageTitle' => __('storefront.order_tracking.page_title').' - Smart Commerce Platform',
                 'pageDescription' => __('storefront.order_tracking.page_description'),
             ]);
         }
@@ -164,6 +166,7 @@ class StorefrontOrderController extends Controller
             'currency',
             'customer',
             'shippingMethod',
+            'shipments.events',
         ]);
 
         $digitalCodesByItem = $this->loadDigitalCodesByOrderItem($order);
@@ -173,7 +176,7 @@ class StorefrontOrderController extends Controller
             'direction' => $this->direction($locale),
             'order' => $order,
             'digitalCodesByItem' => $digitalCodesByItem,
-            'pageTitle' => __('storefront.order_tracking.result_title') . ' - ' . $order->order_number,
+            'pageTitle' => __('storefront.order_tracking.result_title').' - '.$order->order_number,
             'pageDescription' => __('storefront.order_tracking.result_description'),
         ]);
     }
@@ -228,7 +231,7 @@ class StorefrontOrderController extends Controller
             'unpaidOrders' => $unpaidOrders,
             'latestOrder' => $latestOrder,
             'recentOrders' => $recentOrders,
-            'pageTitle' => __('storefront.account_dashboard.page_title') . ' - Smart Commerce Platform',
+            'pageTitle' => __('storefront.account_dashboard.page_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.account_dashboard.page_description'),
         ]);
     }
@@ -255,7 +258,7 @@ class StorefrontOrderController extends Controller
             'locale' => $locale,
             'direction' => $this->direction($locale),
             'orders' => $orders,
-            'pageTitle' => __('storefront.order_history.page_title') . ' - Smart Commerce Platform',
+            'pageTitle' => __('storefront.order_history.page_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.order_history.page_description'),
         ]);
     }
@@ -327,9 +330,9 @@ class StorefrontOrderController extends Controller
         foreach (['customer_phone', 'phone', 'mobile'] as $column) {
             if (Schema::hasColumn('orders', $column)) {
                 if ($hasAnyCondition) {
-                    $query->orWhereRaw($this->phoneNormalizeSql($column) . ' = ?', [$phone]);
+                    $query->orWhereRaw($this->phoneNormalizeSql($column).' = ?', [$phone]);
                 } else {
-                    $query->whereRaw($this->phoneNormalizeSql($column) . ' = ?', [$phone]);
+                    $query->whereRaw($this->phoneNormalizeSql($column).' = ?', [$phone]);
                     $hasAnyCondition = true;
                 }
             }
@@ -361,9 +364,9 @@ class StorefrontOrderController extends Controller
         foreach (['phone', 'mobile', 'customer_phone', 'whatsapp'] as $column) {
             if (Schema::hasColumn('customers', $column)) {
                 if ($hasAnyCondition) {
-                    $query->orWhereRaw($this->phoneNormalizeSql($column) . ' = ?', [$phone]);
+                    $query->orWhereRaw($this->phoneNormalizeSql($column).' = ?', [$phone]);
                 } else {
-                    $query->whereRaw($this->phoneNormalizeSql($column) . ' = ?', [$phone]);
+                    $query->whereRaw($this->phoneNormalizeSql($column).' = ?', [$phone]);
                     $hasAnyCondition = true;
                 }
             }
@@ -433,7 +436,7 @@ class StorefrontOrderController extends Controller
                     return str_repeat('*', mb_strlen($value));
                 }
 
-                return mb_substr($value, 0, 3) . str_repeat('*', max(mb_strlen($value) - 6, 4)) . mb_substr($value, -3);
+                return mb_substr($value, 0, 3).str_repeat('*', max(mb_strlen($value) - 6, 4)).mb_substr($value, -3);
             }
         }
 

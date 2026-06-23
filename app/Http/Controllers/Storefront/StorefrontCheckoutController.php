@@ -3,26 +3,35 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Enums\CartStatus;
+use App\Enums\CustomerStatus;
+use App\Enums\CustomerType;
 use App\Http\Controllers\Controller;
 use App\Mail\StorefrontOrderCreatedMail;
 use App\Models\Cart;
+use App\Models\Country;
 use App\Models\Customer;
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\ShippingMethod;
+use App\Payments\PaymentGatewayManager;
 use App\Services\Checkout\CartCheckoutService;
+use App\Services\Shipping\ShippingQuoteService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
 
 class StorefrontCheckoutController extends Controller
 {
+    public function __construct(
+        private readonly PaymentGatewayManager $paymentGatewayManager,
+    ) {}
+
     public function index(Request $request): View
     {
         $locale = $this->resolveLocale($request);
@@ -44,16 +53,42 @@ class StorefrontCheckoutController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+        $countries = Country::query()->active()->ordered()->get();
 
         return view('storefront.checkout.index', [
             'locale' => $locale,
             'direction' => $this->direction($locale),
             'cart' => $cart,
             'shippingMethods' => $shippingMethods,
-            'pageTitle' => __('storefront.checkout.page_title') . ' - Smart Commerce Platform',
+            'countries' => $countries,
+            'pageTitle' => __('storefront.checkout.page_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.page_description'),
             'checkoutDefaults' => $this->checkoutDefaults(),
+            'paymentMethods' => $this->enabledPaymentMethods(),
         ]);
+    }
+
+    public function shippingQuotes(Request $request, ShippingQuoteService $shippingQuoteService): JsonResponse
+    {
+        $validated = $request->validate([
+            'country_id' => ['nullable', 'integer', 'exists:countries,id'],
+            'city' => ['required', 'string', 'max:255'],
+        ]);
+        $cart = $this->getCurrentCart();
+        if (! $cart) {
+            return response()->json(['quotes' => []]);
+        }
+
+        $quotes = $shippingQuoteService->quoteCart($cart, $validated['country_id'] ?? null, $validated['city'])
+            ->map(fn (array $quote) => [
+                'id' => $quote['method']->id,
+                'name' => $quote['method']->getName(app()->getLocale()),
+                'cost' => $quote['cost'],
+                'min_delivery_days' => $quote['min_delivery_days'],
+                'max_delivery_days' => $quote['max_delivery_days'],
+            ])->all();
+
+        return response()->json(['quotes' => $quotes]);
     }
 
     public function placeOrder(Request $request, CartCheckoutService $checkoutService): RedirectResponse
@@ -73,40 +108,46 @@ class StorefrontCheckoutController extends Controller
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:50'],
             'city' => ['required', 'string', 'max:255'],
+            'country_id' => ['nullable', 'integer', 'exists:countries,id'],
             'address' => ['required', 'string', 'max:500'],
-            'shipping_method_id' => ['nullable', 'integer', 'exists:shipping_methods,id'],
-            'payment_method' => ['required', 'string', 'max:50'],
+            'shipping_method_id' => [Rule::requiredIf(ShippingMethod::query()->active()->exists()), 'nullable', 'integer', 'exists:shipping_methods,id'],
+            'payment_method' => [
+                'required',
+                'string',
+                Rule::in(array_keys($this->enabledPaymentMethods())),
+            ],
             'customer_notes' => ['nullable', 'string', 'max:1000'],
             'lang' => ['nullable', 'string', 'max:5'],
         ]);
 
         try {
-            $order = DB::transaction(function () use ($cart, $validated, $checkoutService) {
-                $cart->load([
-                    'items.product',
-                    'items.productVariant',
-                    'currency',
-                    'shippingMethod',
-                ]);
+            $cart->load([
+                'items.product',
+                'items.productVariant',
+                'currency',
+                'shippingMethod',
+            ]);
 
-                $this->validateCartStockBeforeOrder($cart);
+            $order = $checkoutService->convertCartToOrder(
+                cart: $cart,
+                data: $validated,
+                userId: auth()->id()
+            );
 
-                $order = $checkoutService->convertCartToOrder(
-                    cart: $cart,
-                    data: $validated,
-                    userId: auth()->id()
-                );
-
-                $this->decreaseStockAfterOrder($cart);
-
-                $this->saveCustomerProfileFromCheckout($validated);
-
-                return $order;
-            });
+            $this->saveCustomerProfileFromCheckout($validated);
 
             session()->forget('storefront_cart_id');
 
             $this->sendOrderCreatedEmail($order, $locale);
+
+            $checkoutPayment = $order->payments()
+                ->whereNotNull('checkout_url')
+                ->latest('id')
+                ->first();
+
+            if ($checkoutPayment?->checkout_url) {
+                return redirect()->away($checkoutPayment->checkout_url);
+            }
 
             return redirect()
                 ->to(URL::signedRoute('storefront.orders.show', [
@@ -139,7 +180,7 @@ class StorefrontCheckoutController extends Controller
             'locale' => $locale,
             'direction' => $this->direction($locale),
             'order' => $order,
-            'pageTitle' => __('storefront.checkout.success_title') . ' - Smart Commerce Platform',
+            'pageTitle' => __('storefront.checkout.success_title').' - Smart Commerce Platform',
             'pageDescription' => __('storefront.checkout.success_text'),
         ]);
     }
@@ -170,124 +211,6 @@ class StorefrontCheckoutController extends Controller
         }
     }
 
-    private function validateCartStockBeforeOrder(Cart $cart): void
-    {
-        $productIds = $cart->items
-            ->pluck('product_id')
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($productIds->isEmpty()) {
-            throw new RuntimeException(__('storefront.checkout.empty_cart_error'));
-        }
-
-        $lockedProducts = Product::query()
-            ->whereIn('id', $productIds)
-            ->lockForUpdate()
-            ->get()
-            ->keyBy('id');
-
-        foreach ($cart->items as $item) {
-            $product = $lockedProducts->get($item->product_id);
-
-            if (! $product) {
-                throw new RuntimeException(__('storefront.stock.product_not_available'));
-            }
-
-            $quantity = max(1, (int) ($item->quantity ?? 1));
-
-            $stockInfo = $this->resolveStockInfo($product);
-
-            if ($this->isDigitalOrService($product) && $stockInfo === null) {
-                continue;
-            }
-
-            if ($stockInfo === null) {
-                continue;
-            }
-
-            if ($stockInfo['value'] <= 0) {
-                throw new RuntimeException(__('storefront.stock.cannot_add_out_of_stock'));
-            }
-
-            if ($quantity > $stockInfo['value']) {
-                throw new RuntimeException(__('storefront.stock.quantity_not_available', [
-                    'count' => $stockInfo['value'],
-                ]));
-            }
-        }
-    }
-
-    private function decreaseStockAfterOrder(Cart $cart): void
-    {
-        $productIds = $cart->items
-            ->pluck('product_id')
-            ->filter()
-            ->unique()
-            ->values();
-
-        $products = Product::query()
-            ->whereIn('id', $productIds)
-            ->lockForUpdate()
-            ->get()
-            ->keyBy('id');
-
-        foreach ($cart->items as $item) {
-            $product = $products->get($item->product_id);
-
-            if (! $product) {
-                continue;
-            }
-
-            $quantity = max(1, (int) ($item->quantity ?? 1));
-
-            $stockInfo = $this->resolveStockInfo($product);
-
-            if ($this->isDigitalOrService($product) && $stockInfo === null) {
-                continue;
-            }
-
-            if ($stockInfo === null) {
-                continue;
-            }
-
-            if ($stockInfo['value'] < $quantity) {
-                throw new RuntimeException(__('storefront.stock.quantity_not_available', [
-                    'count' => $stockInfo['value'],
-                ]));
-            }
-
-            $product->decrement($stockInfo['column'], $quantity);
-        }
-    }
-
-    private function resolveStockInfo(Product $product): ?array
-    {
-        foreach (['stock_quantity', 'quantity', 'stock'] as $stockColumn) {
-            if (array_key_exists($stockColumn, $product->getAttributes()) && $product->{$stockColumn} !== null) {
-                return [
-                    'column' => $stockColumn,
-                    'value' => (int) $product->{$stockColumn},
-                ];
-            }
-        }
-
-        return null;
-    }
-
-    private function isDigitalOrService(Product $product): bool
-    {
-        $type = $product->product_type ?? null;
-
-        if ($type instanceof \BackedEnum) {
-            $type = $type->value;
-        }
-
-        return in_array((string) $type, ['digital', 'service'], true);
-    }
-
-
     private function checkoutDefaults(): array
     {
         $user = auth()->user();
@@ -310,6 +233,24 @@ class StorefrontCheckoutController extends Controller
         ];
     }
 
+    private function enabledPaymentMethods(): array
+    {
+        return collect($this->paymentGatewayManager->enabledMethods())
+            ->mapWithKeys(function (array $config, string $method): array {
+                $displayName = $config['display_name'] ?? null;
+                $locale = app()->getLocale();
+
+                if (is_array($displayName)) {
+                    return [$method => $displayName[$locale] ?? $displayName['en'] ?? ucfirst($method)];
+                }
+
+                $translationKey = $config['translation_key'] ?? null;
+
+                return [$method => $translationKey ? __($translationKey) : ucfirst(str_replace('_', ' ', $method))];
+            })
+            ->all();
+    }
+
     private function saveCustomerProfileFromCheckout(array $validated): void
     {
         $user = auth()->user();
@@ -330,8 +271,8 @@ class StorefrontCheckoutController extends Controller
                 'city' => $validated['city'] ?? null,
                 'street' => $validated['address'] ?? null,
                 'address_notes' => $validated['customer_notes'] ?? null,
-                'customer_type' => \App\Enums\CustomerType::Regular->value,
-                'status' => \App\Enums\CustomerStatus::Active->value,
+                'customer_type' => CustomerType::Regular->value,
+                'status' => CustomerStatus::Active->value,
                 'is_active' => true,
             ]
         );

@@ -35,6 +35,7 @@ The system is built with Laravel, MySQL, Filament Admin Panel, Livewire, Laravel
 - Stage 76: Customer type mode and reseller/company request logic.
 - Stage 77: Move logout action to customer quick actions.
 - Stage 78: Multilingual auth, logout, and header fix.
+- Stage 79: Admin audit log for sensitive changes and secret redaction.
 
 ---
 
@@ -250,6 +251,7 @@ Admin order features:
 - Order reminders.
 - Follow-up board.
 - Order priority system.
+- Audit log for sensitive administrative changes.
 
 Supported order statuses:
 
@@ -302,6 +304,7 @@ Filament admin panel modules include:
 - Invoices.
 - Customer type management.
 - Order workflow tools.
+- Audit logs.
 
 Order edit page can include:
 
@@ -369,6 +372,191 @@ php artisan migrate:status
 php artisan storage:link
 npm run build
 ```
+
+---
+
+## Production Completion Roadmap
+
+This roadmap is the agreed execution order for taking the platform from its current development state to a safe production launch. Complete and verify each phase before moving to the next one.
+
+### Current Readiness Snapshot
+
+| Area | Estimated readiness | Notes |
+| --- | ---: | --- |
+| Storefront UI and localization | 85% | Responsive Arabic/Hebrew RTL and English LTR flows are available. |
+| Catalog, media, options, and variants | 80% | Product gallery, video, options, variants, and digital codes are managed from Filament. |
+| Cart and order creation | 80% | Totals and inventory processing are centralized; live payment integration remains. |
+| Inventory and digital fulfillment | 80% | Transactional reservation, fulfillment, cancellation, failure, and expiry rules are implemented. |
+| Live payments and refunds | 55% | Gateway contracts, safe attempts, idempotency, refund states, and webhook event deduplication exist; a live provider remains. |
+| Admin authorization and security | 55% | Admin panel entry now requires explicit permission; resource-level policies remain. |
+| Automated commerce coverage | 70% | CI covers inventory, cart variants, checkout, totals, refunds, invoices, localization, auth throttling, signed URLs, and frontend builds. |
+| Production operations | 50% | Deployment, queues, mail, backups, monitoring, and live credentials remain. |
+
+Readiness percentages are planning estimates based on the current codebase, not release guarantees.
+
+### Phase 1 — Checkout, Inventory, and Digital Codes
+
+Target: make order creation transactional, concurrency-safe, and predictable.
+
+- [x] Consolidate all checkout inventory handling into one service.
+- [x] Remove duplicate product stock deduction during checkout.
+- [x] Deduct stock from the selected variant instead of the base product when applicable.
+- [x] Lock affected products, variants, and digital codes before validation and deduction.
+- [x] Reserve digital codes when an order is created and mark them sold only after confirmed payment.
+- [x] Release reserved stock and digital codes after payment failure, cancellation, or reservation expiry.
+- [x] Define explicit inventory behavior for physical, digital, service, subscription, and bundle products.
+- [x] Centralize subtotal, coupon, tax, shipping, and grand-total calculations.
+- [x] Add tests for insufficient stock, last-item concurrency, variants, and digital-code allocation.
+
+Exit criteria: no double deduction, no overselling under concurrent checkout, and no digital code delivered before payment.
+
+### Phase 2 — Automated Quality Gates
+
+Target: protect every critical commerce flow before integrating live money.
+
+- [x] Add cart tests for products, variants, quantities, prices, and SKU snapshots.
+- [x] Add checkout tests for guest and authenticated customers.
+- [x] Add coupon, tax, shipping, order-total, and currency tests.
+- [x] Add order, invoice, cancellation, refund, and digital-delivery tests.
+- [x] Add login, registration, password reset, throttling, and validation tests.
+- [x] Verify Arabic, Hebrew, and English locale behavior, including RTL/LTR direction.
+- [ ] Add authorization tests for every admin role and protected resource.
+- [x] Add GitHub Actions for PHPUnit, Composer audit, PHP formatting, and frontend builds.
+
+Exit criteria: all critical scenarios run automatically and must pass before a branch can be merged.
+
+### Phase 3 — Live Payments
+
+Target: integrate one production payment provider correctly before adding more gateways.
+
+- [x] Define a provider-independent payment gateway contract.
+- [ ] Integrate the first selected live payment provider.
+- [x] Create and persist payment attempts with unique idempotency keys.
+- [x] Verify webhook signatures and reject invalid callbacks.
+- [x] Make webhook processing idempotent so duplicate events cannot duplicate payment or fulfillment.
+- [x] Support pending, paid, failed, cancelled, partially refunded, and refunded states.
+- [x] Support full and partial refunds with an audit trail.
+- [ ] Add payment reconciliation and failed-webhook monitoring.
+- [x] Fulfill digital orders only after a verified paid event.
+
+Exit criteria: successful, failed, cancelled, duplicated, delayed, and refunded payment scenarios pass in the provider sandbox.
+
+#### Payment Provider Administration
+
+The Filament `Payment Providers` module manages PayPlus, PayPal, Stripe, and Paddle from one controlled screen:
+
+- Independent enable/disable and checkout ordering for each provider.
+- Separate Sandbox and Live credentials.
+- AES-encrypted credential storage using the Laravel application key.
+- Multilingual checkout names and descriptions.
+- Supported currency configuration.
+- Connection state, last test timestamp, and diagnostic error tracking.
+- Checkout exposure only after credentials are complete, the connection is verified, and the provider integration is installed.
+
+Recommended rollout order for the current mixed physical/digital store is PayPlus, PayPal, then any globally eligible provider. Paddle should remain scoped to digital products and subscriptions.
+
+The PayPlus connector currently supports:
+
+- Staging and production API endpoints selected by provider mode.
+- Hosted payment-link creation without handling card details in this application.
+- Signed success, failure, and cancellation return URLs.
+- HMAC-SHA256/Base64 callback verification and duplicate-event protection.
+- Amount and currency validation before payment confirmation.
+- Failed-payment handling, inventory release, and paid digital fulfillment.
+- Partial and full refunds by PayPlus transaction UID.
+- Admin-side connection testing against the configured terminal.
+
+PayPlus remains hidden from checkout until Sandbox credentials are entered and `Test Connection` succeeds.
+
+### Phase 4 — Shipping and Fulfillment
+
+Target: make physical and digital order delivery operationally complete.
+
+- [x] Add country/city shipping zones and location-based rates.
+- [x] Support delivery and store-pickup methods.
+- [x] Validate shipping eligibility and cost on the server during checkout.
+- [x] Add shipment records, carrier, tracking number, and fulfillment timestamps.
+- [x] Synchronize shipment progress with the order lifecycle and customer timeline.
+- [ ] Send localized order, payment, shipment, cancellation, and digital-delivery emails.
+- [ ] Prevent digital codes from appearing in public logs, notifications, or unauthorized screens.
+
+Exit criteria: one physical and one digital test order can be completed end-to-end from checkout to fulfillment.
+
+#### Shipping Administration and Fulfillment
+
+The Filament shipping module now separates checkout pricing from operational fulfillment:
+
+- `Shipping Methods` controls country, allowed/excluded cities, order-value limits, weight limits, base price, per-kilogram price, free-shipping threshold, delivery estimate, pickup, and external carrier details.
+- Checkout requests eligible quotes from the server as the customer enters the country and city. The selected quote is recalculated and validated again when the order is submitted.
+- Product or variant weight is multiplied by quantity; digital and service items do not add shipping weight.
+- The order stores the accepted shipping cost, total weight, destination country, and delivery estimate as a snapshot.
+- `Shipments & Tracking` supports multiple shipments per order, carrier/service, tracking number and URL, expected delivery, labels, notes, and fulfillment timestamps.
+- Every shipment status change creates a customer-visible timeline event. Delivered shipments complete the order after all of its shipments are delivered.
+- Shipping, in-transit, out-for-delivery, delivery, failure, return, and cancellation updates send localized Arabic, Hebrew, or English email notifications with signed order and carrier-tracking links.
+- Signed order pages and phone-based order tracking show shipment progress and carrier tracking links without exposing internal notes.
+
+Automated coverage includes location and weight eligibility, server-side price calculation, shipment events, and order completion.
+
+### Phase 5 — Authorization and Security
+
+Target: protect customer data, administration, files, and privileged operations.
+
+- [x] Add Laravel policies for all Filament resources and sensitive actions.
+- [x] Define permissions for Super Admin, Admin, Orders Manager, Catalog Manager, and Support roles.
+- [x] Restrict payment configuration, digital-code access, role changes, settings, and privileged operations to authorized roles.
+- [ ] Enable multi-factor authentication for privileged admin accounts.
+- [x] Add an audit log for sensitive administrative changes.
+- [ ] Validate uploaded file MIME types, extensions, sizes, and access rules.
+- [ ] Review signed links, session security, rate limits, and password-reset behavior.
+- [ ] Perform responsive browser testing for login and registration across supported locales.
+
+Exit criteria: each role can access only its intended resources, and all sensitive actions are auditable.
+
+#### Administration Roles
+
+Run `php artisan db:seed --class=RolePermissionSeeder --force` once after deployment to synchronize the role matrix. Authorization is enforced by Laravel policies, so hidden navigation cannot be bypassed with a direct admin URL.
+
+| Role | Operational access |
+| --- | --- |
+| `super-admin` | Full platform access, including users, roles, payment credentials, and settings. |
+| `admin` | Full operational access for the platform administrator. |
+| `orders-manager` | Orders, customers, shipments, payment records, support, and read-only digital-code visibility. Payment credentials remain blocked. |
+| `catalog-manager` | Products, variants, media, categories, and digital-code inventory. No customer, order, shipment, or payment access. |
+| `support` | Read-only orders, customers, shipments, and payments, plus product-question/review moderation. |
+
+The Filament `Users & Roles` screen is restricted to privileged administrators. New administrative passwords require at least 12 characters, and editing a user without entering a password preserves the existing password.
+
+### Phase 6 — Production Operations and Launch
+
+Target: deploy a supportable, observable, and recoverable production system.
+
+- [ ] Complete the [`docs/production-checklist.md`](docs/production-checklist.md) requirements.
+- [ ] Configure production environment variables, HTTPS, secure cookies, and trusted proxies.
+- [ ] Configure production database migrations and optimized indexes.
+- [ ] Configure SMTP and verify localized transactional email delivery.
+- [ ] Run a supervised queue worker and scheduled task runner.
+- [ ] Configure automated database and uploaded-file backups and test restoration.
+- [ ] Configure application error tracking, logs, uptime checks, and payment alerts.
+- [ ] Build and cache production assets, configuration, routes, and views.
+- [ ] Perform staging acceptance tests on mobile, tablet, and desktop.
+- [ ] Prepare a rollback procedure and complete a final launch checklist review.
+
+Exit criteria: staging passes the full acceptance suite, backups can be restored, monitoring is active, and rollback is documented.
+
+### Initial Launch Scope
+
+The first production release should focus on:
+
+- Physical and digital products.
+- Product media, options, and selectable variants.
+- Guest and customer checkout.
+- One live payment gateway.
+- Delivery and store pickup.
+- Inventory and digital-code fulfillment.
+- Orders, invoices, localized notifications, and role-based administration.
+- Arabic, Hebrew, and English storefronts.
+
+Defer advanced subscriptions, multi-vendor marketplace features, reseller commissions, AI features, multiple payment gateways, referrals, and advanced analytics until the core launch is stable.
 
 ---
 

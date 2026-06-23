@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderItem extends Model
 {
@@ -21,6 +22,11 @@ class OrderItem extends Model
         'discount_total',
         'tax_total',
         'options',
+        'digital_code_id',
+        'inventory_status',
+        'inventory_reserved_at',
+        'inventory_fulfilled_at',
+        'inventory_released_at',
         'notes',
         'sort_order',
     ];
@@ -33,6 +39,9 @@ class OrderItem extends Model
         'discount_total' => 'decimal:2',
         'tax_total' => 'decimal:2',
         'sort_order' => 'integer',
+        'inventory_reserved_at' => 'datetime',
+        'inventory_fulfilled_at' => 'datetime',
+        'inventory_released_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -99,5 +108,10 @@ class OrderItem extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function digitalCodes(): HasMany
+    {
+        return $this->hasMany(ProductDigitalCode::class);
     }
 }

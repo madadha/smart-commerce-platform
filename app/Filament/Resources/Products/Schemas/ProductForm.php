@@ -202,6 +202,23 @@ class ProductForm
                     ])
                     ->columns(3),
 
+                Section::make('Product Video')
+                    ->description('Add an optional YouTube video to the product page. The video is only displayed when enabled.')
+                    ->schema([
+                        Toggle::make('youtube_enabled')
+                            ->label('Enable YouTube Video')
+                            ->default(false)
+                            ->live(),
+
+                        TextInput::make('youtube_url')
+                            ->label('YouTube URL')
+                            ->url()
+                            ->maxLength(255)
+                            ->placeholder('https://www.youtube.com/watch?v=...')
+                            ->helperText('Supports youtube.com, youtu.be, Shorts, and embed URLs.'),
+                    ])
+                    ->columns(2),
+
                 Section::make('Stock & Shipping')
                     ->schema([
                         Toggle::make('track_stock')

@@ -2,198 +2,246 @@
 
 namespace App\Services\Checkout;
 
+use App\Enums\DigitalCodeStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductDigitalCode;
 use App\Models\ProductVariant;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class CheckoutInventoryService
 {
     public function handleOrderInventory(Order $order): void
     {
-        $order->load([
-            'items.product',
-            'items.productVariant',
-        ]);
+        $this->reserveOrderInventory($order);
+    }
+
+    public function reserveOrderInventory(Order $order): void
+    {
+        $order->loadMissing('items');
 
         foreach ($order->items as $orderItem) {
-            $product = $orderItem->product;
-
-            if (! $product) {
+            if ($orderItem->inventory_status === 'reserved' || $orderItem->inventory_status === 'fulfilled') {
                 continue;
             }
 
             $quantity = max((int) $orderItem->quantity, 1);
-            $productType = $this->resolveProductType($product);
+            $product = Product::query()->lockForUpdate()->find($orderItem->product_id);
 
-            if ($productType === 'digital' || $productType === 'digital_code' || $orderItem->item_type === 'digital_code') {
-                $this->assignDigitalCodes($orderItem, $product, $quantity);
-                continue;
+            if (! $product) {
+                throw new RuntimeException('Product not found for order item: '.$orderItem->id);
             }
 
-            $this->deductPhysicalStock($orderItem, $product, $orderItem->productVariant, $quantity);
+            if ($this->usesDigitalCodes($orderItem, $product)) {
+                $this->reserveDigitalCodes($order, $orderItem, $product, $quantity);
+            } elseif (! $this->isNonStockProduct($product)) {
+                $this->reservePhysicalStock($orderItem, $product, $quantity);
+            }
+
+            $orderItem->forceFill([
+                'inventory_status' => 'reserved',
+                'inventory_reserved_at' => now(),
+                'inventory_fulfilled_at' => null,
+                'inventory_released_at' => null,
+            ])->save();
         }
     }
 
-    private function deductPhysicalStock(
-        OrderItem $orderItem,
-        Product $product,
-        ?ProductVariant $variant,
-        int $quantity
-    ): void {
-        if ($variant) {
-            $this->deductVariantStock($variant, $quantity, $orderItem);
-            return;
-        }
-
-        $this->deductProductStock($product, $quantity, $orderItem);
-    }
-
-    private function deductProductStock(Product $product, int $quantity, OrderItem $orderItem): void
+    public function fulfillOrderInventory(Order $order): void
     {
-        if (! Schema::hasColumn('products', 'stock_quantity')) {
+        DB::transaction(function () use ($order): void {
+            if ($order->items()->where('inventory_status', 'released')->exists()) {
+                $this->reserveOrderInventory($order);
+            }
+
+            $order->load('items');
+
+            foreach ($order->items as $orderItem) {
+                if ($orderItem->inventory_status === 'fulfilled') {
+                    continue;
+                }
+
+                if ($orderItem->inventory_status !== 'reserved') {
+                    throw new RuntimeException('Order inventory is not reserved for item: '.$orderItem->id);
+                }
+
+                ProductDigitalCode::query()
+                    ->where('order_item_id', $orderItem->id)
+                    ->where('status', DigitalCodeStatus::Reserved->value)
+                    ->lockForUpdate()
+                    ->update([
+                        'status' => DigitalCodeStatus::Sold->value,
+                        'sold_to' => $order->user_id,
+                        'sold_at' => now(),
+                    ]);
+
+                $orderItem->forceFill([
+                    'inventory_status' => 'fulfilled',
+                    'inventory_fulfilled_at' => now(),
+                ])->save();
+            }
+        });
+    }
+
+    public function releaseOrderInventory(Order $order): void
+    {
+        DB::transaction(function () use ($order): void {
+            $order->load('items');
+
+            foreach ($order->items as $orderItem) {
+                if ($orderItem->inventory_status !== 'reserved') {
+                    continue;
+                }
+
+                $product = Product::query()->lockForUpdate()->find($orderItem->product_id);
+
+                if ($product && $this->usesDigitalCodes($orderItem, $product)) {
+                    $this->releaseDigitalCodes($orderItem);
+                } elseif ($product && ! $this->isNonStockProduct($product)) {
+                    $this->releasePhysicalStock($orderItem, $product);
+                }
+
+                $orderItem->forceFill([
+                    'inventory_status' => 'released',
+                    'inventory_released_at' => now(),
+                ])->save();
+            }
+        });
+    }
+
+    private function reservePhysicalStock(OrderItem $orderItem, Product $product, int $quantity): void
+    {
+        if ($orderItem->product_variant_id) {
+            $variant = ProductVariant::query()
+                ->where('product_id', $product->id)
+                ->lockForUpdate()
+                ->find($orderItem->product_variant_id);
+
+            if (! $variant || ! $variant->is_active) {
+                throw new RuntimeException('Selected product variant is not available.');
+            }
+
+            if ($variant->track_stock) {
+                $this->deductStock($variant, $quantity, 'variant');
+            }
+
             return;
         }
 
-        $trackStock = Schema::hasColumn('products', 'track_stock')
-            ? (bool) $product->track_stock
-            : true;
+        if ($product->track_stock) {
+            $this->deductStock($product, $quantity, 'product');
+        }
+    }
 
-        if (! $trackStock) {
+    private function releasePhysicalStock(OrderItem $orderItem, Product $product): void
+    {
+        $quantity = max((int) $orderItem->quantity, 1);
+
+        if ($orderItem->product_variant_id) {
+            $variant = ProductVariant::query()->lockForUpdate()->find($orderItem->product_variant_id);
+
+            if ($variant && $variant->track_stock) {
+                $variant->increment('stock_quantity', $quantity);
+            }
+
             return;
         }
 
-        $currentStock = (int) ($product->stock_quantity ?? 0);
+        if ($product->track_stock) {
+            $product->increment('stock_quantity', $quantity);
+        }
+    }
+
+    private function deductStock(Product|ProductVariant $stockable, int $quantity, string $label): void
+    {
+        $currentStock = (int) $stockable->stock_quantity;
 
         if ($currentStock < $quantity) {
-            throw new RuntimeException(
-                'Insufficient stock for product: ' . ($product->sku ?? $product->id)
-            );
+            throw new RuntimeException('Insufficient stock for '.$label.': '.($stockable->sku ?? $stockable->id));
         }
 
-        $product->forceFill([
-            'stock_quantity' => $currentStock - $quantity,
-        ])->save();
-
-        $this->appendOrderItemNote(
-            $orderItem,
-            'Stock deducted from product. Quantity: ' . $quantity
-        );
+        $stockable->forceFill(['stock_quantity' => $currentStock - $quantity])->save();
     }
 
-    private function deductVariantStock(ProductVariant $variant, int $quantity, OrderItem $orderItem): void
+    private function reserveDigitalCodes(Order $order, OrderItem $orderItem, Product $product, int $quantity): void
     {
-        if (! Schema::hasColumn('product_variants', 'stock_quantity')) {
-            return;
-        }
-
-        $trackStock = Schema::hasColumn('product_variants', 'track_stock')
-            ? (bool) $variant->track_stock
-            : true;
-
-        if (! $trackStock) {
-            return;
-        }
-
-        $currentStock = (int) ($variant->stock_quantity ?? 0);
-
-        if ($currentStock < $quantity) {
-            throw new RuntimeException(
-                'Insufficient stock for variant: ' . ($variant->sku ?? $variant->id)
-            );
-        }
-
-        $variant->forceFill([
-            'stock_quantity' => $currentStock - $quantity,
-        ])->save();
-
-        $this->appendOrderItemNote(
-            $orderItem,
-            'Stock deducted from variant. Quantity: ' . $quantity
-        );
-    }
-
-    private function assignDigitalCodes(OrderItem $orderItem, Product $product, int $quantity): void
-    {
-        if (! class_exists(ProductDigitalCode::class) || ! Schema::hasTable('product_digital_codes')) {
-            throw new RuntimeException('Digital codes module is not available.');
-        }
-
-        $availableCodes = ProductDigitalCode::query()
+        $codes = ProductDigitalCode::query()
             ->where('product_id', $product->id)
-            ->where(function ($query) {
-                $query->where('status', 'available')
-                    ->orWhereNull('status');
+            ->when($orderItem->product_variant_id, function ($query, $variantId) {
+                $query->where(function ($query) use ($variantId) {
+                    $query->where('product_variant_id', $variantId)
+                        ->orWhereNull('product_variant_id');
+                });
             })
+            ->where('status', DigitalCodeStatus::Available->value)
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->orderBy('sort_order')
             ->orderBy('id')
             ->lockForUpdate()
             ->limit($quantity)
             ->get();
 
-        if ($availableCodes->count() < $quantity) {
-            throw new RuntimeException(
-                'Not enough digital codes available for product: ' . ($product->sku ?? $product->id)
-            );
+        if ($codes->count() < $quantity) {
+            throw new RuntimeException('Not enough digital codes available for product: '.($product->sku ?? $product->id));
         }
 
-        foreach ($availableCodes as $code) {
-            $updateData = [];
-
-            if (Schema::hasColumn('product_digital_codes', 'status')) {
-                $updateData['status'] = 'sold';
-            }
-
-            if (Schema::hasColumn('product_digital_codes', 'order_id')) {
-                $updateData['order_id'] = $orderItem->order_id;
-            }
-
-            if (Schema::hasColumn('product_digital_codes', 'order_item_id')) {
-                $updateData['order_item_id'] = $orderItem->id;
-            }
-
-            if (Schema::hasColumn('product_digital_codes', 'sold_at')) {
-                $updateData['sold_at'] = now();
-            }
-
-            if (Schema::hasColumn('product_digital_codes', 'reserved_at')) {
-                $updateData['reserved_at'] = null;
-            }
-
-            if (! empty($updateData)) {
-                $code->forceFill($updateData)->save();
-            }
+        foreach ($codes as $code) {
+            $code->forceFill([
+                'status' => DigitalCodeStatus::Reserved,
+                'reserved_by' => $order->user_id,
+                'reserved_at' => now(),
+                'order_id' => $order->id,
+                'order_item_id' => $orderItem->id,
+                'sold_to' => null,
+                'sold_at' => null,
+            ])->save();
         }
 
-        $this->appendOrderItemNote(
-            $orderItem,
-            'Digital codes assigned/sold. Quantity: ' . $quantity
-        );
+        $orderItem->forceFill(['digital_code_id' => $codes->first()->id])->save();
     }
 
-    private function appendOrderItemNote(OrderItem $orderItem, string $note): void
+    private function releaseDigitalCodes(OrderItem $orderItem): void
     {
-        $oldNotes = trim((string) ($orderItem->notes ?? ''));
+        ProductDigitalCode::query()
+            ->where('order_item_id', $orderItem->id)
+            ->where('status', DigitalCodeStatus::Reserved->value)
+            ->lockForUpdate()
+            ->update([
+                'status' => DigitalCodeStatus::Available->value,
+                'reserved_by' => null,
+                'reserved_at' => null,
+                'order_id' => null,
+                'order_item_id' => null,
+            ]);
 
-        $newNotes = $oldNotes === ''
-            ? $note
-            : $oldNotes . PHP_EOL . $note;
-
-        $orderItem->forceFill([
-            'notes' => $newNotes,
-        ])->save();
+        $orderItem->forceFill(['digital_code_id' => null])->save();
     }
 
-    private function resolveProductType(Product $product): string
+    private function usesDigitalCodes(OrderItem $orderItem, Product $product): bool
     {
-        $type = $product->product_type ?? null;
+        $type = $product->product_type;
 
         if ($type instanceof \BackedEnum) {
-            return (string) $type->value;
+            $type = $type->value;
         }
 
-        return (string) $type;
+        return in_array((string) $type, ['digital', 'digital_code', 'digital_card'], true)
+            || $orderItem->item_type === 'digital_code';
+    }
+
+    private function isNonStockProduct(Product $product): bool
+    {
+        $type = $product->product_type;
+
+        if ($type instanceof \BackedEnum) {
+            $type = $type->value;
+        }
+
+        return in_array((string) $type, ['digital_file', 'service', 'subscription'], true);
     }
 }
