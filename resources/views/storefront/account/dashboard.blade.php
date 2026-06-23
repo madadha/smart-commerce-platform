@@ -29,8 +29,6 @@
 
     <section class="scp-account-page">
         <div class="scp-container">
-            @include('layouts.navigation')
-
             <div class="scp-account-hero">
                 <div class="scp-account-hero-content">
                     <span class="scp-account-badge">

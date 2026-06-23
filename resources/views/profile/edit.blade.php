@@ -61,8 +61,6 @@
 
 <section class="scp-profile-page scp-account-page">
     <div class="scp-container">
-        @include('layouts.navigation')
-
         <div class="scp-profile-hero scp-account-hero">
             <div>
                 <span class="scp-profile-badge">{{ $labels['badge'] }}</span>
