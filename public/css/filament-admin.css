@@ -33,7 +33,7 @@
 .fi-sidebar .fi-sidebar-group-label,
 .fi-sidebar .fi-icon-btn-icon { color: #f8fafc; }
 
-.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-button {
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
     background: #fff;
     color: #1d4ed8;
     box-shadow: 0 8px 20px rgb(15 23 42 / 18%);
@@ -41,11 +41,25 @@
 
 .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label,
 .fi-sidebar .fi-sidebar-item.fi-active .fi-icon,
-.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-button {
+.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-btn {
     color: #1d4ed8;
 }
 
-.fi-sidebar .fi-sidebar-item-button:hover { background: rgb(255 255 255 / 10%); }
+.fi-sidebar .fi-sidebar-item-btn:hover,
+.fi-sidebar .fi-sidebar-item-btn:focus-visible {
+    background: #fff !important;
+    color: #1d4ed8 !important;
+    box-shadow: 0 8px 20px rgb(15 23 42 / 18%);
+}
+
+.fi-sidebar .fi-sidebar-item-btn:hover .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item-btn:hover .fi-icon,
+.fi-sidebar .fi-sidebar-item-btn:hover .fi-sidebar-item-icon,
+.fi-sidebar .fi-sidebar-item-btn:focus-visible .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item-btn:focus-visible .fi-icon,
+.fi-sidebar .fi-sidebar-item-btn:focus-visible .fi-sidebar-item-icon {
+    color: #1d4ed8 !important;
+}
 
 .fi-topbar {
     border-bottom: 1px solid rgb(226 232 240 / 90%);
