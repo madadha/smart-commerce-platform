@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Cart;
 use App\Models\Coupon;
+use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Order;
@@ -195,6 +196,14 @@ class StorefrontCartCheckoutTest extends TestCase
     {
         Mail::fake();
         [$product, $variant] = $this->createProductWithVariant();
+        $currency = Currency::query()->where('code', 'ILS')->firstOrFail();
+        $country = Country::query()->forceCreate([
+            'name' => ['en' => 'Israel'],
+            'code' => 'IL',
+            'currency_id' => $currency->id,
+            'tax_rate' => 18,
+            'is_active' => true,
+        ]);
         $this->post(route('storefront.cart.add'), [
             'product_id' => $product->id,
             'product_variant_id' => $variant->id,
@@ -212,11 +221,11 @@ class StorefrontCartCheckoutTest extends TestCase
             'slug' => 'standard-delivery-'.uniqid(),
             'type' => 'standard',
             'base_cost' => 20,
+            'country_id' => $country->id,
             'is_active' => true,
         ]);
         Cart::query()->firstOrFail()->forceFill([
             'coupon_id' => $coupon->id,
-            'tax_total' => 45,
         ])->save();
 
         $this->post(route('storefront.checkout.place'), [
@@ -224,6 +233,7 @@ class StorefrontCartCheckoutTest extends TestCase
             'customer_phone' => '0502222222',
             'city' => 'Jerusalem',
             'address' => 'Totals Street 3',
+            'country_id' => $country->id,
             'shipping_method_id' => $shipping->id,
             'payment_method' => 'cash',
         ])->assertRedirect();
@@ -231,9 +241,9 @@ class StorefrontCartCheckoutTest extends TestCase
         $order = Order::query()->firstOrFail();
         $this->assertSame(900.0, (float) $order->subtotal);
         $this->assertSame(90.0, (float) $order->discount_total);
-        $this->assertSame(45.0, (float) $order->tax_total);
+        $this->assertSame(162.0, (float) $order->tax_total);
         $this->assertSame(20.0, (float) $order->shipping_total);
-        $this->assertSame(875.0, (float) $order->grand_total);
+        $this->assertSame(992.0, (float) $order->grand_total);
         $this->assertSame('CHECKOUT10', $order->coupon_code);
     }
 

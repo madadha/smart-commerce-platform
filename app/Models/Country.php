@@ -11,6 +11,7 @@ class Country extends Model
         'name',
         'code',
         'currency_id',
+        'tax_rate',
         'phone_code',
         'flag',
         'is_active',
@@ -19,6 +20,7 @@ class Country extends Model
 
     protected $casts = [
         'name' => 'array',
+        'tax_rate' => 'decimal:2',
         'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];

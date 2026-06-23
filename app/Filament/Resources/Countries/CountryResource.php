@@ -75,6 +75,15 @@ class CountryResource extends Resource
                             ->searchable()
                             ->preload(),
 
+                        TextInput::make('tax_rate')
+                            ->label('Tax Rate %')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->step(0.01)
+                            ->helperText('Country tax percentage used during checkout.')
+                            ->default(0),
+
                         TextInput::make('phone_code')
                             ->label('Phone Code')
                             ->maxLength(10),
@@ -111,6 +120,11 @@ class CountryResource extends Resource
 
                 Tables\Columns\TextColumn::make('currency.code')
                     ->label('Currency')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('tax_rate')
+                    ->label('Tax %')
+                    ->suffix('%')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('phone_code')

@@ -15,6 +15,7 @@ class CountrySeeder extends Seeder
                 'name' => ['ar' => 'إسرائيل', 'he' => 'ישראל', 'en' => 'Israel'],
                 'code' => 'IL',
                 'currency_code' => 'ILS',
+                'tax_rate' => 18,
                 'phone_code' => '+972',
                 'flag' => '🇮🇱',
                 'sort_order' => 1,
@@ -23,6 +24,7 @@ class CountrySeeder extends Seeder
                 'name' => ['ar' => 'الأردن', 'he' => 'ירדן', 'en' => 'Jordan'],
                 'code' => 'JO',
                 'currency_code' => 'JOD',
+                'tax_rate' => 16,
                 'phone_code' => '+962',
                 'flag' => '🇯🇴',
                 'sort_order' => 2,
@@ -31,6 +33,7 @@ class CountrySeeder extends Seeder
                 'name' => ['ar' => 'الإمارات', 'he' => 'איחוד האמירויות', 'en' => 'United Arab Emirates'],
                 'code' => 'AE',
                 'currency_code' => 'AED',
+                'tax_rate' => 5,
                 'phone_code' => '+971',
                 'flag' => '🇦🇪',
                 'sort_order' => 3,
@@ -39,6 +42,7 @@ class CountrySeeder extends Seeder
                 'name' => ['ar' => 'مصر', 'he' => 'מצרים', 'en' => 'Egypt'],
                 'code' => 'EG',
                 'currency_code' => 'EGP',
+                'tax_rate' => 14,
                 'phone_code' => '+20',
                 'flag' => '🇪🇬',
                 'sort_order' => 4,
@@ -47,6 +51,7 @@ class CountrySeeder extends Seeder
                 'name' => ['ar' => 'الولايات المتحدة', 'he' => 'ארצות הברית', 'en' => 'United States'],
                 'code' => 'US',
                 'currency_code' => 'USD',
+                'tax_rate' => 0,
                 'phone_code' => '+1',
                 'flag' => '🇺🇸',
                 'sort_order' => 5,
@@ -55,6 +60,7 @@ class CountrySeeder extends Seeder
                 'name' => ['ar' => 'السعودية', 'he' => 'ערב הסעודית', 'en' => 'Saudi Arabia'],
                 'code' => 'SA',
                 'currency_code' => 'SAR',
+                'tax_rate' => 15,
                 'phone_code' => '+966',
                 'flag' => '🇸🇦',
                 'sort_order' => 6,
@@ -64,15 +70,16 @@ class CountrySeeder extends Seeder
         foreach ($countries as $country) {
             $currency = Currency::where('code', $country['currency_code'])->first();
 
-            Country::updateOrCreate(
-                ['code' => $country['code']],
-                [
-                    'name' => $country['name'],
-                    'currency_id' => $currency?->id,
-                    'phone_code' => $country['phone_code'],
-                    'flag' => $country['flag'],
-                    'is_active' => true,
-                    'sort_order' => $country['sort_order'],
+                Country::updateOrCreate(
+                    ['code' => $country['code']],
+                    [
+                        'name' => $country['name'],
+                        'currency_id' => $currency?->id,
+                        'tax_rate' => $country['tax_rate'] ?? 0,
+                        'phone_code' => $country['phone_code'],
+                        'flag' => $country['flag'],
+                        'is_active' => true,
+                        'sort_order' => $country['sort_order'],
                 ]
             );
         }

@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Coupon;
+use App\Models\Country;
+use App\Models\Currency;
 use App\Models\ShippingMethod;
 use App\Services\Pricing\CommerceTotalsCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,5 +63,33 @@ class CommerceTotalsCalculatorTest extends TestCase
 
         $this->assertSame(0.0, $totals['shippingTotal']);
         $this->assertSame(100.0, $totals['grandTotal']);
+    }
+
+    public function test_country_tax_rate_is_calculated_from_the_subtotal(): void
+    {
+        $currency = Currency::query()->firstOrCreate([
+            'code' => 'ILS',
+        ], [
+            'name' => ['en' => 'Israeli Shekel'],
+            'symbol' => 'ILS',
+            'exchange_rate' => 1,
+            'is_active' => true,
+        ]);
+
+        Country::query()->forceCreate([
+            'name' => ['en' => 'Israel'],
+            'code' => 'IL',
+            'currency_id' => $currency->id,
+            'tax_rate' => 18,
+            'is_active' => true,
+        ]);
+
+        $totals = app(CommerceTotalsCalculator::class)->calculate(
+            subtotal: 200,
+            taxRate: 18,
+        );
+
+        $this->assertSame(36.0, $totals['taxTotal']);
+        $this->assertSame(236.0, $totals['grandTotal']);
     }
 }

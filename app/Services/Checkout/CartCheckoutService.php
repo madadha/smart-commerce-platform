@@ -4,6 +4,7 @@ namespace App\Services\Checkout;
 
 use App\Enums\CartStatus;
 use App\Models\Cart;
+use App\Models\Country;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -48,9 +49,11 @@ class CartCheckoutService
                 ? $this->shippingQuoteService->requireQuote($cart, (int) $data['shipping_method_id'], $data['country_id'] ?? null, (string) ($data['city'] ?? ''))
                 : null;
             $shippingMethod = $shippingQuote['method'] ?? null;
+            $country = $this->resolveCountry($data['country_id'] ?? null);
             $totals = $this->totalsCalculator->calculate(
                 subtotal: $subtotal,
                 taxTotal: (float) ($cart->tax_total ?? 0),
+                taxRate: $this->resolveTaxRate($country),
                 coupon: $cart->coupon,
                 shippingMethod: $shippingMethod,
                 shippingTotalOverride: $shippingQuote['cost'] ?? 0,
@@ -293,5 +296,23 @@ class CartCheckoutService
         } while (Order::query()->where('order_number', $number)->exists());
 
         return $number;
+    }
+
+    private function resolveCountry(?int $countryId): ?Country
+    {
+        if (! $countryId) {
+            return null;
+        }
+
+        return Country::query()->find($countryId);
+    }
+
+    private function resolveTaxRate(?Country $country): ?float
+    {
+        if (! $country || $country->tax_rate === null) {
+            return null;
+        }
+
+        return (float) $country->tax_rate;
     }
 }
