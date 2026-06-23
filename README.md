@@ -35,6 +35,7 @@ The system is built with Laravel, MySQL, Filament Admin Panel, Livewire, Laravel
 - Stage 76: Customer type mode and reseller/company request logic.
 - Stage 77: Move logout action to customer quick actions.
 - Stage 78: Multilingual auth, logout, and header fix.
+- Stage 79: Admin audit log for sensitive changes and secret redaction.
 
 ---
 
@@ -250,6 +251,7 @@ Admin order features:
 - Order reminders.
 - Follow-up board.
 - Order priority system.
+- Audit log for sensitive administrative changes.
 
 Supported order statuses:
 
@@ -302,6 +304,7 @@ Filament admin panel modules include:
 - Invoices.
 - Customer type management.
 - Order workflow tools.
+- Audit logs.
 
 Order edit page can include:
 
@@ -502,7 +505,7 @@ Target: protect customer data, administration, files, and privileged operations.
 - [x] Define permissions for Super Admin, Admin, Orders Manager, Catalog Manager, and Support roles.
 - [x] Restrict payment configuration, digital-code access, role changes, settings, and privileged operations to authorized roles.
 - [ ] Enable multi-factor authentication for privileged admin accounts.
-- [ ] Add an audit log for sensitive administrative changes.
+- [x] Add an audit log for sensitive administrative changes.
 - [ ] Validate uploaded file MIME types, extensions, sizes, and access rules.
 - [ ] Review signed links, session security, rate limits, and password-reset behavior.
 - [ ] Perform responsive browser testing for login and registration across supported locales.

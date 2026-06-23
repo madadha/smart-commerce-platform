@@ -24,6 +24,7 @@ class RolePermissionSeeder extends Seeder
             'settings.view', 'settings.manage',
             'support.view', 'support.manage',
             'users.view', 'users.manage',
+            'audit.view', 'audit.manage',
         ];
 
         foreach ($permissions as $permission) {

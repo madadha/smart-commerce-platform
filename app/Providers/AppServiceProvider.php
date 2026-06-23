@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Brand;
 use App\Models\Cart;
+use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\Country;
@@ -29,9 +30,12 @@ use App\Models\ShippingMethod;
 use App\Models\StorefrontSetting;
 use App\Models\StorefrontSlide;
 use App\Models\User;
+use App\Observers\AuditModelObserver;
 use App\Observers\OrderInventoryObserver;
 use App\Observers\PaymentInventoryObserver;
 use App\Observers\ShipmentNotificationObserver;
+use App\Policies\AuditLogPolicy;
+use App\Services\Audit\AuditLogger;
 use App\Policies\CatalogResourcePolicy;
 use App\Policies\CustomerResourcePolicy;
 use App\Policies\DigitalCodeResourcePolicy;
@@ -52,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(AuditLogger::class);
     }
 
     /**
@@ -68,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
         foreach ([Order::class, Cart::class, Invoice::class] as $model) {
             Gate::policy($model, OrderResourcePolicy::class);
         }
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
         Gate::policy(Customer::class, CustomerResourcePolicy::class);
         foreach ([Shipment::class, ShippingMethod::class] as $model) {
             Gate::policy($model, ShippingResourcePolicy::class);
@@ -86,5 +91,33 @@ class AppServiceProvider extends ServiceProvider
         Order::observe(OrderInventoryObserver::class);
         Payment::observe(PaymentInventoryObserver::class);
         Shipment::observe(ShipmentNotificationObserver::class);
+
+        foreach ([
+            User::class,
+            Order::class,
+            Payment::class,
+            PaymentProviderSetting::class,
+            Product::class,
+            ProductMedia::class,
+            ProductOption::class,
+            ProductVariant::class,
+            ProductDigitalCode::class,
+            Setting::class,
+            Shipment::class,
+            ShippingMethod::class,
+            StorefrontSetting::class,
+            StorefrontSlide::class,
+            Country::class,
+            Currency::class,
+            Language::class,
+            Company::class,
+            Coupon::class,
+            Category::class,
+            Brand::class,
+            MediaFile::class,
+            Customer::class,
+        ] as $model) {
+            $model::observe(AuditModelObserver::class);
+        }
     }
 }
