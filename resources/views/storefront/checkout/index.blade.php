@@ -9,6 +9,32 @@
         $cartShipping = (float) ($cart?->shipping_total ?? 0);
         $cartTax = (float) ($cart?->tax_total ?? 0);
         $cartGrandTotal = (float) ($cart?->grand_total ?? 0);
+        $formatLocalizedNumber = function ($value, int $decimals = 2) use ($locale) {
+            $formatted = number_format((float) $value, $decimals, '.', ',');
+
+            if ($locale !== 'ar') {
+                return $formatted;
+            }
+
+            return strtr($formatted, [
+                '0' => '٠',
+                '1' => '١',
+                '2' => '٢',
+                '3' => '٣',
+                '4' => '٤',
+                '5' => '٥',
+                '6' => '٦',
+                '7' => '٧',
+                '8' => '٨',
+                '9' => '٩',
+            ]);
+        };
+        $formatLocalizedMoney = function ($value) use ($currencySymbol, $formatLocalizedNumber) {
+            return $currencySymbol.' '.$formatLocalizedNumber($value, 2);
+        };
+        $formatLocalizedPercent = function ($value) use ($formatLocalizedNumber) {
+            return $formatLocalizedNumber($value, 2).'%';
+        };
 
         $resolveItemName = function ($item) use ($locale) {
             $product = $item->product ?? null;
@@ -97,7 +123,7 @@
 
                             <div class="scp-checkout-card">
                                 <div class="scp-checkout-card-head">
-                                    <span>1</span>
+                                    <span>{{ $formatLocalizedNumber(1, 0) }}</span>
                                     <div>
                                         <h2>{{ __('storefront.checkout.customer_details') }}</h2>
                                         <p>{{ __('storefront.checkout.customer_details_hint') }}</p>
@@ -169,7 +195,7 @@
 
                             <div class="scp-checkout-card">
                                 <div class="scp-checkout-card-head">
-                                    <span>2</span>
+                                    <span>{{ $formatLocalizedNumber(2, 0) }}</span>
                                     <div>
                                         <h2>{{ __('storefront.checkout.shipping_details') }}</h2>
                                         <p>{{ __('storefront.checkout.shipping_details_hint') }}</p>
@@ -258,11 +284,11 @@
 
                                     <div class="scp-checkout-item-info">
                                         <h3>{{ $resolveItemName($item) }}</h3>
-                                        <span>{{ __('storefront.cart.quantity') }}: {{ $item->quantity }}</span>
+                                        <span>{{ __('storefront.cart.quantity') }}: {{ $formatLocalizedNumber($item->quantity, 0) }}</span>
                                     </div>
 
                                     <strong>
-                                        {{ $currencySymbol }} {{ number_format((float) $item->line_total, 2) }}
+                                        {{ $formatLocalizedMoney((float) $item->line_total) }}
                                     </strong>
                                 </div>
                             @endforeach
@@ -271,28 +297,28 @@
                         <div class="scp-checkout-summary-lines">
                             <div>
                                 <span>{{ __('storefront.cart.subtotal') }}</span>
-                                <strong id="checkout-subtotal">{{ $currencySymbol }} {{ number_format($cartSubtotal, 2) }}</strong>
+                                <strong id="checkout-subtotal">{{ $formatLocalizedMoney($cartSubtotal) }}</strong>
                             </div>
 
                             <div>
                                 <span>{{ __('storefront.cart.discount') }}</span>
-                                <strong id="checkout-discount">{{ $currencySymbol }} {{ number_format($cartDiscount, 2) }}</strong>
+                                <strong id="checkout-discount">{{ $formatLocalizedMoney($cartDiscount) }}</strong>
                             </div>
 
                             <div>
                                 <span>{{ __('storefront.cart.shipping') }}</span>
-                                <strong id="checkout-shipping">{{ $currencySymbol }} {{ number_format($cartShipping, 2) }}</strong>
+                                <strong id="checkout-shipping">{{ $formatLocalizedMoney($cartShipping) }}</strong>
                             </div>
 
                             <div>
                                 <span>{{ __('storefront.cart.tax') }}</span>
-                                <strong id="checkout-tax">{{ $currencySymbol }} {{ number_format($cartTax, 2) }}</strong>
+                                <strong id="checkout-tax">{{ $formatLocalizedMoney($cartTax) }}</strong>
                             </div>
                         </div>
 
                         <div class="scp-checkout-total">
                             <span>{{ __('storefront.cart.grand_total') }}</span>
-                            <strong id="checkout-grand-total">{{ $currencySymbol }} {{ number_format($cartGrandTotal, 2) }}</strong>
+                            <strong id="checkout-grand-total">{{ $formatLocalizedMoney($cartGrandTotal) }}</strong>
                         </div>
 
                         <div class="scp-checkout-summary-note">
@@ -302,7 +328,7 @@
                             </div>
                             <div>
                                 <span>{{ $locale === 'ar' ? 'نسبة الضريبة' : ($locale === 'he' ? 'שיעור מס' : 'Tax rate') }}</span>
-                                <strong id="checkout-selected-tax-rate">0%</strong>
+                                <strong id="checkout-selected-tax-rate">{{ $formatLocalizedPercent(0) }}</strong>
                             </div>
                         </div>
                     </aside>
@@ -335,9 +361,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const baseSubtotal = Number(@json($cartSubtotal));
     const baseDiscount = Number(@json($cartDiscount));
     const baseShipping = Number(@json($cartShipping));
-    const taxLabel = @json($locale === 'ar' ? 'نسبة الضريبة' : ($locale === 'he' ? 'שיעור מס' : 'Tax rate'));
+    const browserLocale = @json($locale === 'ar' ? 'ar-EG' : ($locale === 'he' ? 'he-IL' : 'en-US'));
+    const numberFormatter = new Intl.NumberFormat(browserLocale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 
-    const formatMoney = (value) => `${currencySymbol} ${Number(value || 0).toFixed(2)}`;
+    const formatMoney = (value) => `${currencySymbol} ${numberFormatter.format(Number(value || 0))}`;
     const getSelectedTaxRate = () => Number(country?.selectedOptions?.[0]?.dataset?.taxRate || 0);
     const getSelectedShippingCost = () => {
         const selectedOption = method?.selectedOptions?.[0];
@@ -346,8 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return baseShipping;
         }
 
-        const matches = (selectedOption.textContent || '').match(/(\d+(?:\.\d+)?)\s*$/);
-        return matches ? Number(matches[1]) : baseShipping;
+        return Number(selectedOption.dataset.cost || baseShipping);
     };
 
     const refreshPreview = () => {
@@ -362,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tax) tax.textContent = formatMoney(taxAmount);
         if (grandTotal) grandTotal.textContent = formatMoney(total);
         if (selectedShipping) selectedShipping.textContent = method?.selectedOptions?.[0]?.textContent?.trim() || @json(__('storefront.checkout.select_shipping_method'));
-        if (selectedTaxRate) selectedTaxRate.textContent = `${taxRate.toFixed(2)}%`;
+        if (selectedTaxRate) selectedTaxRate.textContent = `${numberFormatter.format(taxRate)}%`;
     };
     let timer;
     const refresh = () => {
@@ -381,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method.innerHTML = `<option value="">${@json(__('storefront.checkout.select_shipping_method'))}</option>`;
                 for (const quote of (data.quotes || [])) {
                     const option = new Option(`${quote.name} - ${formatMoney(quote.cost)}`, quote.id);
+                    option.dataset.cost = String(quote.cost ?? 0);
                     option.selected = String(quote.id) === String(selected);
                     method.add(option);
                 }

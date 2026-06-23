@@ -70,6 +70,8 @@ class StorefrontCheckoutController extends Controller
 
     public function shippingQuotes(Request $request, ShippingQuoteService $shippingQuoteService): JsonResponse
     {
+        $locale = $this->resolveLocale($request);
+
         $validated = $request->validate([
             'country_id' => ['nullable', 'integer', 'exists:countries,id'],
             'city' => ['required', 'string', 'max:255'],
@@ -82,7 +84,7 @@ class StorefrontCheckoutController extends Controller
         $quotes = $shippingQuoteService->quoteCart($cart, $validated['country_id'] ?? null, $validated['city'])
             ->map(fn (array $quote) => [
                 'id' => $quote['method']->id,
-                'name' => $quote['method']->getName(app()->getLocale()),
+                'name' => $quote['method']->getName($locale),
                 'cost' => $quote['cost'],
                 'min_delivery_days' => $quote['min_delivery_days'],
                 'max_delivery_days' => $quote['max_delivery_days'],
