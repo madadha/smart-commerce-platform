@@ -48,6 +48,11 @@ class ShippingMethodsTable
                     ->formatStateUsing(fn ($state, ShippingMethod $record): string => ($record->currency?->symbol ?? '₪') . ' ' . number_format((float) $state, 2))
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('per_kg_cost')
+                    ->label('Per Kg')
+                    ->formatStateUsing(fn ($state, ShippingMethod $record): string => ($record->currency?->symbol ?? '₪') . ' ' . number_format((float) $state, 2))
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('free_shipping_min_total')
                     ->label('Free From')
                     ->formatStateUsing(function ($state, ShippingMethod $record): string {
@@ -57,6 +62,18 @@ class ShippingMethodsTable
 
                         return ($record->currency?->symbol ?? '₪') . ' ' . number_format((float) $state, 2);
                     })
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('min_weight')
+                    ->label('Min Wt.')
+                    ->suffix('kg')
+                    ->placeholder('-')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('max_weight')
+                    ->label('Max Wt.')
+                    ->suffix('kg')
+                    ->placeholder('-')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('delivery_estimate')

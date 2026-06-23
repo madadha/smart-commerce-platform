@@ -39,6 +39,14 @@ class ShipmentResource extends Resource
                 Select::make('status')->options(collect(ShipmentStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()]))->required()->default('pending'),
                 TextInput::make('shipment_number')->disabled()->dehydrated(false),
             ])->columns(2),
+            Section::make('Order Shipping Address')->schema([
+                Textarea::make('order_shipping_address')
+                    ->label('Order Shipping Address')
+                    ->rows(4)
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->default(fn (?Shipment $record): string => self::formatShippingAddress($record?->order?->shipping_address)),
+            ]),
             Section::make('Carrier & Tracking')->schema([
                 TextInput::make('carrier_name')->maxLength(255),
                 TextInput::make('carrier_service')->maxLength(255),
@@ -57,6 +65,11 @@ class ShipmentResource extends Resource
         return $table->columns([
             Tables\Columns\TextColumn::make('shipment_number')->searchable()->copyable(),
             Tables\Columns\TextColumn::make('order.order_number')->searchable()->sortable(),
+            Tables\Columns\TextColumn::make('order_shipping_address')
+                ->label('Address')
+                ->state(fn (Shipment $record): string => self::formatShippingAddress($record->shipping_address ?? $record->order?->shipping_address))
+                ->limit(35)
+                ->tooltip(fn (Shipment $record): string => self::formatShippingAddress($record->shipping_address ?? $record->order?->shipping_address)),
             Tables\Columns\TextColumn::make('status')->badge()->formatStateUsing(fn ($state) => $state instanceof ShipmentStatus ? $state->label() : $state)->color(fn ($state) => $state instanceof ShipmentStatus ? $state->color() : 'gray'),
             Tables\Columns\TextColumn::make('carrier_name')->placeholder('-'),
             Tables\Columns\TextColumn::make('tracking_number')->searchable()->copyable()->placeholder('-'),
@@ -73,5 +86,29 @@ class ShipmentResource extends Resource
     public static function getRelations(): array
     {
         return [EventsRelationManager::class];
+    }
+
+    private static function formatShippingAddress(mixed $address): string
+    {
+        if (is_string($address)) {
+            $decoded = json_decode($address, true);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $address = $decoded;
+            }
+        }
+
+        if (! is_array($address)) {
+            return '-';
+        }
+
+        $parts = array_filter([
+            $address['address'] ?? null,
+            $address['city'] ?? null,
+            $address['country'] ?? null,
+            isset($address['country_id']) ? 'Country ID: '.$address['country_id'] : null,
+        ]);
+
+        return $parts ? implode(', ', $parts) : '-';
     }
 }
