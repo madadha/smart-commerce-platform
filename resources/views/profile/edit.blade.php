@@ -59,18 +59,18 @@
     $initial = mb_substr($displayName, 0, 1);
 @endphp
 
-<section class="scp-profile-page">
+<section class="scp-profile-page scp-account-page">
     <div class="scp-container">
         @include('layouts.navigation')
 
-        <div class="scp-profile-hero">
+        <div class="scp-profile-hero scp-account-hero">
             <div>
                 <span class="scp-profile-badge">{{ $labels['badge'] }}</span>
                 <h1>{{ $labels['title'] }}</h1>
                 <p>{{ $labels['desc'] }}</p>
             </div>
 
-            <aside class="scp-profile-user-card">
+            <aside class="scp-profile-user-card scp-account-profile-card">
                 <div class="scp-profile-avatar">{{ $initial }}</div>
                 <div>
                     <strong>{{ $displayName }}</strong>
@@ -84,9 +84,9 @@
             <div class="scp-profile-success">{{ $labels['saved'] }}</div>
         @endif
 
-        <div class="scp-profile-grid">
-            <main class="scp-profile-main">
-                <div class="scp-profile-card">
+        <div class="scp-profile-grid scp-account-grid">
+            <main class="scp-profile-main scp-account-main">
+                <div class="scp-profile-card scp-account-panel">
                     <div class="scp-profile-card-head">
                         <div>
                             <h2>{{ $labels['profile_info'] }}</h2>
@@ -170,7 +170,7 @@
                     </form>
                 </div>
 
-                <div class="scp-profile-card">
+                <div class="scp-profile-card scp-account-panel">
                     <div class="scp-profile-card-head">
                         <div>
                             <h2>{{ $labels['security'] }}</h2>
@@ -207,8 +207,8 @@
                 </div>
             </main>
 
-            <aside class="scp-profile-sidebar">
-                <div class="scp-profile-card">
+            <aside class="scp-profile-sidebar scp-account-sidebar">
+                <div class="scp-profile-card scp-account-panel">
                     <h3>{{ $labels['summary'] }}</h3>
                     <div class="scp-profile-summary">
                         <div><span>{{ $labels['phone'] }}</span><strong>{{ $customer?->phone ?: $labels['not_set'] }}</strong></div>
@@ -217,7 +217,7 @@
                     </div>
                 </div>
 
-                <div class="scp-profile-card danger">
+                <div class="scp-profile-card danger scp-account-panel">
                     <h3>{{ $labels['danger'] }}</h3>
                     <p>{{ $labels['danger_hint'] }}</p>
                     <form method="POST" action="{{ route('profile.destroy') }}" class="scp-profile-form" onsubmit="return confirm('{{ $locale === 'ar' ? 'هل أنت متأكد من حذف الحساب؟' : 'Are you sure?' }}')">
