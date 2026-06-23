@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class ProductDigitalCodeResource extends Resource
+class ProductDigitalCodeResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = ProductDigitalCode::class;
 

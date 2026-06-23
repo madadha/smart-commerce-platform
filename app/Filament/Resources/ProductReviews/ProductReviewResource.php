@@ -14,7 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class ProductReviewResource extends Resource
+class ProductReviewResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = ProductReview::class;
 

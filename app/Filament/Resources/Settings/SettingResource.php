@@ -19,7 +19,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class SettingResource extends Resource
+class SettingResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Setting::class;
 

@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class PaymentResource extends Resource
+class PaymentResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Payment::class;
 

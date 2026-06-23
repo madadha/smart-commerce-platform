@@ -19,7 +19,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class BrandResource extends Resource
+class BrandResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Brand::class;
 

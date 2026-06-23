@@ -21,7 +21,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class CompanyResource extends Resource
+class CompanyResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Company::class;
 

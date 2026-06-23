@@ -23,7 +23,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class ProductQuestionResource extends Resource
+class ProductQuestionResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = ProductQuestion::class;
 

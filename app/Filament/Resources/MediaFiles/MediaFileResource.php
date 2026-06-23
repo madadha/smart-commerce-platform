@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class MediaFileResource extends Resource
+class MediaFileResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = MediaFile::class;
 

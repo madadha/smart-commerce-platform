@@ -17,7 +17,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class ProductResource extends Resource
+class ProductResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Product::class;
 

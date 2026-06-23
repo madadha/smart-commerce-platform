@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class StorefrontSlideResource extends Resource
+class StorefrontSlideResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = StorefrontSlide::class;
 

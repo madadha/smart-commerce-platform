@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class CouponResource extends Resource
+class CouponResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Coupon::class;
 

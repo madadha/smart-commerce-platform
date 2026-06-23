@@ -19,7 +19,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class CountryResource extends Resource
+class CountryResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Country::class;
 

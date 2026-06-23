@@ -18,7 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class CurrencyResource extends Resource
+class CurrencyResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Currency::class;
 

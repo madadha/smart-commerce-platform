@@ -9,7 +9,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class AuditLogResource extends Resource
+class AuditLogResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = AuditLog::class;
 

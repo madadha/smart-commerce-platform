@@ -34,8 +34,15 @@
 .fi-sidebar .fi-icon-btn-icon { color: #f8fafc; }
 
 .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-button {
-    background: rgb(255 255 255 / 16%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 13%);
+    background: #fff;
+    color: #1d4ed8;
+    box-shadow: 0 8px 20px rgb(15 23 42 / 18%);
+}
+
+.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item.fi-active .fi-icon,
+.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-button {
+    color: #1d4ed8;
 }
 
 .fi-sidebar .fi-sidebar-item-button:hover { background: rgb(255 255 255 / 10%); }

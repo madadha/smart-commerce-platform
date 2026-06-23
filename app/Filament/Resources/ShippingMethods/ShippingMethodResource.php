@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class ShippingMethodResource extends Resource
+class ShippingMethodResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = ShippingMethod::class;
 

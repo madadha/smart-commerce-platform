@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class OrderResource extends Resource
+class OrderResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Order::class;
 

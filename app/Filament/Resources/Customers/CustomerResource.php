@@ -12,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
-class CustomerResource extends Resource
+class CustomerResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Customer::class;
 

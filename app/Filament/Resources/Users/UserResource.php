@@ -15,7 +15,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class UserResource extends Resource
+class UserResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = User::class;
 

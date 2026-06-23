@@ -20,7 +20,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class ShipmentResource extends Resource
+class ShipmentResource extends \App\Filament\Resources\BaseResource
 {
     protected static ?string $model = Shipment::class;
 
