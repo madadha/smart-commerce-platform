@@ -377,13 +377,33 @@
 .scp-mini-account-nav .scp-container {
     width: 100%;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: flex-start;
+    justify-content: flex-start;
     gap: 16px;
-    flex-wrap: wrap;
 }
 
-.scp-mini-account-nav > .scp-container > div {
+.scp-mini-account-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+}
+
+.scp-mini-account-title {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.scp-mini-account-links {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -401,18 +421,6 @@
     font-size: 13px;
     font-weight: 900;
     cursor: pointer;
-}
-
-.scp-mini-account-nav a:first-child {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    border-color: #bfdbfe;
-    background: linear-gradient(135deg, #eff6ff, #ffffff);
-}
-
-.scp-mini-account-nav .scp-logo {
-    min-width: 0;
 }
 
 .scp-account-page {
@@ -634,8 +642,14 @@
         gap: 10px;
     }
 
-    .scp-mini-account-nav > .scp-container > div {
+    .scp-mini-account-panel {
         width: 100%;
+    }
+
+    .scp-mini-account-links {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .scp-mini-account-nav a,
