@@ -29,6 +29,7 @@
 
     <section class="scp-account-page">
         <div class="scp-container">
+            @include('layouts.navigation')
 
             <div class="scp-account-hero">
                 <div class="scp-account-hero-content">
@@ -42,16 +43,6 @@
                     </h1>
 
                     <p>{{ __('storefront.account_dashboard.page_description') }}</p>
-
-                    <div class="scp-account-hero-actions">
-                        <a href="{{ route('storefront.products.index', ['lang' => $locale]) }}" class="scp-account-primary-btn">
-                            {{ __('storefront.account_dashboard.shop_now') }}
-                        </a>
-
-                        <a href="{{ route('storefront.orders.history', ['lang' => $locale]) }}" class="scp-account-secondary-btn">
-                            {{ __('storefront.order_history.my_orders') }}
-                        </a>
-                    </div>
                 </div>
 
                 <div class="scp-account-profile-card">

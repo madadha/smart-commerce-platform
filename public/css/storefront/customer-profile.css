@@ -363,3 +363,298 @@
         justify-content: center;
     }
 }
+
+/* Shared account navigation + white customer account theme */
+.scp-mini-account-nav {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+}
+
+.scp-mini-account-nav .scp-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.scp-mini-account-nav > .scp-container > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.scp-mini-account-nav a,
+.scp-mini-account-nav button {
+    min-height: 40px;
+    border-radius: 14px;
+    padding: 0 14px;
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.scp-mini-account-nav a:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-color: #bfdbfe;
+    background: linear-gradient(135deg, #eff6ff, #ffffff);
+}
+
+.scp-mini-account-nav .scp-logo {
+    min-width: 0;
+}
+
+.scp-account-page {
+    padding: 26px 0 72px;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.scp-account-page .scp-container {
+    width: min(100% - 24px, 1320px);
+}
+
+.scp-account-page .scp-account-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 18px;
+    padding: 24px 28px;
+    border-radius: 28px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+    margin-bottom: 18px;
+}
+
+.scp-account-page .scp-account-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.scp-account-page .scp-account-hero h1 {
+    margin: 14px 0 0;
+    color: #0f172a;
+    font-size: clamp(28px, 3.4vw, 50px);
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+}
+
+.scp-account-page .scp-account-hero p {
+    margin: 14px 0 0;
+    color: #475569;
+    line-height: 1.8;
+    font-size: 15px;
+    max-width: 760px;
+}
+
+.scp-account-page .scp-account-profile-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, #f8fafc, #ffffff);
+    border: 1px solid #e5e7eb;
+}
+
+.scp-account-page .scp-account-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 950;
+}
+
+.scp-account-page .scp-account-profile-card strong {
+    display: block;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 950;
+}
+
+.scp-account-page .scp-account-profile-card span,
+.scp-account-page .scp-account-profile-card small {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+    word-break: break-word;
+}
+
+.scp-account-page .scp-account-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.scp-account-page .scp-account-stat-card,
+.scp-account-page .scp-account-panel,
+.scp-account-page .scp-account-empty,
+.scp-account-page .scp-account-mini-empty {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+}
+
+.scp-account-page .scp-account-stat-card {
+    border-radius: 22px;
+    padding: 18px;
+}
+
+.scp-account-page .scp-account-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: #eff6ff;
+    color: #1d4ed8;
+    margin-bottom: 14px;
+}
+
+.scp-account-page .scp-account-stat-card span,
+.scp-account-page .scp-account-panel-head p,
+.scp-account-page .scp-account-empty p,
+.scp-account-page .scp-account-mini-empty {
+    color: #64748b;
+}
+
+.scp-account-page .scp-account-stat-card strong,
+.scp-account-page .scp-account-panel-head h2,
+.scp-account-page .scp-account-panel-head a,
+.scp-account-page .scp-account-order-card strong,
+.scp-account-page .scp-account-latest-order strong {
+    color: #0f172a;
+}
+
+.scp-account-page .scp-account-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 18px;
+    align-items: start;
+}
+
+.scp-account-page .scp-account-main,
+.scp-account-page .scp-account-sidebar {
+    display: grid;
+    gap: 18px;
+}
+
+.scp-account-page .scp-account-sidebar {
+    position: sticky;
+    top: 120px;
+}
+
+.scp-account-page .scp-account-order-card,
+.scp-account-page .scp-account-latest-order,
+.scp-account-page .scp-account-actions-list a,
+.scp-account-page .scp-account-order-card em {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #0f172a;
+}
+
+.scp-account-page .scp-account-actions-list a:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.08);
+}
+
+.scp-account-page .scp-account-view-order,
+.scp-account-page .scp-account-primary-btn,
+.scp-account-page .scp-account-secondary-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    border-color: transparent;
+}
+
+.scp-account-page .scp-account-secondary-btn {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #dbe2ea;
+}
+
+.scp-account-page .scp-account-payment-status {
+    background: #ecfdf5 !important;
+    color: #166534 !important;
+}
+
+.scp-account-page .scp-account-logout-action {
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.scp-account-page .scp-account-logout-action small {
+    color: #64748b;
+}
+
+@media (max-width: 1100px) {
+    .scp-account-page .scp-account-grid,
+    .scp-account-page .scp-account-hero,
+    .scp-account-page .scp-account-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .scp-account-page .scp-account-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 700px) {
+    .scp-mini-account-nav {
+        border-radius: 18px;
+        padding: 10px 12px;
+    }
+
+    .scp-mini-account-nav .scp-container {
+        gap: 10px;
+    }
+
+    .scp-mini-account-nav > .scp-container > div {
+        width: 100%;
+    }
+
+    .scp-mini-account-nav a,
+    .scp-mini-account-nav button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .scp-account-page {
+        padding: 18px 0 56px;
+    }
+
+    .scp-account-page .scp-container {
+        width: min(100% - 18px, 1320px);
+    }
+
+    .scp-account-page .scp-account-hero,
+    .scp-account-page .scp-account-panel,
+    .scp-account-page .scp-account-stat-card {
+        border-radius: 20px;
+    }
+}

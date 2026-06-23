@@ -61,22 +61,13 @@
 
 <section class="scp-profile-page">
     <div class="scp-container">
+        @include('layouts.navigation')
+
         <div class="scp-profile-hero">
             <div>
                 <span class="scp-profile-badge">{{ $labels['badge'] }}</span>
                 <h1>{{ $labels['title'] }}</h1>
                 <p>{{ $labels['desc'] }}</p>
-
-                <div class="scp-profile-actions">
-                    <a href="{{ route('storefront.home', ['lang' => $locale]) }}">{{ $labels['home'] }}</a>
-                    <a href="{{ route('storefront.account.dashboard', ['lang' => $locale]) }}">{{ $labels['account'] }}</a>
-                    <a href="{{ route('storefront.orders.history', ['lang' => $locale]) }}">{{ $labels['orders'] }}</a>
-                    <a href="{{ route('storefront.wishlist.index', ['lang' => $locale]) }}">{{ $labels['wishlist'] }}</a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit">{{ $labels['logout'] }}</button>
-                    </form>
-                </div>
             </div>
 
             <aside class="scp-profile-user-card">
