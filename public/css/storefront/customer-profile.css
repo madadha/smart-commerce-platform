@@ -203,6 +203,11 @@
     margin-bottom: 20px;
 }
 
+.scp-profile-card-head-tight {
+    margin-top: 10px;
+    margin-bottom: 14px;
+}
+
 .scp-profile-card h2,
 .scp-profile-card h3 {
     margin: 0;
@@ -281,6 +286,11 @@
     color: #dc2626;
     font-weight: 850;
     font-size: 12px;
+}
+
+.scp-profile-field input,
+.scp-profile-field textarea {
+    box-sizing: border-box;
 }
 
 .scp-profile-submit-row {

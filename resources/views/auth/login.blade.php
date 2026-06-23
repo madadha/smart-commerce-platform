@@ -11,7 +11,7 @@
 
     <x-auth-session-status class="scp-auth-alert success" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}" class="scp-auth-form">
+    <form method="POST" action="{{ route('login', ['lang' => $locale]) }}" class="scp-auth-form">
         @csrf
         <input type="hidden" name="lang" value="{{ $locale }}">
 

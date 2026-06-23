@@ -17,6 +17,16 @@
 
             return $product->sale_price ?: $product->price;
         };
+
+        $productTypeValue = function ($product) {
+            $type = $product->product_type ?? null;
+
+            if ($type instanceof \BackedEnum) {
+                return $type->value;
+            }
+
+            return (string) $type;
+        };
     @endphp
 
 
@@ -305,6 +315,44 @@
     </button>
 </form>
                             </div>
+
+                            <div class="scp-product-utility-row">
+                                @if(auth()->check())
+                                    <form
+                                        method="POST"
+                                        action="{{ route('storefront.wishlist.toggle', ['product' => $product->id, 'lang' => $locale]) }}"
+                                        class="scp-product-utility-form"
+                                    >
+                                        @csrf
+                                        <button type="submit" title="{{ __('storefront.wishlist.toggle') }}">
+                                            ♡ <span>{{ __('storefront.wishlist.toggle') }}</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login', ['lang' => $locale]) }}" class="scp-product-utility-form">
+                                        <button type="button" title="{{ __('storefront.wishlist.login_required') }}">
+                                            ♡ <span>{{ __('storefront.wishlist.login_required') }}</span>
+                                        </button>
+                                    </a>
+                                @endif
+
+                                @if(Route::has('storefront.compare.add'))
+                                    <form
+                                        method="POST"
+                                        action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
+                                        class="scp-product-utility-form"
+                                    >
+                                        @csrf
+                                        <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
+                                            ⇄ <span>{{ __('storefront.compare.add_to_compare') }}</span>
+                                        </button>
+                                    </form>
+                                @endif
+
+                                @if($productTypeValue($product) === 'digital')
+                                    <span class="scp-product-utility-chip">{{ __('storefront.products_page.digital') }}</span>
+                                @endif
+                            </div>
                         </div>
                     </article>
                 @empty
@@ -377,6 +425,62 @@
                                     {{ $product->currency?->symbol ?? '₪' }}
                                     {{ number_format((float) $productPrice($product), 2) }}
                                 </strong>
+                            </div>
+
+                            <div class="scp-product-actions">
+                                <a href="{{ route('storefront.products.show', ['slug' => $product->slug, 'lang' => $locale]) }}" class="scp-btn-small">
+                                    {{ __('storefront.product.details') }}
+                                </a>
+
+                                <form method="POST" action="{{ route('storefront.cart.add') }}" class="scp-card-cart-form">
+                                    @csrf
+
+                                    <input type="hidden" name="lang" value="{{ $locale }}">
+                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                    <input type="hidden" name="quantity" value="1">
+
+                                    <button
+                                        type="submit"
+                                        class="scp-btn-small primary"
+                                        @disabled($isOutOfStock)
+                                    >
+                                        {{ $isOutOfStock ? (\Illuminate\Support\Facades\Lang::has('storefront.stock.out_of_stock') ? __('storefront.stock.out_of_stock') : 'نفذ المخزون') : __('storefront.product.add_to_cart') }}
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="scp-product-utility-row">
+                                @if(auth()->check())
+                                    <form
+                                        method="POST"
+                                        action="{{ route('storefront.wishlist.toggle', ['product' => $product->id, 'lang' => $locale]) }}"
+                                        class="scp-product-utility-form"
+                                    >
+                                        @csrf
+                                        <button type="submit" title="{{ __('storefront.wishlist.toggle') }}">
+                                            ♡ <span>{{ __('storefront.wishlist.toggle') }}</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login', ['lang' => $locale]) }}" class="scp-product-utility-form">
+                                        <button type="button" title="{{ __('storefront.wishlist.login_required') }}">
+                                            ♡ <span>{{ __('storefront.wishlist.login_required') }}</span>
+                                        </button>
+                                    </a>
+                                @endif
+
+                                @if(Route::has('storefront.compare.add'))
+                                    <form
+                                        method="POST"
+                                        action="{{ route('storefront.compare.add', ['product' => $product->id, 'lang' => $locale]) }}"
+                                        class="scp-product-utility-form"
+                                    >
+                                        @csrf
+                                        <button type="submit" title="{{ __('storefront.compare.add_to_compare') }}">
+                                            ⇄ <span>{{ __('storefront.compare.add_to_compare') }}</span>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </div>
                     </article>
