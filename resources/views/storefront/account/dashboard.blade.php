@@ -13,6 +13,29 @@
         };
 
         $locale = $locale ?? request('lang', app()->getLocale() ?? 'ar');
+        $formatLocalizedNumber = function ($value, int $decimals = 0) use ($locale) {
+            $formatted = number_format((float) $value, $decimals, '.', ',');
+
+            if ($locale !== 'ar') {
+                return $formatted;
+            }
+
+            return strtr($formatted, [
+                '0' => '٠',
+                '1' => '١',
+                '2' => '٢',
+                '3' => '٣',
+                '4' => '٤',
+                '5' => '٥',
+                '6' => '٦',
+                '7' => '٧',
+                '8' => '٨',
+                '9' => '٩',
+            ]);
+        };
+        $formatLocalizedMoney = function ($value) use ($currencySymbol, $formatLocalizedNumber) {
+            return $currencySymbol.' '.$formatLocalizedNumber($value, 2);
+        };
 
         $logoutText = match ($locale) {
             'he' => 'התנתקות',
@@ -59,31 +82,31 @@
                 <div class="scp-account-stat-card">
                     <div class="scp-account-stat-icon">🧾</div>
                     <span>{{ __('storefront.account_dashboard.total_orders') }}</span>
-                    <strong>{{ $totalOrders }}</strong>
+                    <strong>{{ $formatLocalizedNumber($totalOrders, 0) }}</strong>
                 </div>
 
                 <div class="scp-account-stat-card">
                     <div class="scp-account-stat-icon">💳</div>
                     <span>{{ __('storefront.account_dashboard.total_spent') }}</span>
-                    <strong>{{ $currencySymbol }} {{ number_format((float) $totalSpent, 2) }}</strong>
+                    <strong>{{ $formatLocalizedMoney((float) $totalSpent) }}</strong>
                 </div>
 
                 <div class="scp-account-stat-card">
                     <div class="scp-account-stat-icon">⏳</div>
                     <span>{{ __('storefront.account_dashboard.pending_orders') }}</span>
-                    <strong>{{ $pendingOrders }}</strong>
+                    <strong>{{ $formatLocalizedNumber($pendingOrders, 0) }}</strong>
                 </div>
 
                 <div class="scp-account-stat-card">
                     <div class="scp-account-stat-icon">✅</div>
                     <span>{{ __('storefront.account_dashboard.completed_orders') }}</span>
-                    <strong>{{ $completedOrders }}</strong>
+                    <strong>{{ $formatLocalizedNumber($completedOrders, 0) }}</strong>
                 </div>
 
                 <div class="scp-account-stat-card">
                     <div class="scp-account-stat-icon">⚠️</div>
                     <span>{{ __('storefront.account_dashboard.unpaid_orders') }}</span>
-                    <strong>{{ $unpaidOrders }}</strong>
+                    <strong>{{ $formatLocalizedNumber($unpaidOrders, 0) }}</strong>
                 </div>
             </div>
 
@@ -106,10 +129,6 @@
                         @if($recentOrders->count() > 0)
                             <div class="scp-account-orders-list">
                                 @foreach($recentOrders as $order)
-                                    @php
-                                        $orderCurrency = $order?->currency?->symbol ?? '₪';
-                                    @endphp
-
                                     <article class="scp-account-order-card">
                                         <div>
                                             <span class="scp-account-order-label">
@@ -146,7 +165,7 @@
                                                 {{ __('storefront.cart.grand_total') }}
                                             </span>
 
-                                            <strong>{{ $orderCurrency }} {{ number_format((float) $order->grand_total, 2) }}</strong>
+                                            <strong>{{ $formatLocalizedMoney((float) $order->grand_total) }}</strong>
                                         </div>
 
                                         <a
@@ -183,15 +202,11 @@
                         </div>
 
                         @if($latestOrder)
-                            @php
-                                $latestCurrency = $latestOrder?->currency?->symbol ?? '₪';
-                            @endphp
-
                             <div class="scp-account-latest-order">
                                 <span>{{ $latestOrder->order_number }}</span>
 
                                 <strong>
-                                    {{ $latestCurrency }} {{ number_format((float) $latestOrder->grand_total, 2) }}
+                                    {{ $formatLocalizedMoney((float) $latestOrder->grand_total) }}
                                 </strong>
 
                                 <div>
