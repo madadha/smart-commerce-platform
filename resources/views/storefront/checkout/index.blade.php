@@ -4,6 +4,11 @@
     @php
         $currencySymbol = $cart?->currency?->symbol ?? '₪';
         $checkoutDefaults = $checkoutDefaults ?? [];
+        $cartSubtotal = (float) ($cart?->subtotal ?? 0);
+        $cartDiscount = (float) ($cart?->discount_total ?? 0);
+        $cartShipping = (float) ($cart?->shipping_total ?? 0);
+        $cartTax = (float) ($cart?->tax_total ?? 0);
+        $cartGrandTotal = (float) ($cart?->grand_total ?? 0);
 
         $resolveItemName = function ($item) use ($locale) {
             $product = $item->product ?? null;
@@ -137,7 +142,11 @@
                                         <select name="country_id" id="checkout-country">
                                             <option value="">{{ __('storefront.checkout.select_country') }}</option>
                                             @foreach($countries as $country)
-                                                <option value="{{ $country->id }}" @selected((string) old('country_id', $checkoutDefaults['country_id'] ?? '') === (string) $country->id)>
+                                                <option
+                                                    value="{{ $country->id }}"
+                                                    data-tax-rate="{{ (float) ($country->tax_rate ?? 0) }}"
+                                                    @selected((string) old('country_id', $checkoutDefaults['country_id'] ?? '') === (string) $country->id)
+                                                >
                                                     {{ $country->flag }} {{ $country->getName($locale) }}
                                                 </option>
                                             @endforeach
@@ -262,28 +271,39 @@
                         <div class="scp-checkout-summary-lines">
                             <div>
                                 <span>{{ __('storefront.cart.subtotal') }}</span>
-                                <strong>{{ $currencySymbol }} {{ number_format((float) $cart->subtotal, 2) }}</strong>
+                                <strong id="checkout-subtotal">{{ $currencySymbol }} {{ number_format($cartSubtotal, 2) }}</strong>
                             </div>
 
                             <div>
                                 <span>{{ __('storefront.cart.discount') }}</span>
-                                <strong>{{ $currencySymbol }} {{ number_format((float) $cart->discount_total, 2) }}</strong>
+                                <strong id="checkout-discount">{{ $currencySymbol }} {{ number_format($cartDiscount, 2) }}</strong>
                             </div>
 
                             <div>
                                 <span>{{ __('storefront.cart.shipping') }}</span>
-                                <strong>{{ $currencySymbol }} {{ number_format((float) $cart->shipping_total, 2) }}</strong>
+                                <strong id="checkout-shipping">{{ $currencySymbol }} {{ number_format($cartShipping, 2) }}</strong>
                             </div>
 
                             <div>
                                 <span>{{ __('storefront.cart.tax') }}</span>
-                                <strong>{{ $currencySymbol }} {{ number_format((float) $cart->tax_total, 2) }}</strong>
+                                <strong id="checkout-tax">{{ $currencySymbol }} {{ number_format($cartTax, 2) }}</strong>
                             </div>
                         </div>
 
                         <div class="scp-checkout-total">
                             <span>{{ __('storefront.cart.grand_total') }}</span>
-                            <strong>{{ $currencySymbol }} {{ number_format((float) $cart->grand_total, 2) }}</strong>
+                            <strong id="checkout-grand-total">{{ $currencySymbol }} {{ number_format($cartGrandTotal, 2) }}</strong>
+                        </div>
+
+                        <div class="scp-checkout-summary-note">
+                            <div>
+                                <span>{{ __('storefront.checkout.shipping_method') }}</span>
+                                <strong id="checkout-selected-shipping">{{ __('storefront.checkout.select_shipping_method') }}</strong>
+                            </div>
+                            <div>
+                                <span>{{ $locale === 'ar' ? 'نسبة الضريبة' : ($locale === 'he' ? 'שיעור מס' : 'Tax rate') }}</span>
+                                <strong id="checkout-selected-tax-rate">0%</strong>
+                            </div>
                         </div>
                     </aside>
 
@@ -301,7 +321,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const city = document.getElementById('checkout-city');
     const method = document.getElementById('checkout-shipping-method');
     const feedback = document.getElementById('checkout-shipping-feedback');
+    const subtotal = document.getElementById('checkout-subtotal');
+    const discount = document.getElementById('checkout-discount');
+    const shipping = document.getElementById('checkout-shipping');
+    const tax = document.getElementById('checkout-tax');
+    const grandTotal = document.getElementById('checkout-grand-total');
+    const selectedShipping = document.getElementById('checkout-selected-shipping');
+    const selectedTaxRate = document.getElementById('checkout-selected-tax-rate');
+
     if (!city || !method) return;
+
+    const currencySymbol = @json($currencySymbol);
+    const baseSubtotal = Number(@json($cartSubtotal));
+    const baseDiscount = Number(@json($cartDiscount));
+    const baseShipping = Number(@json($cartShipping));
+    const taxLabel = @json($locale === 'ar' ? 'نسبة الضريبة' : ($locale === 'he' ? 'שיעור מס' : 'Tax rate'));
+
+    const formatMoney = (value) => `${currencySymbol} ${Number(value || 0).toFixed(2)}`;
+    const getSelectedTaxRate = () => Number(country?.selectedOptions?.[0]?.dataset?.taxRate || 0);
+    const getSelectedShippingCost = () => {
+        const selectedOption = method?.selectedOptions?.[0];
+
+        if (!selectedOption || !selectedOption.value) {
+            return baseShipping;
+        }
+
+        const matches = (selectedOption.textContent || '').match(/(\d+(?:\.\d+)?)\s*$/);
+        return matches ? Number(matches[1]) : baseShipping;
+    };
+
+    const refreshPreview = () => {
+        const shippingCost = getSelectedShippingCost();
+        const taxRate = getSelectedTaxRate();
+        const taxAmount = (baseSubtotal * taxRate) / 100;
+        const total = baseSubtotal - baseDiscount + shippingCost + taxAmount;
+
+        if (subtotal) subtotal.textContent = formatMoney(baseSubtotal);
+        if (discount) discount.textContent = formatMoney(baseDiscount);
+        if (shipping) shipping.textContent = formatMoney(shippingCost);
+        if (tax) tax.textContent = formatMoney(taxAmount);
+        if (grandTotal) grandTotal.textContent = formatMoney(total);
+        if (selectedShipping) selectedShipping.textContent = method?.selectedOptions?.[0]?.textContent?.trim() || @json(__('storefront.checkout.select_shipping_method'));
+        if (selectedTaxRate) selectedTaxRate.textContent = `${taxRate.toFixed(2)}%`;
+    };
     let timer;
     const refresh = () => {
         clearTimeout(timer);
@@ -318,11 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const selected = method.value;
                 method.innerHTML = `<option value="">${@json(__('storefront.checkout.select_shipping_method'))}</option>`;
                 for (const quote of (data.quotes || [])) {
-                    const option = new Option(`${quote.name} — ${Number(quote.cost).toFixed(2)}`, quote.id);
+                    const option = new Option(`${quote.name} - ${formatMoney(quote.cost)}`, quote.id);
                     option.selected = String(quote.id) === String(selected);
                     method.add(option);
                 }
                 feedback.textContent = data.quotes?.length ? @json(__('storefront.checkout.shipping_calculated')) : @json(__('storefront.checkout.no_shipping_available'));
+                refreshPreview();
             } catch (error) {
                 feedback.textContent = @json(__('storefront.checkout.shipping_load_failed'));
             }
@@ -330,7 +393,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     city.addEventListener('input', refresh);
     country?.addEventListener('change', refresh);
+    method.addEventListener('change', refreshPreview);
     if (city.value.trim()) refresh();
+    refreshPreview();
 });
 </script>
 @endpush
+
