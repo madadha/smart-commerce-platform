@@ -9,15 +9,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->text('checkout_url')->nullable()->after('provider_reference');
-            $table->dateTime('checkout_expires_at')->nullable()->after('checkout_url');
+            if (! Schema::hasColumn('payments', 'checkout_url')) {
+                $table->text('checkout_url')->nullable()->after('provider_reference');
+            }
+
+            if (! Schema::hasColumn('payments', 'checkout_expires_at')) {
+                $table->dateTime('checkout_expires_at')->nullable()->after('checkout_url');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->dropColumn(['checkout_url', 'checkout_expires_at']);
+            $columns = array_values(array_filter([
+                Schema::hasColumn('payments', 'checkout_url') ? 'checkout_url' : null,
+                Schema::hasColumn('payments', 'checkout_expires_at') ? 'checkout_expires_at' : null,
+            ]));
+
+            if ($columns !== []) {
+                $table->dropColumn($columns);
+            }
         });
     }
 };
