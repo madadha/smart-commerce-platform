@@ -60,6 +60,21 @@ class ActiveLanguageStorefrontTest extends TestCase
             ->assertDontSee('الاسم بالإنجليزية');
     }
 
+    public function test_admin_navigation_does_not_crash_when_english_is_default_language(): void
+    {
+        $this->createLanguage('en', true, true, 'ltr', 1);
+        $this->createLanguage('ar', true, false, 'rtl', 2);
+        $this->createLanguage('he', false, false, 'rtl', 3);
+
+        $admin = User::factory()->create();
+        $admin->assignRole('super-admin');
+
+        $this->actingAs($admin)
+            ->get('/admin/languages')
+            ->assertOk()
+            ->assertSee('Languages');
+    }
+
     private function createLanguage(string $code, bool $isActive, bool $isDefault, string $direction, int $sortOrder): Language
     {
         return Language::query()->forceCreate([

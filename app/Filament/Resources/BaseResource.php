@@ -17,13 +17,13 @@ abstract class BaseResource extends Resource
         $headline = Str::headline($label);
         $translatedHeadline = __($headline);
 
-        if ($translatedHeadline !== $headline) {
+        if (is_string($translatedHeadline) && $translatedHeadline !== $headline) {
             return $translatedHeadline;
         }
 
         $translated = __($label);
 
-        return $translated !== $label ? $translated : $label;
+        return is_string($translated) && $translated !== $label ? $translated : $label;
     }
 
     public static function getNavigationLabel(): string
