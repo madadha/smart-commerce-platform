@@ -294,6 +294,42 @@
                             @endforeach
                         </div>
 
+                        <div class="scp-checkout-coupon">
+                            <div class="scp-checkout-coupon-head">
+                                <strong>{{ __('storefront.checkout.coupon_title') }}</strong>
+                                <span>{{ __('storefront.checkout.coupon_hint') }}</span>
+                            </div>
+
+                            @if($cart->coupon_code)
+                                <div class="scp-checkout-coupon-applied">
+                                    <div>
+                                        <span>{{ __('storefront.checkout.coupon_applied_label') }}</span>
+                                        <strong>{{ $cart->coupon_code }}</strong>
+                                    </div>
+
+                                    <form method="POST" action="{{ route('storefront.checkout.coupon.remove') }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="lang" value="{{ $locale }}">
+                                        <button type="submit">{{ __('storefront.checkout.coupon_remove') }}</button>
+                                    </form>
+                                </div>
+                            @else
+                                <form method="POST" action="{{ route('storefront.checkout.coupon.apply') }}" class="scp-checkout-coupon-form">
+                                    @csrf
+                                    <input type="hidden" name="lang" value="{{ $locale }}">
+                                    <input
+                                        type="text"
+                                        name="code"
+                                        value="{{ old('code') }}"
+                                        placeholder="{{ __('storefront.checkout.coupon_placeholder') }}"
+                                        autocomplete="off"
+                                    >
+                                    <button type="submit">{{ __('storefront.checkout.coupon_apply') }}</button>
+                                </form>
+                            @endif
+                        </div>
+
                         <div class="scp-checkout-summary-lines">
                             <div>
                                 <span>{{ __('storefront.cart.subtotal') }}</span>

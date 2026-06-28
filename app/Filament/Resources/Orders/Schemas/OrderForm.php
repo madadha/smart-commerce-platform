@@ -132,6 +132,10 @@ class OrderForm
                                 ->toArray())
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (mixed $state, callable $set): void {
+                                self::fillCouponFields($state, $set);
+                            })
                             ->helperText('Discount will be calculated after saving.'),
 
                         TextInput::make('coupon_code')
@@ -406,6 +410,27 @@ class OrderForm
         } else {
             $set('item_type', 'product');
         }
+    }
+
+    private static function fillCouponFields(mixed $couponId, callable $set): void
+    {
+        if (blank($couponId)) {
+            $set('coupon_code', null);
+            $set('coupon_discount_type', null);
+            $set('coupon_discount_value', null);
+
+            return;
+        }
+
+        $coupon = Coupon::query()->find($couponId);
+
+        if (! $coupon) {
+            return;
+        }
+
+        $set('coupon_code', $coupon->code);
+        $set('coupon_discount_type', $coupon->discount_type?->value);
+        $set('coupon_discount_value', (float) $coupon->discount_value);
     }
 
     private static function resolveProductName(Product $product, string $locale): string

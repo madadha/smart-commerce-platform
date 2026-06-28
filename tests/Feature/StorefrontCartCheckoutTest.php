@@ -78,6 +78,73 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertDatabaseCount('cart_items', 0);
     }
 
+    public function test_customer_can_apply_and_remove_coupon_from_checkout(): void
+    {
+        [$product, $variant] = $this->createProductWithVariant();
+        $this->post(route('storefront.cart.add'), [
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 1,
+        ]);
+        $coupon = Coupon::query()->forceCreate([
+            'code' => 'save10',
+            'name' => ['en' => 'Save 10%'],
+            'discount_type' => 'percentage',
+            'discount_value' => 10,
+            'is_active' => true,
+        ]);
+
+        $this->from('/store/checkout?lang=en')
+            ->post(route('storefront.checkout.coupon.apply'), [
+                'code' => ' save10 ',
+                'lang' => 'en',
+            ])
+            ->assertRedirect('/store/checkout?lang=en')
+            ->assertSessionHas('success');
+
+        $cart = Cart::query()->firstOrFail()->fresh();
+        $this->assertSame($coupon->id, $cart->coupon_id);
+        $this->assertSame('SAVE10', $cart->coupon_code);
+        $this->assertSame(45.0, (float) $cart->discount_total);
+        $this->assertSame(405.0, (float) $cart->grand_total);
+
+        $this->delete(route('storefront.checkout.coupon.remove'), ['lang' => 'en'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $cart = $cart->fresh();
+        $this->assertNull($cart->coupon_id);
+        $this->assertNull($cart->coupon_code);
+        $this->assertSame(0.0, (float) $cart->discount_total);
+        $this->assertSame(450.0, (float) $cart->grand_total);
+    }
+
+    public function test_checkout_rejects_invalid_coupon_for_current_cart(): void
+    {
+        [$product, $variant] = $this->createProductWithVariant();
+        $this->post(route('storefront.cart.add'), [
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 1,
+        ]);
+        Coupon::query()->forceCreate([
+            'code' => 'MIN1000',
+            'name' => ['en' => 'Minimum 1000'],
+            'discount_type' => 'fixed_amount',
+            'discount_value' => 50,
+            'minimum_order_total' => 1000,
+            'is_active' => true,
+        ]);
+
+        $this->post(route('storefront.checkout.coupon.apply'), [
+            'code' => 'MIN1000',
+        ])->assertSessionHas('error');
+
+        $cart = Cart::query()->firstOrFail()->fresh();
+        $this->assertNull($cart->coupon_id);
+        $this->assertSame(0.0, (float) $cart->discount_total);
+    }
+
     public function test_guest_checkout_creates_order_with_variant_snapshot_and_single_stock_deduction(): void
     {
         Mail::fake();
@@ -245,6 +312,7 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertSame(20.0, (float) $order->shipping_total);
         $this->assertSame(992.0, (float) $order->grand_total);
         $this->assertSame('CHECKOUT10', $order->coupon_code);
+        $this->assertSame(1, $coupon->fresh()->used_count);
     }
 
     public function test_verified_payplus_checkout_redirects_to_the_hosted_payment_page(): void

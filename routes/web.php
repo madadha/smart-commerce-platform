@@ -68,6 +68,13 @@ Route::prefix('store')->name('storefront.')->group(function () {
     Route::get('/checkout', [StorefrontCheckoutController::class, 'index'])
         ->name('checkout.index');
 
+    Route::post('/checkout/coupon', [StorefrontCartController::class, 'applyCoupon'])
+        ->middleware('throttle:20,1')
+        ->name('checkout.coupon.apply');
+
+    Route::delete('/checkout/coupon', [StorefrontCartController::class, 'removeCoupon'])
+        ->name('checkout.coupon.remove');
+
     Route::get('/checkout/shipping-quotes', [StorefrontCheckoutController::class, 'shippingQuotes'])
         ->middleware('throttle:30,1')
         ->name('checkout.shipping-quotes');

@@ -2476,6 +2476,104 @@ select {
     white-space: nowrap;
 }
 
+.scp-checkout-coupon {
+    border-top: 1px solid #eef2f7;
+    padding: 16px 0;
+}
+
+.scp-checkout-coupon-head {
+    margin-bottom: 10px;
+}
+
+.scp-checkout-coupon-head strong {
+    display: block;
+    color: var(--scp-dark);
+    font-size: 14px;
+    font-weight: 950;
+}
+
+.scp-checkout-coupon-head span {
+    display: block;
+    margin-top: 3px;
+    color: var(--scp-muted);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.scp-checkout-coupon-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+}
+
+.scp-checkout-coupon-form input,
+.scp-checkout-coupon-applied {
+    min-height: 44px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.scp-checkout-coupon-form input {
+    width: 100%;
+    padding: 0 14px;
+    color: var(--scp-dark);
+    font-size: 13px;
+    font-weight: 850;
+    outline: none;
+}
+
+.scp-checkout-coupon-form input:focus {
+    border-color: rgba(37, 99, 235, 0.55);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+.scp-checkout-coupon-form button,
+.scp-checkout-coupon-applied button {
+    min-height: 44px;
+    border: 0;
+    border-radius: 16px;
+    padding: 0 16px;
+    background: linear-gradient(135deg, var(--scp-primary), #1d4ed8);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+}
+
+.scp-checkout-coupon-applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px 8px 14px;
+}
+
+.scp-checkout-coupon-applied span {
+    display: block;
+    color: var(--scp-muted);
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.scp-checkout-coupon-applied strong {
+    display: block;
+    margin-top: 2px;
+    color: #047857;
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: 0.03em;
+}
+
+.scp-checkout-coupon-applied button {
+    background: #fee2e2;
+    color: #991b1b;
+    box-shadow: none;
+}
+
 .scp-checkout-summary-lines {
     border-top: 1px solid #eef2f7;
     padding-top: 10px;
@@ -2576,6 +2674,14 @@ select {
 
     .scp-checkout-item > strong {
         grid-column: 2;
+    }
+
+    .scp-checkout-coupon-form {
+        grid-template-columns: 1fr;
+    }
+
+    .scp-checkout-coupon-form button {
+        width: 100%;
     }
 }
 

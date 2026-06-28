@@ -6,6 +6,7 @@ use App\Enums\CartStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Product;
@@ -186,6 +187,72 @@ class StorefrontCartController extends Controller
         $this->recalculateCartTotals($cart);
 
         return back()->with('success', __('storefront.cart.removed_successfully'));
+    }
+
+    public function applyCoupon(Request $request): RedirectResponse
+    {
+        $this->resolveLocale($request);
+
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:255'],
+        ]);
+
+        $cart = $this->getCurrentCart();
+
+        if (! $cart || $cart->items()->count() === 0) {
+            return back()->with('error', __('storefront.checkout.coupon_empty_cart'));
+        }
+
+        $cart->loadMissing(['items', 'coupon']);
+        $subtotal = (float) $cart->items->sum('line_total');
+        $code = strtoupper(trim((string) $validated['code']));
+
+        $coupon = Coupon::query()
+            ->whereRaw('UPPER(code) = ?', [$code])
+            ->first();
+
+        if (! $coupon || ! $coupon->isValidForAmount($subtotal)) {
+            return back()
+                ->withInput()
+                ->with('error', __('storefront.checkout.coupon_invalid'));
+        }
+
+        $cart->forceFill([
+            'coupon_id' => $coupon->id,
+            'coupon_code' => $coupon->code,
+            'coupon_discount_type' => $coupon->discount_type?->value,
+            'coupon_discount_value' => $coupon->discount_value,
+        ])->saveQuietly();
+
+        $cart->unsetRelation('coupon');
+        $cart->load('coupon');
+        $cart->recalculateTotals();
+
+        return back()->with('success', __('storefront.checkout.coupon_applied'));
+    }
+
+    public function removeCoupon(Request $request): RedirectResponse
+    {
+        $this->resolveLocale($request);
+
+        $cart = $this->getCurrentCart();
+
+        if (! $cart) {
+            return back()->with('error', __('storefront.checkout.coupon_empty_cart'));
+        }
+
+        $cart->unsetRelation('coupon');
+        $cart->forceFill([
+            'coupon_id' => null,
+            'coupon_code' => null,
+            'coupon_discount_type' => null,
+            'coupon_discount_value' => 0,
+            'discount_total' => 0,
+        ])->saveQuietly();
+
+        $cart->recalculateTotals();
+
+        return back()->with('success', __('storefront.checkout.coupon_removed'));
     }
 
     private function getCurrentCart(): ?Cart

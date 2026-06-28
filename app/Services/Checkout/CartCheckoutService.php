@@ -161,6 +161,10 @@ class CartCheckoutService
                 'is_active' => false,
             ]))->save();
 
+            if ($cart->coupon_id) {
+                $cart->coupon?->increment('used_count');
+            }
+
             return $order->refresh();
         });
 
