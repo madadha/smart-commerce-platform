@@ -22,7 +22,7 @@ class InvoicesTable
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('order.order_number')
-                    ->label('Order')
+                    ->label('Order Number')
                     ->searchable()
                     ->placeholder('-')
                     ->sortable(),

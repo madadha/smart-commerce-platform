@@ -33,7 +33,7 @@ class InvoiceForm
                             ->helperText('Leave empty to generate automatically.'),
 
                         Select::make('order_id')
-                            ->label('Order')
+                            ->label('Order Number')
                             ->options(fn (): array => Order::query()
                                 ->latest()
                                 ->get()

@@ -75,6 +75,28 @@ class ActiveLanguageStorefrontTest extends TestCase
             ->assertSee('Languages');
     }
 
+    public function test_admin_invoice_grid_uses_translated_order_number_label(): void
+    {
+        $this->createLanguage('ar', true, true, 'rtl', 1);
+        $this->createLanguage('en', true, false, 'ltr', 2);
+        $this->createLanguage('he', false, false, 'rtl', 3);
+
+        $admin = User::factory()->create();
+        $admin->assignRole('super-admin');
+
+        $this->actingAs($admin)
+            ->get('/admin/invoices')
+            ->assertOk()
+            ->assertSee('رقم الطلب')
+            ->assertDontSeeText('order.order_number');
+
+        $this->actingAs($admin)
+            ->get('/admin/invoices/create')
+            ->assertOk()
+            ->assertSee('رقم الطلب')
+            ->assertDontSeeText('order.order_number');
+    }
+
     private function createLanguage(string $code, bool $isActive, bool $isDefault, string $direction, int $sortOrder): Language
     {
         return Language::query()->forceCreate([
