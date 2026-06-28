@@ -49,7 +49,6 @@ use App\Policies\SupportResourcePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Component as SchemaComponent;
@@ -99,10 +98,6 @@ class AppServiceProvider extends ServiceProvider
 
         BaseFilter::configureUsing(function (BaseFilter $filter): void {
             $filter->translateLabel();
-        });
-
-        Action::configureUsing(function (Action $action): void {
-            $action->translateLabel();
         });
 
         TextInput::configureUsing(function (TextInput $component): void {
