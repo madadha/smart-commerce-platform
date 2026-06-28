@@ -22,12 +22,29 @@ class ShipmentService
                     'city' => $order->shipping_city ?? null,
                     'address' => is_array($order->shipping_address) ? $order->shipping_address : ($order->shipping_address ?? null),
                 ],
-                'weight' => $order->shipping_weight,
-                'shipping_cost' => $order->shipping_total,
+                'weight' => $this->resolveShipmentWeight($order),
+                'shipping_cost' => (float) ($order->shipping_total ?? 0),
             ], $attributes));
 
             return $shipment->refresh();
         });
+    }
+
+    private function resolveShipmentWeight(Order $order): float
+    {
+        if ($order->shipping_weight !== null) {
+            return max((float) $order->shipping_weight, 0);
+        }
+
+        $order->loadMissing(['items.product', 'items.productVariant']);
+
+        $weight = $order->items->sum(function ($item): float {
+            $itemWeight = $item->productVariant?->weight ?? $item->product?->weight ?? 0;
+
+            return (float) $itemWeight * max((int) $item->quantity, 1);
+        });
+
+        return max((float) $weight, 0);
     }
 
     public function transition(Shipment $shipment, ShipmentStatus $status, ?string $description = null, ?string $location = null): Shipment

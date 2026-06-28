@@ -80,4 +80,33 @@ class ShippingWorkflowTest extends TestCase
                 && $mail->shipment->tracking_number === 'TRACK-123';
         });
     }
+
+    public function test_shipment_creation_uses_safe_weight_when_order_weight_is_missing(): void
+    {
+        $currency = Currency::query()->firstOrCreate(['code' => 'ILS'], ['name' => ['en' => 'Shekel'], 'symbol' => '₪', 'exchange_rate' => 1, 'is_active' => true]);
+        $product = Product::query()->forceCreate([
+            'name' => ['en' => 'Console'], 'slug' => 'console-'.uniqid(), 'sku' => 'CONSOLE-1',
+            'product_type' => 'physical', 'status' => 'active', 'currency_id' => $currency->id,
+            'price' => 100, 'weight' => 2.5, 'stock_quantity' => 10, 'is_active' => true,
+        ]);
+        $method = ShippingMethod::query()->forceCreate([
+            'name' => ['en' => 'Standard'], 'slug' => 'standard-'.uniqid(), 'type' => 'standard',
+            'base_cost' => 10, 'is_active' => true,
+        ]);
+        $order = Order::query()->forceCreate([
+            'order_number' => 'ORD-WEIGHT-'.uniqid(), 'status' => 'pending', 'payment_status' => 'paid',
+            'currency_id' => $currency->id, 'shipping_method_id' => $method->id,
+            'subtotal' => 100, 'shipping_total' => 10, 'grand_total' => 110,
+            'shipping_weight' => 0, 'shipping_address' => 'Basmat Tab\'un', 'is_active' => true,
+        ]);
+        $order->forceFill(['shipping_weight' => null]);
+        $order->items()->forceCreate([
+            'product_id' => $product->id, 'product_name' => ['en' => 'Console'],
+            'item_type' => 'product', 'quantity' => 2, 'unit_price' => 100, 'line_total' => 200,
+        ]);
+
+        $shipment = app(ShipmentService::class)->createForOrder($order);
+
+        $this->assertSame('5.000', $shipment->weight);
+    }
 }
