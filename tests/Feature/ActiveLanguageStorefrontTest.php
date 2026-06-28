@@ -55,9 +55,9 @@ class ActiveLanguageStorefrontTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/products/create')
             ->assertOk()
-            ->assertSee('Name Arabic')
-            ->assertDontSee('Name Hebrew')
-            ->assertDontSee('Name English');
+            ->assertSee('الاسم بالعربية')
+            ->assertDontSee('الاسم بالعبرية')
+            ->assertDontSee('الاسم بالإنجليزية');
     }
 
     private function createLanguage(string $code, bool $isActive, bool $isDefault, string $direction, int $sortOrder): Language

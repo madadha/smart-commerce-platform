@@ -43,7 +43,7 @@ class OrdersTable
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('payment_status')
-                    ->label('Payment')
+                    ->label('Payment Status')
                     ->badge()
                     ->formatStateUsing(fn ($state): string => $state instanceof PaymentStatus ? $state->label() : (string) $state)
                     ->color(fn ($state): string => $state instanceof PaymentStatus ? $state->color() : 'gray')

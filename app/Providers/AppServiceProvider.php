@@ -49,8 +49,13 @@ use App\Policies\SupportResourcePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Component as SchemaComponent;
+use Filament\Schemas\Components\Section;
+use Filament\Tables\Columns\Column;
+use Filament\Tables\Filters\BaseFilter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -68,12 +73,46 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        SchemaComponent::configureUsing(function (SchemaComponent $component): void {
+            if (method_exists($component, 'translateLabel')) {
+                $component->translateLabel();
+            }
+        });
+
+        Section::configureUsing(function (Section $component): void {
+            $heading = $component->getHeading();
+
+            if (is_string($heading) && filled($heading)) {
+                $component->heading(__($heading));
+            }
+
+            $description = $component->getDescription();
+
+            if (is_string($description) && filled($description)) {
+                $component->description(__($description));
+            }
+        });
+
+        Column::configureUsing(function (Column $column): void {
+            $column->translateLabel();
+        });
+
+        BaseFilter::configureUsing(function (BaseFilter $filter): void {
+            $filter->translateLabel();
+        });
+
+        Action::configureUsing(function (Action $action): void {
+            $action->translateLabel();
+        });
+
         TextInput::configureUsing(function (TextInput $component): void {
+            $component->translateLabel();
             $component->visible(fn (TextInput $component): bool => app(ActiveLanguageRegistry::class)
                 ->shouldDisplayStatePath($component->getStatePath()));
         });
 
         Textarea::configureUsing(function (Textarea $component): void {
+            $component->translateLabel();
             $component->visible(fn (Textarea $component): bool => app(ActiveLanguageRegistry::class)
                 ->shouldDisplayStatePath($component->getStatePath()));
         });

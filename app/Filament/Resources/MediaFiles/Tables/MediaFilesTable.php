@@ -77,7 +77,7 @@ class MediaFilesTable
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Order')
+                    ->label('Sort Order')
                     ->sortable(),
             ])
             ->defaultSort('id', 'desc')

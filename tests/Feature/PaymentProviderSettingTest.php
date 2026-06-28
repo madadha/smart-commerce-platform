@@ -108,8 +108,8 @@ class PaymentProviderSettingTest extends TestCase
         $this->actingAs($user)
             ->get("/admin/payment-provider-settings/{$provider->id}/edit")
             ->assertOk()
-            ->assertSee('Provider Status')
-            ->assertSee('Sandbox Credentials')
-            ->assertSee('Live Credentials');
+            ->assertSee('حالة مزود الدفع')
+            ->assertSee('بيانات اختبار Sandbox')
+            ->assertSee('بيانات التشغيل الفعلي');
     }
 }

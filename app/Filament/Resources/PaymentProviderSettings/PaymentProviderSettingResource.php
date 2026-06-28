@@ -146,7 +146,7 @@ class PaymentProviderSettingResource extends \App\Filament\Resources\BaseResourc
                     ->dateTime('Y-m-d H:i')
                     ->placeholder('Never'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Order')
+                    ->label('Sort Order')
                     ->sortable(),
             ])
             ->defaultSort('sort_order')
