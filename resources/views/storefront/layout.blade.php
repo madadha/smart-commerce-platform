@@ -36,6 +36,39 @@
     $storeTagline = $storefrontSettings?->localized('store_tagline', $currentLocale, 'Marketplace Platform') ?: 'Marketplace Platform';
     $topbarText = $storefrontSettings?->localized('topbar_text', $currentLocale, __('storefront.topbar')) ?: __('storefront.topbar');
     $footerDescription = $storefrontSettings?->localized('footer_description', $currentLocale, __('storefront.footer.description')) ?: __('storefront.footer.description');
+    $footerAddress = $storefrontSettings?->localized('address', $currentLocale, '') ?: '';
+    $footerContactItems = collect([
+        [
+            'icon' => '✉',
+            'label' => __('storefront.footer.email'),
+            'value' => $storefrontSettings?->contact_email,
+            'url' => $storefrontSettings?->contact_email ? 'mailto:'.$storefrontSettings->contact_email : null,
+        ],
+        [
+            'icon' => '☎',
+            'label' => __('storefront.footer.phone'),
+            'value' => $storefrontSettings?->contact_phone,
+            'url' => $storefrontSettings?->contact_phone ? 'tel:'.preg_replace('/\s+/', '', $storefrontSettings->contact_phone) : null,
+        ],
+        [
+            'icon' => '☘',
+            'label' => __('storefront.footer.whatsapp'),
+            'value' => $storefrontSettings?->whatsapp,
+            'url' => $storefrontSettings?->whatsapp ? 'https://wa.me/'.preg_replace('/\D+/', '', $storefrontSettings->whatsapp) : null,
+        ],
+        [
+            'icon' => '⌖',
+            'label' => __('storefront.footer.address'),
+            'value' => $footerAddress,
+            'url' => null,
+        ],
+    ])->filter(fn (array $item) => filled($item['value']));
+    $footerSocialLinks = collect([
+        ['icon' => 'f', 'label' => 'Facebook', 'url' => $storefrontSettings?->facebook_url],
+        ['icon' => '◎', 'label' => 'Instagram', 'url' => $storefrontSettings?->instagram_url],
+        ['icon' => '♪', 'label' => 'TikTok', 'url' => $storefrontSettings?->tiktok_url],
+        ['icon' => '▶', 'label' => 'YouTube', 'url' => $storefrontSettings?->youtube_url],
+    ])->filter(fn (array $item) => filled($item['url']));
     $logoUrl = $storefrontSettings?->logoUrl();
     $faviconUrl = $storefrontSettings?->faviconUrl();
     $themeVariables = $storefrontSettings?->cssVariables();
@@ -246,14 +279,36 @@
 <footer class="scp-footer">
     <div class="scp-container">
         <div class="scp-footer-grid">
-            <div>
-                <h3>{{ $storeName }}</h3>
+            <div class="scp-footer-brand-block">
+                <div class="scp-footer-brand">
+                    @if($logoUrl)
+                        <img src="{{ $logoUrl }}" alt="{{ $storeName }}">
+                    @else
+                        <span>{{ mb_substr($storeName, 0, 1) }}</span>
+                    @endif
+
+                    <div>
+                        <h3>{{ $storeName }}</h3>
+                        <small>{{ $storeTagline }}</small>
+                    </div>
+                </div>
+
                 <p>
                     {{ $footerDescription }}
                 </p>
+
+                @if($footerSocialLinks->isNotEmpty())
+                    <div class="scp-footer-socials">
+                        @foreach($footerSocialLinks as $social)
+                            <a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $social['label'] }}">
+                                <span>{{ $social['icon'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
-            <div>
+            <div class="scp-footer-links-block">
                 <h4>{{ __('storefront.footer.quick_links') }}</h4>
 
                 <a href="{{ route('storefront.products.index', ['lang' => $currentLocale]) }}">
@@ -264,13 +319,41 @@
                 <a href="{{ route('storefront.products.index', ['lang' => $currentLocale, 'on_sale' => 1]) }}">{{ __('storefront.footer.deals') }}</a>
             </div>
 
-            <div>
+            <div class="scp-footer-links-block">
                 <h4>{{ __('storefront.footer.support') }}</h4>
 
                 <a href="{{ route('storefront.orders.track', ['lang' => $currentLocale]) }}">{{ __('storefront.order_tracking.track_order') }}</a>
                 <a href="{{ route('storefront.cart.index', ['lang' => $currentLocale]) }}">{{ __('storefront.nav.cart') }}</a>
                 <a href="{{ route('storefront.products.index', ['lang' => $currentLocale]) }}">{{ __('storefront.footer.products') }}</a>
             </div>
+
+            @if($footerContactItems->isNotEmpty())
+                <div class="scp-footer-contact-block">
+                    <h4>{{ __('storefront.footer.contact') }}</h4>
+
+                    <div class="scp-footer-contact-list">
+                        @foreach($footerContactItems as $item)
+                            @if($item['url'])
+                                <a href="{{ $item['url'] }}" class="scp-footer-contact-item" @if(str_starts_with($item['url'], 'https://')) target="_blank" rel="noopener noreferrer" @endif>
+                                    <span>{{ $item['icon'] }}</span>
+                                    <div>
+                                        <small>{{ $item['label'] }}</small>
+                                        <strong>{{ $item['value'] }}</strong>
+                                    </div>
+                                </a>
+                            @else
+                                <div class="scp-footer-contact-item">
+                                    <span>{{ $item['icon'] }}</span>
+                                    <div>
+                                        <small>{{ $item['label'] }}</small>
+                                        <strong>{{ $item['value'] }}</strong>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
 
         <div class="scp-footer-bottom">

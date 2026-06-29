@@ -141,6 +141,11 @@ class StorefrontSettingForm
                         Textarea::make('footer_description.en')->label('Footer EN')->rows(3),
                     ]),
                     Grid::make(3)->schema([
+                        TextInput::make('address.ar')->label('Address AR'),
+                        TextInput::make('address.he')->label('Address HE'),
+                        TextInput::make('address.en')->label('Address EN'),
+                    ]),
+                    Grid::make(3)->schema([
                         TextInput::make('contact_email')->email()->label('Email'),
                         TextInput::make('contact_phone')->label('Phone'),
                         TextInput::make('whatsapp')->label('WhatsApp'),
