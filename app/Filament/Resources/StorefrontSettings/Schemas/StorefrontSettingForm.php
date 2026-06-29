@@ -4,6 +4,7 @@ namespace App\Filament\Resources\StorefrontSettings\Schemas;
 
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -73,6 +74,24 @@ class StorefrontSettingForm
                     ]),
                 ]),
 
+            Section::make('Typography')
+                ->schema([
+                    Grid::make(2)->schema([
+                        Select::make('body_font_family')
+                            ->label('Body Font')
+                            ->options(self::fontOptions())
+                            ->searchable()
+                            ->default('Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif')
+                            ->helperText('Used for normal storefront text.'),
+                        Select::make('heading_font_family')
+                            ->label('Heading Font')
+                            ->options(self::fontOptions())
+                            ->searchable()
+                            ->default('Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif')
+                            ->helperText('Used for homepage titles and section headings.'),
+                    ]),
+                ]),
+
             Section::make('Default Hero Content')
                 ->schema([
                     Grid::make(3)->schema([
@@ -134,5 +153,18 @@ class StorefrontSettingForm
                     TextInput::make('youtube_url')->url()->label('YouTube'),
                 ]),
         ]);
+    }
+
+    private static function fontOptions(): array
+    {
+        return [
+            'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' => 'Inter / System UI',
+            '"Tajawal", "Segoe UI", Tahoma, Arial, sans-serif' => 'Tajawal Arabic Style',
+            '"Cairo", "Segoe UI", Tahoma, Arial, sans-serif' => 'Cairo Arabic Style',
+            '"Rubik", "Segoe UI", Tahoma, Arial, sans-serif' => 'Rubik Hebrew/Arabic Style',
+            '"Noto Sans", "Segoe UI", Tahoma, Arial, sans-serif' => 'Noto Sans Multilingual',
+            'Arial, Helvetica, sans-serif' => 'Arial',
+            'Tahoma, Geneva, sans-serif' => 'Tahoma',
+        ];
     }
 }

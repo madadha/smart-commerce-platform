@@ -33,6 +33,8 @@
     @php
         $storefrontSettings = $storefrontSettings ?? (\App\Models\StorefrontSetting::current());
         $storefrontSlides = $storefrontSlides ?? collect();
+        $homePromotions = $homePromotions ?? collect();
+        $midPromotions = $midPromotions ?? collect();
         $showCategoriesSection = $storefrontSettings?->show_categories_section ?? true;
         $showFeaturedSection = $storefrontSettings?->show_featured_section ?? true;
         $showLatestSection = $storefrontSettings?->show_latest_section ?? true;
@@ -178,6 +180,47 @@
         </div>
     </section>
 
+    @if($homePromotions->isNotEmpty())
+        <section class="scp-promo-section">
+            <div class="scp-container">
+                <div class="scp-promo-grid">
+                    @foreach($homePromotions as $promotion)
+                        <a
+                            href="{{ $resolveStoreUrl($promotion->button_url) }}"
+                            class="scp-promo-card scp-promo-{{ $promotion->style ?: 'gradient' }}"
+                            @if($promotion->background_color || $promotion->text_color)
+                                style="{{ $promotion->background_color ? '--scp-promo-bg: '.$promotion->background_color.';' : '' }} {{ $promotion->text_color ? '--scp-promo-text: '.$promotion->text_color.';' : '' }}"
+                            @endif
+                        >
+                            <div class="scp-promo-content">
+                                @if($promotion->localized('eyebrow', $locale))
+                                    <span>{{ $promotion->localized('eyebrow', $locale) }}</span>
+                                @endif
+
+                                <h2>{{ $promotion->localized('title', $locale) }}</h2>
+
+                                @if($promotion->localized('description', $locale))
+                                    <p>{{ $promotion->localized('description', $locale) }}</p>
+                                @endif
+
+                                <strong>
+                                    {{ $promotion->localized('button_text', $locale, __('storefront.sections.view_all')) }}
+                                    {{ $direction === 'rtl' ? '←' : '→' }}
+                                </strong>
+                            </div>
+
+                            @if($promotion->imageUrl())
+                                <div class="scp-promo-media">
+                                    <img src="{{ $promotion->imageUrl() }}" alt="{{ $promotion->localized('title', $locale) }}">
+                                </div>
+                            @endif
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
     @if($showCategoriesSection)
     <section class="scp-section">
         <div class="scp-container">
@@ -191,13 +234,36 @@
             <div class="scp-category-grid">
                 @forelse($featuredCategories as $category)
                     <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'category' => $category->id]) }}" class="scp-category-card">
-                        <div class="scp-category-icon">
-                            @if(! empty($category->icon))
-                                {{ $category->icon }}
-                            @else
-                                📁
-                            @endif
-                        </div>
+                    <div class="scp-category-icon">
+    @php
+        $categoryIcon = $category->icon ?? null;
+
+        $isCategoryIconImage = is_string($categoryIcon)
+            && preg_match('/\.(png|jpg|jpeg|svg|webp|gif)$/i', $categoryIcon);
+
+        $categoryIconUrl = null;
+
+        if ($isCategoryIconImage) {
+            $cleanIconPath = ltrim(str_replace('storage/', '', $categoryIcon), '/');
+
+            $categoryIconUrl = \Illuminate\Support\Str::startsWith($categoryIcon, ['http://', 'https://'])
+                ? $categoryIcon
+                : asset('storage/' . $cleanIconPath);
+        }
+    @endphp
+
+    @if($categoryIconUrl)
+        <img
+            src="{{ $categoryIconUrl }}"
+            alt="{{ $category->getName($locale) }}"
+            class="scp-category-icon-image"
+        >
+    @elseif(! empty($categoryIcon))
+        <span>{{ $categoryIcon }}</span>
+    @else
+        <span>📁</span>
+    @endif
+</div>
 
                         <h3>{{ $category->getName($locale) }}</h3>
 
@@ -225,8 +291,8 @@
                     <p>{{ __('storefront.sections.featured_subtitle') }}</p>
                 </div>
 
-                <a href="#" class="scp-link-more">
-                    {{ __('storefront.sections.view_all') }} →
+                <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar']) }}" class="scp-link-more">
+                    {{ __('storefront.sections.view_all') }} {{ $direction === 'rtl' ? '←' : '→' }}
                 </a>
             </div>
 
@@ -366,6 +432,47 @@
 
     @endif
 
+    @if($midPromotions->isNotEmpty())
+        <section class="scp-promo-section scp-promo-section-compact">
+            <div class="scp-container">
+                <div class="scp-promo-grid compact">
+                    @foreach($midPromotions as $promotion)
+                        <a
+                            href="{{ $resolveStoreUrl($promotion->button_url) }}"
+                            class="scp-promo-card scp-promo-{{ $promotion->style ?: 'gradient' }}"
+                            @if($promotion->background_color || $promotion->text_color)
+                                style="{{ $promotion->background_color ? '--scp-promo-bg: '.$promotion->background_color.';' : '' }} {{ $promotion->text_color ? '--scp-promo-text: '.$promotion->text_color.';' : '' }}"
+                            @endif
+                        >
+                            <div class="scp-promo-content">
+                                @if($promotion->localized('eyebrow', $locale))
+                                    <span>{{ $promotion->localized('eyebrow', $locale) }}</span>
+                                @endif
+
+                                <h2>{{ $promotion->localized('title', $locale) }}</h2>
+
+                                @if($promotion->localized('description', $locale))
+                                    <p>{{ $promotion->localized('description', $locale) }}</p>
+                                @endif
+
+                                <strong>
+                                    {{ $promotion->localized('button_text', $locale, __('storefront.sections.view_all')) }}
+                                    {{ $direction === 'rtl' ? '←' : '→' }}
+                                </strong>
+                            </div>
+
+                            @if($promotion->imageUrl())
+                                <div class="scp-promo-media">
+                                    <img src="{{ $promotion->imageUrl() }}" alt="{{ $promotion->localized('title', $locale) }}">
+                                </div>
+                            @endif
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
     @if($showLatestSection)
     <section class="scp-section">
         <div class="scp-container">
@@ -374,6 +481,10 @@
                     <h2>{{ __('storefront.sections.latest') }}</h2>
                     <p>{{ __('storefront.sections.latest_subtitle') }}</p>
                 </div>
+
+                <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'sort' => 'latest']) }}" class="scp-link-more">
+                    {{ __('storefront.sections.view_all') }} {{ $direction === 'rtl' ? '←' : '→' }}
+                </a>
             </div>
 
             <div class="scp-product-grid compact">

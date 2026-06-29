@@ -11,6 +11,8 @@
     --scp-success: #16a34a;
     --scp-warning: #f59e0b;
     --scp-danger: #dc2626;
+    --scp-font-body: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --scp-font-heading: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -21,7 +23,15 @@ body.scp-storefront {
     margin: 0;
     background: var(--scp-bg);
     color: var(--scp-text);
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: var(--scp-font-body);
+}
+
+.scp-storefront h1,
+.scp-storefront h2,
+.scp-storefront h3,
+.scp-storefront h4,
+.scp-storefront .scp-logo strong {
+    font-family: var(--scp-font-heading);
 }
 
 body.is-rtl {
@@ -425,6 +435,154 @@ select {
     font-size: 14px;
     font-weight: 900;
     color: var(--scp-primary);
+}
+
+.scp-promo-section {
+    padding: 30px 0 10px;
+}
+
+.scp-promo-section-compact {
+    padding: 8px 0 26px;
+    background: #f1f5f9;
+}
+
+.scp-promo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.scp-promo-grid.compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.scp-promo-card {
+    --scp-promo-bg: linear-gradient(135deg, #0f172a, #2563eb);
+    --scp-promo-text: #ffffff;
+    position: relative;
+    min-height: 190px;
+    border-radius: 30px;
+    padding: 24px;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 18px;
+    background: var(--scp-promo-bg);
+    color: var(--scp-promo-text);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+    isolation: isolate;
+}
+
+.scp-promo-card:first-child:nth-last-child(n + 3),
+.scp-promo-card:first-child:nth-last-child(n + 3) ~ .scp-promo-card:nth-child(2) {
+    min-height: 220px;
+}
+
+.scp-promo-card::before {
+    content: "";
+    position: absolute;
+    inset-inline-end: -70px;
+    bottom: -90px;
+    width: 210px;
+    height: 210px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    z-index: -1;
+}
+
+.scp-promo-gradient {
+    --scp-promo-bg: linear-gradient(135deg, #172554, #2563eb 55%, #38bdf8);
+}
+
+.scp-promo-dark {
+    --scp-promo-bg: linear-gradient(135deg, #020617, #111827);
+}
+
+.scp-promo-light {
+    --scp-promo-bg: linear-gradient(135deg, #ffffff, #eef2ff);
+    --scp-promo-text: #0f172a;
+    border-color: #e5e7eb;
+}
+
+.scp-promo-accent {
+    --scp-promo-bg: linear-gradient(135deg, #f59e0b, #ef4444);
+}
+
+.scp-promo-content {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.scp-promo-content span {
+    width: fit-content;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.18);
+    color: inherit;
+    font-size: 12px;
+    font-weight: 950;
+}
+
+.scp-promo-light .scp-promo-content span {
+    background: #dbeafe;
+    color: var(--scp-primary);
+}
+
+.scp-promo-content h2 {
+    margin: 0;
+    color: inherit;
+    font-size: clamp(22px, 2.6vw, 34px);
+    line-height: 1.08;
+    font-weight: 950;
+    letter-spacing: -0.045em;
+}
+
+.scp-promo-content p {
+    margin: 12px 0 0;
+    max-width: 46ch;
+    color: color-mix(in srgb, currentColor 78%, transparent);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.7;
+}
+
+.scp-promo-content strong {
+    width: fit-content;
+    margin-top: 18px;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.18);
+    color: inherit;
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.scp-promo-light .scp-promo-content strong {
+    background: var(--scp-primary);
+    color: #fff;
+}
+
+.scp-promo-media {
+    position: relative;
+    z-index: 1;
+    width: 38%;
+    min-width: 110px;
+    display: grid;
+    place-items: center;
+}
+
+.scp-promo-media img {
+    width: 100%;
+    max-height: 170px;
+    object-fit: contain;
+    filter: drop-shadow(0 22px 28px rgba(15, 23, 42, 0.22));
 }
 
 .scp-category-grid {
@@ -1040,6 +1198,8 @@ select {
     .scp-category-grid,
     .scp-product-grid,
     .scp-product-grid.compact,
+    .scp-promo-grid,
+    .scp-promo-grid.compact,
     .scp-brand-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1115,8 +1275,21 @@ select {
     .scp-category-grid,
     .scp-product-grid,
     .scp-product-grid.compact,
+    .scp-promo-grid,
+    .scp-promo-grid.compact,
     .scp-brand-grid {
         grid-template-columns: 1fr;
+    }
+
+    .scp-promo-card {
+        min-height: 180px;
+        padding: 20px;
+        border-radius: 24px;
+    }
+
+    .scp-promo-media {
+        width: 32%;
+        min-width: 86px;
     }
 
     .scp-search {

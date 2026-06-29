@@ -31,6 +31,8 @@ class StorefrontSetting extends Model
         'card_color',
         'text_color',
         'muted_text_color',
+        'body_font_family',
+        'heading_font_family',
         'hero_badge',
         'hero_title',
         'hero_text',
@@ -118,6 +120,8 @@ class StorefrontSetting extends Model
             '--scp-card' => $this->card_color,
             '--scp-text' => $this->text_color,
             '--scp-muted' => $this->muted_text_color,
+            '--scp-font-body' => $this->body_font_family,
+            '--scp-font-heading' => $this->heading_font_family ?: $this->body_font_family,
         ];
 
         return collect($vars)

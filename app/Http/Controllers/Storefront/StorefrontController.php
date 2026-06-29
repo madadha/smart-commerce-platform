@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductOption;
+use App\Models\StorefrontPromotion;
 use App\Models\StorefrontSetting;
 use App\Models\StorefrontSlide;
 use App\Support\Localization\ActiveLanguageRegistry;
@@ -23,6 +24,8 @@ class StorefrontController extends Controller
 
         $storefrontSettings = StorefrontSetting::current();
         $storefrontSlides = StorefrontSlide::activeSlides();
+        $homePromotions = StorefrontPromotion::activeForPlacement('home_after_hero', 6);
+        $midPromotions = StorefrontPromotion::activeForPlacement('home_between_products', 3);
 
         $featuredCategories = Category::query()
             ->where('is_active', true)
@@ -84,6 +87,8 @@ class StorefrontController extends Controller
             'brands' => $brands,
             'storefrontSettings' => $storefrontSettings,
             'storefrontSlides' => $storefrontSlides,
+            'homePromotions' => $homePromotions,
+            'midPromotions' => $midPromotions,
         ]);
     }
 
