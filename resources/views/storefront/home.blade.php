@@ -226,8 +226,8 @@
         <div class="scp-container">
             <div class="scp-section-heading">
                 <div>
-                    <h2>{{ __('storefront.sections.categories') }}</h2>
-                    <p>{{ __('storefront.sections.categories_subtitle') }}</p>
+                    <h2>{{ $settingText('categories_section_title', __('storefront.sections.categories')) }}</h2>
+                    <p>{{ $settingText('categories_section_subtitle', __('storefront.sections.categories_subtitle')) }}</p>
                 </div>
             </div>
 
@@ -270,6 +270,10 @@
                         @if(method_exists($category, 'getDescription'))
                             <p>{{ $category->getDescription($locale) }}</p>
                         @endif
+
+                        <strong class="scp-category-cta">
+                            {{ __('storefront.sections.category_cta') }} {{ $direction === 'rtl' ? '<' : '>' }}
+                        </strong>
                     </a>
                 @empty
                     <div class="scp-empty">
@@ -287,8 +291,8 @@
         <div class="scp-container">
             <div class="scp-section-heading">
                 <div>
-                    <h2>{{ __('storefront.sections.featured') }}</h2>
-                    <p>{{ __('storefront.sections.featured_subtitle') }}</p>
+                    <h2>{{ $settingText('featured_section_title', __('storefront.sections.featured')) }}</h2>
+                    <p>{{ $settingText('featured_section_subtitle', __('storefront.sections.featured_subtitle')) }}</p>
                 </div>
 
                 <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar']) }}" class="scp-link-more">
@@ -478,8 +482,8 @@
         <div class="scp-container">
             <div class="scp-section-heading">
                 <div>
-                    <h2>{{ __('storefront.sections.latest') }}</h2>
-                    <p>{{ __('storefront.sections.latest_subtitle') }}</p>
+                    <h2>{{ $settingText('latest_section_title', __('storefront.sections.latest')) }}</h2>
+                    <p>{{ $settingText('latest_section_subtitle', __('storefront.sections.latest_subtitle')) }}</p>
                 </div>
 
                 <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'sort' => 'latest']) }}" class="scp-link-more">
@@ -611,8 +615,8 @@
         <div class="scp-container">
             <div class="scp-section-heading">
                 <div>
-                    <h2>{{ __('storefront.sections.brands') }}</h2>
-                    <p>{{ __('storefront.sections.brands_subtitle') }}</p>
+                    <h2>{{ $settingText('brands_section_title', __('storefront.sections.brands')) }}</h2>
+                    <p>{{ $settingText('brands_section_subtitle', __('storefront.sections.brands_subtitle')) }}</p>
                 </div>
             </div>
 

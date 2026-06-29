@@ -3963,3 +3963,27 @@ html[dir="rtl"] .scp-brand-track {
         grid-template-columns: 1fr !important;
     }
 }
+
+.scp-category-icon {
+    width: 100% !important;
+    height: 142px !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+.scp-category-icon-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+}
+
+.scp-category-icon span {
+    display: grid !important;
+    place-items: center !important;
+    line-height: 1 !important;
+    font-size: 58px !important;
+}

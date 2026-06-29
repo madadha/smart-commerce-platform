@@ -131,6 +131,46 @@ class StorefrontSettingForm
                         Toggle::make('show_latest_section')->label('Latest Products')->default(true),
                         Toggle::make('show_brands_section')->label('Brands')->default(true),
                     ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('categories_section_title.ar')->label('Categories Title AR'),
+                        TextInput::make('categories_section_title.he')->label('Categories Title HE'),
+                        TextInput::make('categories_section_title.en')->label('Categories Title EN'),
+                    ]),
+                    Grid::make(3)->schema([
+                        Textarea::make('categories_section_subtitle.ar')->label('Categories Subtitle AR')->rows(2),
+                        Textarea::make('categories_section_subtitle.he')->label('Categories Subtitle HE')->rows(2),
+                        Textarea::make('categories_section_subtitle.en')->label('Categories Subtitle EN')->rows(2),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('featured_section_title.ar')->label('Featured Title AR'),
+                        TextInput::make('featured_section_title.he')->label('Featured Title HE'),
+                        TextInput::make('featured_section_title.en')->label('Featured Title EN'),
+                    ]),
+                    Grid::make(3)->schema([
+                        Textarea::make('featured_section_subtitle.ar')->label('Featured Subtitle AR')->rows(2),
+                        Textarea::make('featured_section_subtitle.he')->label('Featured Subtitle HE')->rows(2),
+                        Textarea::make('featured_section_subtitle.en')->label('Featured Subtitle EN')->rows(2),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('latest_section_title.ar')->label('Latest Title AR'),
+                        TextInput::make('latest_section_title.he')->label('Latest Title HE'),
+                        TextInput::make('latest_section_title.en')->label('Latest Title EN'),
+                    ]),
+                    Grid::make(3)->schema([
+                        Textarea::make('latest_section_subtitle.ar')->label('Latest Subtitle AR')->rows(2),
+                        Textarea::make('latest_section_subtitle.he')->label('Latest Subtitle HE')->rows(2),
+                        Textarea::make('latest_section_subtitle.en')->label('Latest Subtitle EN')->rows(2),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('brands_section_title.ar')->label('Brands Title AR'),
+                        TextInput::make('brands_section_title.he')->label('Brands Title HE'),
+                        TextInput::make('brands_section_title.en')->label('Brands Title EN'),
+                    ]),
+                    Grid::make(3)->schema([
+                        Textarea::make('brands_section_subtitle.ar')->label('Brands Subtitle AR')->rows(2),
+                        Textarea::make('brands_section_subtitle.he')->label('Brands Subtitle HE')->rows(2),
+                        Textarea::make('brands_section_subtitle.en')->label('Brands Subtitle EN')->rows(2),
+                    ]),
                 ]),
 
             Section::make('Footer & Contact')
@@ -155,7 +195,22 @@ class StorefrontSettingForm
                         TextInput::make('instagram_url')->url()->label('Instagram'),
                         TextInput::make('tiktok_url')->url()->label('TikTok'),
                     ]),
-                    TextInput::make('youtube_url')->url()->label('YouTube'),
+                    Grid::make(4)->schema([
+                        TextInput::make('facebook_icon')->label('Facebook Icon')->placeholder('f'),
+                        TextInput::make('instagram_icon')->label('Instagram Icon')->placeholder('◎'),
+                        TextInput::make('tiktok_icon')->label('TikTok Icon')->placeholder('♪'),
+                        TextInput::make('youtube_icon')->label('YouTube Icon')->placeholder('▶'),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('youtube_url')->url()->label('YouTube'),
+                        TextInput::make('whatsapp_floating_icon')->label('Floating WhatsApp Icon')->placeholder('☘'),
+                        Toggle::make('show_floating_whatsapp')->label('Show Floating WhatsApp')->default(true),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('footer_rights_text.ar')->label('Rights AR')->placeholder('جميع الحقوق محفوظة.'),
+                        TextInput::make('footer_rights_text.he')->label('Rights HE')->placeholder('כל הזכויות שמורות.'),
+                        TextInput::make('footer_rights_text.en')->label('Rights EN')->placeholder('All rights reserved.'),
+                    ]),
                 ]),
         ]);
     }

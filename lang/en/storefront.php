@@ -41,6 +41,7 @@ return [
         'latest_subtitle' => 'Recently added products from your dynamic product catalog.',
         'brands' => 'Trusted Brands',
         'brands_subtitle' => 'Brands loaded from the brands module.',
+        'category_cta' => 'To category',
         'view_all' => 'View all',
     ],
 

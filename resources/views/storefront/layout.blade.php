@@ -36,7 +36,17 @@
     $storeTagline = $storefrontSettings?->localized('store_tagline', $currentLocale, 'Marketplace Platform') ?: 'Marketplace Platform';
     $topbarText = $storefrontSettings?->localized('topbar_text', $currentLocale, __('storefront.topbar')) ?: __('storefront.topbar');
     $footerDescription = $storefrontSettings?->localized('footer_description', $currentLocale, __('storefront.footer.description')) ?: __('storefront.footer.description');
+    $footerRights = $storefrontSettings?->localized('footer_rights_text', $currentLocale, __('storefront.footer.rights')) ?: __('storefront.footer.rights');
     $footerAddress = $storefrontSettings?->localized('address', $currentLocale, '') ?: '';
+    $sessionCartId = session('storefront_cart_id');
+    $cartCount = $sessionCartId
+        ? (int) \App\Models\CartItem::query()
+            ->where('cart_id', $sessionCartId)
+            ->sum('quantity')
+        : 0;
+    $floatingWhatsappUrl = $storefrontSettings?->whatsapp
+        ? 'https://wa.me/'.preg_replace('/\D+/', '', $storefrontSettings->whatsapp)
+        : null;
     $footerContactItems = collect([
         [
             'icon' => '✉',
@@ -69,6 +79,18 @@
         ['icon' => '♪', 'label' => 'TikTok', 'url' => $storefrontSettings?->tiktok_url],
         ['icon' => '▶', 'label' => 'YouTube', 'url' => $storefrontSettings?->youtube_url],
     ])->filter(fn (array $item) => filled($item['url']));
+    $footerSocialLinks = $footerSocialLinks->map(function (array $item) use ($storefrontSettings): array {
+        $customIcons = [
+            'Facebook' => $storefrontSettings?->facebook_icon ?: 'f',
+            'Instagram' => $storefrontSettings?->instagram_icon ?: '◎',
+            'TikTok' => $storefrontSettings?->tiktok_icon ?: '♪',
+            'YouTube' => $storefrontSettings?->youtube_icon ?: '▶',
+        ];
+
+        $item['icon'] = $customIcons[$item['label']] ?? $item['icon'];
+
+        return $item;
+    });
     $logoUrl = $storefrontSettings?->logoUrl();
     $faviconUrl = $storefrontSettings?->faviconUrl();
     $themeVariables = $storefrontSettings?->cssVariables();
@@ -171,8 +193,11 @@
                     </a>
                 @endauth
 
-                <a href="{{ route('storefront.cart.index', ['lang' => $currentLocale]) }}" class="scp-header-action">
+                <a href="{{ route('storefront.cart.index', ['lang' => $currentLocale]) }}" class="scp-header-action scp-header-cart-link">
                     <span>🛒</span>
+                    @if($cartCount > 0)
+                        <strong class="scp-cart-count-badge" aria-label="{{ $cartCount }} {{ $authText['cart'] }}">{{ $cartCount }}</strong>
+                    @endif
                     <small>{{ $authText['cart'] }}</small>
                 </a>
             </div>
@@ -357,10 +382,22 @@
         </div>
 
         <div class="scp-footer-bottom">
-            © {{ date('Y') }} Smart Commerce Platform. {{ __('storefront.footer.rights') }}
+            &copy; {{ date('Y') }} {{ $storeName }}. {{ $footerRights }}
         </div>
     </div>
 </footer>
+
+@if($floatingWhatsappUrl && ($storefrontSettings?->show_floating_whatsapp ?? true))
+    <a
+        href="{{ $floatingWhatsappUrl }}"
+        class="scp-floating-whatsapp"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="{{ __('storefront.footer.whatsapp') }}"
+    >
+        <span>{{ $storefrontSettings?->whatsapp_floating_icon ?: '☎' }}</span>
+    </a>
+@endif
 
 
 <script>

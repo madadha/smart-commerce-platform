@@ -64,6 +64,24 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertDatabaseCount('cart_items', 0);
     }
 
+    public function test_header_cart_badge_shows_current_cart_quantity(): void
+    {
+        [$product, $variant] = $this->createProductWithVariant();
+
+        $this->post(route('storefront.cart.add'), [
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 2,
+            'lang' => 'en',
+        ])->assertRedirect();
+
+        $response = $this->get('/?lang=en');
+
+        $response->assertOk();
+        $response->assertSee('scp-cart-count-badge', false);
+        $response->assertSee('>2<', false);
+    }
+
     public function test_variant_from_another_product_is_rejected(): void
     {
         [$product] = $this->createProductWithVariant();
