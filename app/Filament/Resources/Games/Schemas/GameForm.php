@@ -66,7 +66,7 @@ class GameForm
                         ->multiple()
                         ->preload()
                         ->searchable()
-                        ->getOptionLabelFromRecordUsing(fn (GameRegion $record): string => $record->getName(app(ActiveLanguageRegistry::class)->defaultCode()).' · '.$record->code),
+                        ->getOptionLabelFromRecordUsing(fn (GameRegion $record): string => self::regionOptionLabel($record)),
 
                     Toggle::make('supports_player_validation')
                         ->label('Supports Player Validation')
@@ -106,5 +106,21 @@ class GameForm
                 ->visible(fn (): bool => app(ActiveLanguageRegistry::class)->isActive($locale))
                 ->rows(3))
             ->all();
+    }
+
+    private static function regionOptionLabel(GameRegion $record): string
+    {
+        $locale = app(ActiveLanguageRegistry::class)->defaultCode();
+        $name = $record->getName($locale);
+
+        if (str_contains($name, '????') || $name === 'Region') {
+            $name = $record->getName('en');
+        }
+
+        if (str_contains($name, '????') || $name === 'Region') {
+            $name = $record->code;
+        }
+
+        return trim($name.' - '.$record->code);
     }
 }
