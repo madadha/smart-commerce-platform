@@ -1664,9 +1664,11 @@ body.is-ltr .scp-footer-links-block a:hover {
     padding: 16px 18px;
     border: 1px solid rgba(212, 162, 76, 0.34);
     border-radius: 18px;
-    background:
+    background: var(
+        --scp-cookie-bg,
         radial-gradient(circle at 8% 50%, rgba(212, 162, 76, 0.18), transparent 30%),
-        linear-gradient(135deg, #071225, #0b1730 55%, #102a62);
+        linear-gradient(135deg, #071225, #0b1730 55%, #102a62)
+    );
     color: #ffffff;
     box-shadow: 0 22px 60px rgba(2, 6, 23, 0.28);
 }
@@ -1701,7 +1703,7 @@ body.is-ltr .scp-footer-links-block a:hover {
     min-height: 44px;
     border: 0;
     border-radius: 14px;
-    background: linear-gradient(135deg, #f7d37a, #d4a24c);
+    background: var(--scp-cookie-button-bg, linear-gradient(135deg, #f7d37a, #d4a24c));
     color: #111827;
     font-size: 13px;
     font-weight: 950;

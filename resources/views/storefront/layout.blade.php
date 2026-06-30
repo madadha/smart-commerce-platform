@@ -400,7 +400,7 @@
 @endif
 
 @if(request()->is('store') || request()->is('store/*'))
-    <x-cookie-consent :locale="$currentLocale" />
+    <x-cookie-consent :locale="$currentLocale" :settings="$storefrontSettings" />
 @endif
 
 

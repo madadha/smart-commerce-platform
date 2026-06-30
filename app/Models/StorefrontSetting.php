@@ -61,6 +61,14 @@ class StorefrontSetting extends Model
         'youtube_icon',
         'whatsapp_floating_icon',
         'show_floating_whatsapp',
+        'show_cookie_consent',
+        'cookie_consent_text',
+        'cookie_consent_button_text',
+        'cookie_consent_privacy_text',
+        'cookie_consent_privacy_url',
+        'cookie_consent_storage_key',
+        'cookie_consent_background_color',
+        'cookie_consent_button_color',
         'is_active',
     ];
 
@@ -86,11 +94,15 @@ class StorefrontSetting extends Model
         'products_categories_filter_title' => 'array',
         'products_brands_filter_title' => 'array',
         'footer_rights_text' => 'array',
+        'cookie_consent_text' => 'array',
+        'cookie_consent_button_text' => 'array',
+        'cookie_consent_privacy_text' => 'array',
         'show_categories_section' => 'boolean',
         'show_featured_section' => 'boolean',
         'show_latest_section' => 'boolean',
         'show_brands_section' => 'boolean',
         'show_floating_whatsapp' => 'boolean',
+        'show_cookie_consent' => 'boolean',
         'is_active' => 'boolean',
     ];
 

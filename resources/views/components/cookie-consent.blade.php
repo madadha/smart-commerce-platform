@@ -1,5 +1,6 @@
 @props([
     'locale' => app()->getLocale(),
+    'settings' => null,
 ])
 
 @php
@@ -23,25 +24,45 @@
             'privacy' => 'Privacy Policy',
         ],
     ][$language];
+
+    $settings = $settings ?? \App\Models\StorefrontSetting::current();
+
+    if ($settings && $settings->show_cookie_consent === false) {
+        return;
+    }
+
+    $text = $settings?->localized('cookie_consent_text', $language, $copy['text']) ?: $copy['text'];
+    $acceptText = $settings?->localized('cookie_consent_button_text', $language, $copy['accept']) ?: $copy['accept'];
+    $privacyText = $settings?->localized('cookie_consent_privacy_text', $language, $copy['privacy']) ?: $copy['privacy'];
+    $privacyUrl = filled($settings?->cookie_consent_privacy_url) ? $settings->cookie_consent_privacy_url : '#';
+    $storageKey = filled($settings?->cookie_consent_storage_key) ? $settings->cookie_consent_storage_key : 'smart_commerce_cookie_consent';
+    $backgroundColor = filled($settings?->cookie_consent_background_color) ? $settings->cookie_consent_background_color : null;
+    $buttonColor = filled($settings?->cookie_consent_button_color) ? $settings->cookie_consent_button_color : null;
+
+    $customStyle = trim(implode(' ', array_filter([
+        $backgroundColor ? '--scp-cookie-bg: '.$backgroundColor.';' : null,
+        $buttonColor ? '--scp-cookie-button-bg: '.$buttonColor.';' : null,
+    ])));
 @endphp
 
 <div
     class="scp-cookie-consent"
     dir="{{ $direction }}"
     data-scp-cookie-consent
-    data-storage-key="smart_commerce_cookie_consent"
+    data-storage-key="{{ $storageKey }}"
+    @if($customStyle !== '') style="{{ $customStyle }}" @endif
     hidden
 >
     <div class="scp-cookie-consent-inner">
         <div class="scp-cookie-consent-icon" aria-hidden="true">🍪</div>
 
         <p>
-            {{ $copy['text'] }}
-            <a href="#" class="scp-cookie-consent-link">{{ $copy['privacy'] }}</a>
+            {{ $text }}
+            <a href="{{ $privacyUrl }}" class="scp-cookie-consent-link">{{ $privacyText }}</a>
         </p>
 
         <button type="button" class="scp-cookie-consent-button" data-scp-cookie-accept>
-            {{ $copy['accept'] }}
+            {{ $acceptText }}
         </button>
     </div>
 </div>

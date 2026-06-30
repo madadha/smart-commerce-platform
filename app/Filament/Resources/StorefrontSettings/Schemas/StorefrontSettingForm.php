@@ -226,6 +226,47 @@ class StorefrontSettingForm
                         TextInput::make('footer_rights_text.en')->label('Rights EN')->placeholder('All rights reserved.'),
                     ]),
                 ]),
+
+            Section::make('Cookie Consent Banner')
+                ->schema([
+                    Toggle::make('show_cookie_consent')
+                        ->label('Show Cookie Banner')
+                        ->default(true)
+                        ->helperText('Only appears on /store and /store/* pages.'),
+                    Grid::make(3)->schema([
+                        Textarea::make('cookie_consent_text.ar')->label('Cookie Text AR')->rows(4),
+                        Textarea::make('cookie_consent_text.he')->label('Cookie Text HE')->rows(4),
+                        Textarea::make('cookie_consent_text.en')->label('Cookie Text EN')->rows(4),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('cookie_consent_button_text.ar')->label('Button AR')->placeholder('موافق'),
+                        TextInput::make('cookie_consent_button_text.he')->label('Button HE')->placeholder('קראתי'),
+                        TextInput::make('cookie_consent_button_text.en')->label('Button EN')->placeholder('Got it'),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('cookie_consent_privacy_text.ar')->label('Privacy Link AR')->placeholder('سياسة الخصوصية'),
+                        TextInput::make('cookie_consent_privacy_text.he')->label('Privacy Link HE')->placeholder('מדיניות הפרטיות שלנו'),
+                        TextInput::make('cookie_consent_privacy_text.en')->label('Privacy Link EN')->placeholder('Privacy Policy'),
+                    ]),
+                    Grid::make(2)->schema([
+                        TextInput::make('cookie_consent_privacy_url')
+                            ->label('Privacy URL')
+                            ->default('#')
+                            ->helperText('Use # until a privacy page is ready.'),
+                        TextInput::make('cookie_consent_storage_key')
+                            ->label('LocalStorage Key')
+                            ->default('smart_commerce_cookie_consent')
+                            ->helperText('Changing this key will show the banner again to previous visitors.'),
+                    ]),
+                    Grid::make(2)->schema([
+                        TextInput::make('cookie_consent_background_color')
+                            ->label('Background Color')
+                            ->placeholder('#071225 or linear-gradient(...)'),
+                        TextInput::make('cookie_consent_button_color')
+                            ->label('Button Color')
+                            ->placeholder('#d4a24c or linear-gradient(...)'),
+                    ]),
+                ]),
         ]);
     }
 
