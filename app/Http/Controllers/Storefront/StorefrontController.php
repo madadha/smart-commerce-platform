@@ -241,6 +241,7 @@ class StorefrontController extends Controller
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
+            'storefrontSettings' => StorefrontSetting::current(),
             'filters' => [
                 'q' => $search,
                 'category' => $categoryId,

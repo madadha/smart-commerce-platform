@@ -173,6 +173,20 @@ class StorefrontSettingForm
                     ]),
                 ]),
 
+            Section::make('Products Page Filters')
+                ->schema([
+                    Grid::make(3)->schema([
+                        TextInput::make('products_categories_filter_title.ar')->label('Categories Filter Title AR'),
+                        TextInput::make('products_categories_filter_title.he')->label('Categories Filter Title HE'),
+                        TextInput::make('products_categories_filter_title.en')->label('Categories Filter Title EN'),
+                    ]),
+                    Grid::make(3)->schema([
+                        TextInput::make('products_brands_filter_title.ar')->label('Brands Filter Title AR'),
+                        TextInput::make('products_brands_filter_title.he')->label('Brands Filter Title HE'),
+                        TextInput::make('products_brands_filter_title.en')->label('Brands Filter Title EN'),
+                    ]),
+                ]),
+
             Section::make('Footer & Contact')
                 ->schema([
                     Grid::make(3)->schema([

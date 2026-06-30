@@ -37,6 +37,29 @@
         if ($selectedMinPrice > $selectedMaxPrice) {
             [$selectedMinPrice, $selectedMaxPrice] = [$selectedMaxPrice, $selectedMinPrice];
         }
+
+        $storefrontSettings = $storefrontSettings ?? \App\Models\StorefrontSetting::current();
+        $settingText = function (string $field, string $fallback) use ($storefrontSettings, $locale): string {
+            return $storefrontSettings?->localized($field, $locale, $fallback) ?: $fallback;
+        };
+
+        $filterImageUrl = function (?string $path): ?string {
+            if (blank($path)) {
+                return null;
+            }
+
+            $path = trim($path);
+
+            if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+
+            if (! preg_match('/\.(png|jpg|jpeg|svg|webp|gif)$/i', $path)) {
+                return null;
+            }
+
+            return asset('storage/' . ltrim(str_replace('storage/', '', $path), '/'));
+        };
     @endphp
 
     <section class="scp-products-hero">
@@ -203,42 +226,67 @@
 
             <div class="scp-products-layout">
                     <aside class="scp-products-sidebar">
-                        <div class="scp-sidebar-card">
-                            <h3>{{ __('storefront.products_page.categories_filter') }}</h3>
+                        <div class="scp-sidebar-card scp-filter-list-card">
+                            <h3>{{ $settingText('products_categories_filter_title', __('storefront.products_page.categories_filter')) }}</h3>
 
                         <a
                             href="{{ route('storefront.products.index', array_filter(['lang' => $locale, 'q' => $filters['q'], 'brand' => $filters['brand'], 'type' => $filters['type'], 'sort' => $filters['sort']])) }}"
                             class="{{ empty($filters['category']) ? 'active' : '' }}"
                         >
-                            {{ __('storefront.products_page.all_categories') }}
+                            <span class="scp-filter-link-label">{{ __('storefront.products_page.all_categories') }}</span>
+                            <span class="scp-filter-link-icon" aria-hidden="true">☰</span>
                         </a>
 
                         @foreach($categories as $category)
+                            @php
+                                $categoryIcon = $category->icon ?? null;
+                                $categoryIconUrl = $filterImageUrl(is_string($categoryIcon) ? $categoryIcon : null);
+                            @endphp
                             <a
                                 href="{{ route('storefront.products.index', array_filter(['lang' => $locale, 'q' => $filters['q'], 'category' => $category->id, 'brand' => $filters['brand'], 'type' => $filters['type'], 'sort' => $filters['sort']])) }}"
                                 class="{{ (string) $filters['category'] === (string) $category->id ? 'active' : '' }}"
                             >
-                                {{ $category->getName($locale) }}
+                                <span class="scp-filter-link-label">{{ $category->getName($locale) }}</span>
+                                <span class="scp-filter-link-icon" aria-hidden="true">
+                                    @if($categoryIconUrl)
+                                        <img src="{{ $categoryIconUrl }}" alt="">
+                                    @elseif(! empty($categoryIcon))
+                                        {{ $categoryIcon }}
+                                    @else
+                                        📁
+                                    @endif
+                                </span>
                             </a>
                         @endforeach
                     </div>
 
-                    <div class="scp-sidebar-card">
-                        <h3>{{ __('storefront.products_page.brands_filter') }}</h3>
+                    <div class="scp-sidebar-card scp-filter-list-card">
+                        <h3>{{ $settingText('products_brands_filter_title', __('storefront.products_page.brands_filter')) }}</h3>
 
                         <a
                             href="{{ route('storefront.products.index', array_filter(['lang' => $locale, 'q' => $filters['q'], 'category' => $filters['category'], 'type' => $filters['type'], 'sort' => $filters['sort']])) }}"
                             class="{{ empty($filters['brand']) ? 'active' : '' }}"
                         >
-                            {{ __('storefront.products_page.all_brands') }}
+                            <span class="scp-filter-link-label">{{ __('storefront.products_page.all_brands') }}</span>
+                            <span class="scp-filter-link-icon" aria-hidden="true">🏷</span>
                         </a>
 
                         @foreach($brands as $brand)
+                            @php
+                                $brandLogoUrl = $filterImageUrl($brand->logo ?? null);
+                            @endphp
                             <a
                                 href="{{ route('storefront.products.index', array_filter(['lang' => $locale, 'q' => $filters['q'], 'category' => $filters['category'], 'brand' => $brand->id, 'type' => $filters['type'], 'sort' => $filters['sort']])) }}"
                                 class="{{ (string) $filters['brand'] === (string) $brand->id ? 'active' : '' }}"
                             >
-                                {{ $brand->getName($locale) }}
+                                <span class="scp-filter-link-label">{{ $brand->getName($locale) }}</span>
+                                <span class="scp-filter-link-icon" aria-hidden="true">
+                                    @if($brandLogoUrl)
+                                        <img src="{{ $brandLogoUrl }}" alt="">
+                                    @else
+                                        ★
+                                    @endif
+                                </span>
                             </a>
                         @endforeach
                     </div>

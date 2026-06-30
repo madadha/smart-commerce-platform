@@ -1094,6 +1094,46 @@ select {
     color: var(--scp-primary);
 }
 
+.scp-filter-list-card a {
+    gap: 10px;
+}
+
+.scp-filter-link-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scp-filter-link-icon {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--scp-primary);
+    font-size: 15px;
+    line-height: 1;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.055);
+}
+
+.scp-filter-link-icon img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: block;
+}
+
+.scp-filter-list-card a:hover .scp-filter-link-icon,
+.scp-filter-list-card a.active .scp-filter-link-icon {
+    border-color: #bfdbfe;
+    background: #ffffff;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.12);
+}
+
 .scp-products-main {
     min-width: 0;
 }
