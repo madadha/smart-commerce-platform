@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Enums\CartStatus;
+use App\Enums\ProductType;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -11,6 +12,7 @@ use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\StorefrontSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -106,9 +108,17 @@ class StorefrontCartController extends Controller
                 ]));
         }
 
+        $gameTopUpOptions = $this->resolveGameTopUpOptions($request, $product, $variant, $locale);
+
+        if ($gameTopUpOptions === false) {
+            return back()
+                ->withInput()
+                ->with('error', __('storefront.game_topup.disabled'));
+        }
+
         $cart = $this->getOrCreateCart($product);
 
-        $this->addItemToCart($cart, $product, $variant, $quantity, $locale);
+        $this->addItemToCart($cart, $product, $variant, $quantity, $locale, $gameTopUpOptions);
 
         $this->recalculateCartTotals($cart);
 
@@ -317,16 +327,24 @@ class StorefrontCartController extends Controller
         Product $product,
         ?ProductVariant $variant,
         int $quantity,
-        string $locale
+        string $locale,
+        ?array $extraOptions = null
     ): void {
         $unitPrice = $this->getUnitPrice($product, $variant);
         $itemType = $this->resolveItemType($product);
+        $options = $variant?->option_values ?? [];
 
-        $existingItem = CartItem::query()
-            ->where('cart_id', $cart->id)
-            ->where('product_id', $product->id)
-            ->where('product_variant_id', $variant?->id)
-            ->first();
+        if ($extraOptions) {
+            $options['game_topup'] = $extraOptions;
+        }
+
+        $existingItem = $this->isGameTopUp($product)
+            ? null
+            : CartItem::query()
+                ->where('cart_id', $cart->id)
+                ->where('product_id', $product->id)
+                ->where('product_variant_id', $variant?->id)
+                ->first();
 
         if ($existingItem) {
             $newQuantity = (int) $existingItem->quantity + $quantity;
@@ -340,7 +358,7 @@ class StorefrontCartController extends Controller
                 'item_type' => $itemType,
                 'discount_total' => 0,
                 'tax_total' => 0,
-                'options' => $variant?->option_values,
+                'options' => $options,
             ]);
 
             return;
@@ -358,7 +376,7 @@ class StorefrontCartController extends Controller
             'line_total' => $unitPrice * $quantity,
             'discount_total' => 0,
             'tax_total' => 0,
-            'options' => $variant?->option_values,
+            'options' => $options,
             'notes' => 'Added from storefront. Locale: '.$locale,
         ]);
     }
@@ -407,6 +425,7 @@ class StorefrontCartController extends Controller
             'digital', 'digital_code', 'digital_card' => 'digital_code',
             'digital_file' => 'digital_file',
             'service' => 'service',
+            'game_topup' => 'game_topup',
             default => 'product',
         };
     }
@@ -436,8 +455,78 @@ class StorefrontCartController extends Controller
             'digital_card',
             'digital_file',
             'service',
+            'game_topup',
             'subscription',
         ], true);
+    }
+
+    private function resolveGameTopUpOptions(
+        Request $request,
+        Product $product,
+        ?ProductVariant $variant,
+        string $locale
+    ): array|false|null {
+        if (! $this->isGameTopUp($product)) {
+            return null;
+        }
+
+        $settings = StorefrontSetting::current();
+
+        if ($settings && $settings->enable_game_topups === false) {
+            return false;
+        }
+
+        $rules = [
+            'game_player_id' => [$product->game_requires_player_id ? 'required' : 'nullable', 'string', 'max:120'],
+            'game_region' => [$product->game_requires_region ? 'required' : 'nullable', 'string', 'max:120'],
+            'game_server' => [$product->game_requires_server ? 'required' : 'nullable', 'string', 'max:120'],
+        ];
+
+        $validated = $request->validate($rules);
+
+        return [
+            'game_title' => $this->localizedProductField($product->game_title, $locale, $product->getName($locale)),
+            'currency_name' => $this->localizedProductField($product->game_currency_name, $locale, null),
+            'delivery_mode' => $product->game_delivery_mode ?: 'manual',
+            'provider' => $product->game_provider,
+            'provider_sku' => $variant?->provider_sku ?: $product->game_provider_sku,
+            'requires_player_id' => (bool) $product->game_requires_player_id,
+            'requires_region' => (bool) $product->game_requires_region,
+            'requires_server' => (bool) $product->game_requires_server,
+            'can_validate_player' => (bool) $product->game_can_validate_player,
+            'player_id' => trim((string) ($validated['game_player_id'] ?? '')),
+            'region' => trim((string) ($validated['game_region'] ?? '')),
+            'server' => trim((string) ($validated['game_server'] ?? '')),
+        ];
+    }
+
+    private function isGameTopUp(Product $product): bool
+    {
+        $type = $product->product_type ?? null;
+
+        if ($type instanceof \BackedEnum) {
+            $type = $type->value;
+        }
+
+        return (string) $type === ProductType::GameTopUp->value;
+    }
+
+    private function localizedProductField(mixed $value, string $locale, ?string $fallback = null): ?string
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : $value;
+        }
+
+        if (is_array($value)) {
+            return $value[$locale]
+                ?? $value['ar']
+                ?? $value['en']
+                ?? $value['he']
+                ?? $fallback;
+        }
+
+        return $value ? (string) $value : $fallback;
     }
 
     private function resolveProductName(Product $product, string $locale): string

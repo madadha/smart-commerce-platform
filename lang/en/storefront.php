@@ -401,6 +401,21 @@ return [
     'submitted_successfully' => 'Your question has been submitted successfully and will appear after approval.',
 ],
 
+'game_topup' => [
+    'badge' => 'Game Top-Up',
+    'currency' => 'Game currency',
+    'default_instructions' => 'Enter the player details exactly as they appear in the game. Wrong IDs may delay or prevent recharge.',
+    'player_id' => 'Player ID / Game UID',
+    'player_id_placeholder' => 'Example: 5123456789',
+    'region' => 'Region',
+    'region_placeholder' => 'Example: Middle East',
+    'server' => 'Server',
+    'server_placeholder' => 'Example: Europe',
+    'validation_available' => 'Player validation is enabled when the connected provider supports it.',
+    'manual_check_note' => 'Please double-check the player details. This recharge will be reviewed before fulfillment.',
+    'disabled' => 'Game top-up products are currently disabled by store settings.',
+],
+
 
 'badges' => [
     'sale' => 'Sale',

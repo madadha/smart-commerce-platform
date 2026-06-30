@@ -97,6 +97,21 @@
             'stock' => $variant->track_stock ? (int) $variant->stock_quantity : null,
         ])->values();
         $youtubeEmbedUrl = method_exists($product, 'getYouTubeEmbedUrl') ? $product->getYouTubeEmbedUrl() : null;
+        $storefrontSettings = $storefrontSettings ?? \App\Models\StorefrontSetting::current();
+        $gameTopUpsEnabled = $storefrontSettings?->enable_game_topups ?? true;
+        $isGameTopUp = $productTypeValue($product) === 'game_topup';
+        $localizedProductField = function ($value, string $fallback = '') use ($locale): string {
+            if (is_string($value)) {
+                $decoded = json_decode($value, true);
+                $value = json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : $value;
+            }
+
+            if (is_array($value)) {
+                return (string) ($value[$locale] ?? $value['ar'] ?? $value['en'] ?? $value['he'] ?? $fallback);
+            }
+
+            return (string) ($value ?: $fallback);
+        };
     @endphp
 
     <section class="scp-product-details-section">
@@ -293,6 +308,81 @@
         <input type="hidden" name="product_id" value="{{ $product->id }}">
         <input type="hidden" name="product_variant_id" value="{{ $selectedVariant?->id }}" data-scp-selected-variant>
 
+        @if($isGameTopUp)
+            <div class="scp-game-topup-box">
+                <div>
+                    <span>{{ __('storefront.game_topup.badge') }}</span>
+                    <strong>{{ $localizedProductField($product->game_title, $product->getName($locale)) }}</strong>
+                    @if($localizedProductField($product->game_currency_name))
+                        <small>{{ __('storefront.game_topup.currency') }}: {{ $localizedProductField($product->game_currency_name) }}</small>
+                    @endif
+                </div>
+
+                @if($localizedProductField($product->game_topup_instructions))
+                    <p>{{ $localizedProductField($product->game_topup_instructions) }}</p>
+                @else
+                    <p>{{ __('storefront.game_topup.default_instructions') }}</p>
+                @endif
+
+                @if(! $gameTopUpsEnabled)
+                    <div class="scp-game-topup-disabled">
+                        {{ __('storefront.game_topup.disabled') }}
+                    </div>
+                @else
+                    <div class="scp-game-topup-fields">
+                        @if($product->game_requires_player_id)
+                            <label>
+                                <span>{{ $localizedProductField($product->game_player_id_label, __('storefront.game_topup.player_id')) }}</span>
+                                <input
+                                    type="text"
+                                    name="game_player_id"
+                                    value="{{ old('game_player_id') }}"
+                                    placeholder="{{ __('storefront.game_topup.player_id_placeholder') }}"
+                                    required
+                                >
+                            </label>
+                        @endif
+
+                        @if($product->game_requires_region)
+                            <label>
+                                <span>{{ $localizedProductField($product->game_region_label, __('storefront.game_topup.region')) }}</span>
+                                <input
+                                    type="text"
+                                    name="game_region"
+                                    value="{{ old('game_region') }}"
+                                    placeholder="{{ __('storefront.game_topup.region_placeholder') }}"
+                                    required
+                                >
+                            </label>
+                        @endif
+
+                        @if($product->game_requires_server)
+                            <label>
+                                <span>{{ $localizedProductField($product->game_server_label, __('storefront.game_topup.server')) }}</span>
+                                <input
+                                    type="text"
+                                    name="game_server"
+                                    value="{{ old('game_server') }}"
+                                    placeholder="{{ __('storefront.game_topup.server_placeholder') }}"
+                                    required
+                                >
+                            </label>
+                        @endif
+                    </div>
+
+                    @if($product->game_can_validate_player)
+                        <div class="scp-game-topup-validation-note">
+                            {{ __('storefront.game_topup.validation_available') }}
+                        </div>
+                    @else
+                        <div class="scp-game-topup-validation-note">
+                            {{ __('storefront.game_topup.manual_check_note') }}
+                        </div>
+                    @endif
+                @endif
+            </div>
+        @endif
+
         <div class="scp-quantity-box">
             <label>{{ __('storefront.cart.quantity') }}</label>
 
@@ -309,7 +399,7 @@
             type="submit"
             class="scp-detail-add-to-cart"
             data-scp-add-to-cart
-            @disabled($isOutOfStock)
+            @disabled($isOutOfStock || ($isGameTopUp && ! $gameTopUpsEnabled))
         >
             {{ $isOutOfStock ? (\Illuminate\Support\Facades\Lang::has('storefront.stock.out_of_stock') ? __('storefront.stock.out_of_stock') : 'نفذ المخزون') : __('storefront.product.add_to_cart') }}
         </button>

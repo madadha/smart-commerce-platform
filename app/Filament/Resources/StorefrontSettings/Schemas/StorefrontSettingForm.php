@@ -187,6 +187,15 @@ class StorefrontSettingForm
                     ]),
                 ]),
 
+            Section::make('Gaming Recharge System')
+                ->description('Global controls for Game Top-Up products such as PUBG UC and direct player recharge services.')
+                ->schema([
+                    Toggle::make('enable_game_topups')
+                        ->label('Enable Game Top-Up Products')
+                        ->default(true)
+                        ->helperText('When disabled, customers cannot add Game Top-Up products to the cart.'),
+                ]),
+
             Section::make('Footer & Contact')
                 ->schema([
                     Grid::make(3)->schema([

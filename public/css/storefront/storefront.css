@@ -1148,6 +1148,93 @@ select {
     font-weight: 900;
 }
 
+.scp-game-topup-box {
+    width: 100%;
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 36%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.scp-game-topup-box > div:first-child {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.scp-game-topup-box > div:first-child span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.11);
+    color: var(--scp-primary);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.scp-game-topup-box > div:first-child strong {
+    color: var(--scp-text);
+    font-size: 18px;
+    font-weight: 950;
+}
+
+.scp-game-topup-box > div:first-child small,
+.scp-game-topup-box p,
+.scp-game-topup-validation-note {
+    color: var(--scp-muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.scp-game-topup-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.scp-game-topup-fields label {
+    display: grid;
+    gap: 7px;
+    color: var(--scp-text);
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.scp-game-topup-fields input {
+    width: 100%;
+    border: 1px solid rgba(148, 163, 184, 0.30);
+    border-radius: 14px;
+    padding: 12px 14px;
+    color: var(--scp-text);
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.scp-game-topup-fields input:focus {
+    border-color: var(--scp-primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.scp-game-topup-disabled {
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #fff1f2;
+    color: #be123c;
+    font-weight: 900;
+}
+
+@media (max-width: 720px) {
+    .scp-game-topup-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 1100px) {
     .scp-products-ad-tiles {
         grid-template-columns: repeat(3, minmax(150px, 1fr));

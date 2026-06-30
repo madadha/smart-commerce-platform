@@ -8,6 +8,7 @@ enum ProductType: string
     case DigitalCard = 'digital_card';
     case DigitalFile = 'digital_file';
     case Service = 'service';
+    case GameTopUp = 'game_topup';
     case Subscription = 'subscription';
     case Bundle = 'bundle';
 
@@ -18,6 +19,7 @@ enum ProductType: string
             self::DigitalCard => 'Digital Card',
             self::DigitalFile => 'Digital File',
             self::Service => 'Service',
+            self::GameTopUp => 'Game Top-Up',
             self::Subscription => 'Subscription',
             self::Bundle => 'Bundle',
         };
@@ -27,7 +29,7 @@ enum ProductType: string
     {
         return match ($this) {
             self::Physical, self::Bundle => true,
-            self::DigitalCard, self::DigitalFile, self::Service, self::Subscription => false,
+            self::DigitalCard, self::DigitalFile, self::Service, self::GameTopUp, self::Subscription => false,
         };
     }
 }

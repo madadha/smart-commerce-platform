@@ -62,6 +62,7 @@ class StorefrontSetting extends Model
         'whatsapp_floating_icon',
         'show_floating_whatsapp',
         'show_cookie_consent',
+        'enable_game_topups',
         'cookie_consent_text',
         'cookie_consent_button_text',
         'cookie_consent_privacy_text',
@@ -103,6 +104,7 @@ class StorefrontSetting extends Model
         'show_brands_section' => 'boolean',
         'show_floating_whatsapp' => 'boolean',
         'show_cookie_consent' => 'boolean',
+        'enable_game_topups' => 'boolean',
         'is_active' => 'boolean',
     ];
 

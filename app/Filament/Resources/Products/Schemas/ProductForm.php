@@ -63,6 +63,7 @@ class ProductForm
                                 $type->value => $type->label(),
                             ])->toArray())
                             ->required()
+                            ->live()
                             ->default(ProductType::Physical->value),
 
                         Select::make('status')
@@ -219,6 +220,118 @@ class ProductForm
                             ->helperText('Supports youtube.com, youtu.be, Shorts, and embed URLs.'),
                     ])
                     ->columns(2),
+
+                Section::make('Game Top-Up Settings')
+                    ->description('Use this section for products such as PUBG UC, game recharge packages, subscriptions, or direct player top-ups.')
+                    ->schema([
+                        TextInput::make('game_title.ar')
+                            ->label('Game Title Arabic')
+                            ->placeholder('PUBG MOBILE'),
+
+                        TextInput::make('game_title.he')
+                            ->label('Game Title Hebrew')
+                            ->placeholder('PUBG MOBILE'),
+
+                        TextInput::make('game_title.en')
+                            ->label('Game Title English')
+                            ->placeholder('PUBG MOBILE'),
+
+                        TextInput::make('game_currency_name.ar')
+                            ->label('Currency / Unit Arabic')
+                            ->placeholder('UC'),
+
+                        TextInput::make('game_currency_name.he')
+                            ->label('Currency / Unit Hebrew')
+                            ->placeholder('UC'),
+
+                        TextInput::make('game_currency_name.en')
+                            ->label('Currency / Unit English')
+                            ->placeholder('UC'),
+
+                        Select::make('game_delivery_mode')
+                            ->label('Delivery Mode')
+                            ->options([
+                                'manual' => 'Manual fulfillment',
+                                'api' => 'API provider',
+                            ])
+                            ->default('manual')
+                            ->required(),
+
+                        TextInput::make('game_provider')
+                            ->label('Provider')
+                            ->placeholder('Midasbuy / Local provider / Manual team'),
+
+                        TextInput::make('game_provider_sku')
+                            ->label('Default Provider SKU')
+                            ->helperText('Variant Provider SKU overrides this value for each package.'),
+
+                        Toggle::make('game_requires_player_id')
+                            ->label('Require Player ID / Game UID')
+                            ->default(true),
+
+                        Toggle::make('game_requires_region')
+                            ->label('Require Region')
+                            ->default(false),
+
+                        Toggle::make('game_requires_server')
+                            ->label('Require Server')
+                            ->default(false),
+
+                        Toggle::make('game_can_validate_player')
+                            ->label('Provider Can Validate Player')
+                            ->default(false)
+                            ->helperText('Enable only when the selected official provider has a validation endpoint.'),
+
+                        TextInput::make('game_player_id_label.ar')
+                            ->label('Player ID Label AR')
+                            ->placeholder('معرّف اللاعب'),
+
+                        TextInput::make('game_player_id_label.he')
+                            ->label('Player ID Label HE')
+                            ->placeholder('מזהה שחקן'),
+
+                        TextInput::make('game_player_id_label.en')
+                            ->label('Player ID Label EN')
+                            ->placeholder('Player ID'),
+
+                        TextInput::make('game_region_label.ar')
+                            ->label('Region Label AR')
+                            ->placeholder('المنطقة'),
+
+                        TextInput::make('game_region_label.he')
+                            ->label('Region Label HE')
+                            ->placeholder('אזור'),
+
+                        TextInput::make('game_region_label.en')
+                            ->label('Region Label EN')
+                            ->placeholder('Region'),
+
+                        TextInput::make('game_server_label.ar')
+                            ->label('Server Label AR')
+                            ->placeholder('السيرفر'),
+
+                        TextInput::make('game_server_label.he')
+                            ->label('Server Label HE')
+                            ->placeholder('שרת'),
+
+                        TextInput::make('game_server_label.en')
+                            ->label('Server Label EN')
+                            ->placeholder('Server'),
+
+                        Textarea::make('game_topup_instructions.ar')
+                            ->label('Customer Instructions AR')
+                            ->rows(3),
+
+                        Textarea::make('game_topup_instructions.he')
+                            ->label('Customer Instructions HE')
+                            ->rows(3),
+
+                        Textarea::make('game_topup_instructions.en')
+                            ->label('Customer Instructions EN')
+                            ->rows(3),
+                    ])
+                    ->visible(fn ($get): bool => $get('product_type') === ProductType::GameTopUp->value)
+                    ->columns(3),
 
                 Section::make('Stock & Shipping')
                     ->schema([

@@ -13,6 +13,7 @@ class ProductVariant extends Model
         'product_id',
         'name',
         'sku',
+        'provider_sku',
         'barcode',
         'option_values',
         'media_file_id',

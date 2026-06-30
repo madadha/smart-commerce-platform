@@ -26,6 +26,8 @@ class StorefrontController extends Controller
         $storefrontSlides = StorefrontSlide::activeSlides();
         $homePromotions = StorefrontPromotion::activeForPlacement('home_after_hero', 6);
         $midPromotions = StorefrontPromotion::activeForPlacement('home_between_products', 3);
+        $homeAdSlides = StorefrontPromotion::activeForPlacement('home_ads_hero', 8);
+        $homeAdTiles = StorefrontPromotion::activeForPlacement('home_ads_strip', 8);
 
         $featuredCategories = Category::query()
             ->where('is_active', true)
@@ -89,6 +91,8 @@ class StorefrontController extends Controller
             'storefrontSlides' => $storefrontSlides,
             'homePromotions' => $homePromotions,
             'midPromotions' => $midPromotions,
+            'homeAdSlides' => $homeAdSlides,
+            'homeAdTiles' => $homeAdTiles,
         ]);
     }
 

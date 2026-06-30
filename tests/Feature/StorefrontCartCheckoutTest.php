@@ -12,6 +12,7 @@ use App\Models\PaymentProviderSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingMethod;
+use App\Models\StorefrontSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -45,6 +46,59 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertSame(900.0, (float) $item->line_total);
         $this->assertSame(['storage' => '256gb'], $item->options);
         $this->assertSame(900.0, (float) $cart->fresh()->grand_total);
+    }
+
+    public function test_game_topup_add_to_cart_captures_player_details_and_provider_sku(): void
+    {
+        [$product, $variant] = $this->createGameTopUpProduct();
+
+        $this->from('/store/products/'.$product->slug.'?lang=en')
+            ->post(route('storefront.cart.add'), [
+                'product_id' => $product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 1,
+                'game_player_id' => '5123456789',
+                'game_region' => 'Middle East',
+                'lang' => 'en',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $cart = Cart::query()->findOrFail(session('storefront_cart_id'));
+        $item = $cart->items()->firstOrFail();
+
+        $this->assertSame('game_topup', $item->item_type);
+        $this->assertSame(['package' => '60uc'], collect($item->options)->except('game_topup')->all());
+        $this->assertSame('5123456789', $item->options['game_topup']['player_id']);
+        $this->assertSame('Middle East', $item->options['game_topup']['region']);
+        $this->assertSame('PUBG-60-UC', $item->options['game_topup']['provider_sku']);
+        $this->assertSame('manual', $item->options['game_topup']['delivery_mode']);
+    }
+
+    public function test_game_topup_is_blocked_when_disabled_from_storefront_settings(): void
+    {
+        StorefrontSetting::query()->forceCreate([
+            'store_name' => ['en' => 'Smart Commerce'],
+            'store_tagline' => ['en' => 'Marketplace Platform'],
+            'enable_game_topups' => false,
+            'is_active' => true,
+        ]);
+
+        [$product, $variant] = $this->createGameTopUpProduct('disabled');
+
+        $this->from('/store/products/'.$product->slug.'?lang=en')
+            ->post(route('storefront.cart.add'), [
+                'product_id' => $product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 1,
+                'game_player_id' => '5123456789',
+                'game_region' => 'Middle East',
+                'lang' => 'en',
+            ])
+            ->assertRedirect('/store/products/'.$product->slug.'?lang=en')
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseCount('cart_items', 0);
     }
 
     public function test_product_with_active_variants_cannot_be_added_without_a_selection(): void
@@ -410,6 +464,58 @@ class StorefrontCartCheckoutTest extends TestCase
             'price' => 450,
             'track_stock' => true,
             'stock_quantity' => 5,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        return [$product, $variant];
+    }
+
+    private function createGameTopUpProduct(string $suffix = 'primary'): array
+    {
+        $currency = Currency::query()->firstOrCreate(
+            ['code' => 'ILS'],
+            [
+                'name' => ['en' => 'Israeli Shekel'],
+                'symbol' => 'ILS',
+                'exchange_rate' => 1,
+                'is_default' => true,
+                'is_active' => true,
+            ]
+        );
+
+        $product = Product::query()->forceCreate([
+            'name' => ['ar' => 'شدات ببجي', 'en' => 'PUBG UC Top-Up'],
+            'slug' => 'pubg-uc-topup-'.$suffix.'-'.uniqid(),
+            'sku' => 'PUBG-TOPUP-'.$suffix.'-'.uniqid(),
+            'product_type' => 'game_topup',
+            'status' => 'active',
+            'currency_id' => $currency->id,
+            'price' => 10,
+            'track_stock' => false,
+            'stock_quantity' => 0,
+            'requires_shipping' => false,
+            'game_title' => ['en' => 'PUBG MOBILE', 'ar' => 'PUBG MOBILE'],
+            'game_currency_name' => ['en' => 'UC', 'ar' => 'UC'],
+            'game_delivery_mode' => 'manual',
+            'game_provider' => 'Manual Team',
+            'game_provider_sku' => 'PUBG-DEFAULT',
+            'game_requires_player_id' => true,
+            'game_requires_region' => true,
+            'game_requires_server' => false,
+            'game_can_validate_player' => false,
+            'is_active' => true,
+        ]);
+
+        $variant = ProductVariant::query()->forceCreate([
+            'product_id' => $product->id,
+            'name' => ['ar' => '60 UC', 'en' => '60 UC'],
+            'sku' => 'PUBG-60-'.$suffix.'-'.uniqid(),
+            'provider_sku' => 'PUBG-60-UC',
+            'option_values' => ['package' => '60uc'],
+            'price' => 10,
+            'track_stock' => false,
+            'stock_quantity' => 0,
             'is_active' => true,
             'is_default' => true,
         ]);

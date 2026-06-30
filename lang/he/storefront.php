@@ -396,6 +396,22 @@ return [
 ],
 
 
+'game_topup' => [
+    'badge' => 'טעינת משחקים',
+    'currency' => 'מטבע משחק',
+    'default_instructions' => 'יש להזין את פרטי השחקן בדיוק כפי שהם מופיעים במשחק. מזהה שגוי עלול לעכב או למנוע את הטעינה.',
+    'player_id' => 'מזהה שחקן / Game UID',
+    'player_id_placeholder' => 'לדוגמה: 5123456789',
+    'region' => 'אזור',
+    'region_placeholder' => 'לדוגמה: Middle East',
+    'server' => 'שרת',
+    'server_placeholder' => 'לדוגמה: Europe',
+    'validation_available' => 'אימות שחקן יהיה זמין כאשר מחובר ספק רשמי שתומך בכך.',
+    'manual_check_note' => 'נא לבדוק את פרטי השחקן. הטעינה תיבדק לפני ביצוע.',
+    'disabled' => 'מוצרי טעינת משחקים מושבתים כרגע בהגדרות החנות.',
+],
+
+
 'badges' => [
     'sale' => 'מבצע',
     'new' => 'חדש',

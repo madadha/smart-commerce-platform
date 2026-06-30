@@ -35,6 +35,8 @@
         $storefrontSlides = $storefrontSlides ?? collect();
         $homePromotions = $homePromotions ?? collect();
         $midPromotions = $midPromotions ?? collect();
+        $homeAdSlides = $homeAdSlides ?? collect();
+        $homeAdTiles = $homeAdTiles ?? collect();
         $showCategoriesSection = $storefrontSettings?->show_categories_section ?? true;
         $showFeaturedSection = $storefrontSettings?->show_featured_section ?? true;
         $showLatestSection = $storefrontSettings?->show_latest_section ?? true;
@@ -179,6 +181,80 @@
             @endif
         </div>
     </section>
+
+    @if($homeAdSlides->isNotEmpty() || $homeAdTiles->isNotEmpty())
+        <section class="scp-products-ad-showcase" data-scp-home-ads>
+            <div class="scp-container">
+                @if($homeAdSlides->isNotEmpty())
+                    <div class="scp-products-ad-slider">
+                        <div class="scp-products-ad-track" data-scp-home-ad-track>
+                            @foreach($homeAdSlides as $promotion)
+                                <a
+                                    href="{{ $resolveStoreUrl($promotion->button_url) }}"
+                                    class="scp-products-ad-slide"
+                                    @if($promotion->background_color || $promotion->text_color)
+                                        style="{{ $promotion->background_color ? '--scp-ad-bg: '.$promotion->background_color.';' : '' }} {{ $promotion->text_color ? '--scp-ad-text: '.$promotion->text_color.';' : '' }}"
+                                    @endif
+                                >
+                                    @if($promotion->imageUrl())
+                                        <img src="{{ $promotion->imageUrl() }}" alt="{{ $promotion->localized('title', $locale) }}">
+                                    @endif
+
+                                    <span class="scp-products-ad-overlay">
+                                        @if($promotion->localized('eyebrow', $locale))
+                                            <small>{{ $promotion->localized('eyebrow', $locale) }}</small>
+                                        @endif
+
+                                        <strong>{{ $promotion->localized('title', $locale) }}</strong>
+
+                                        @if($promotion->localized('description', $locale))
+                                            <em>{{ $promotion->localized('description', $locale) }}</em>
+                                        @endif
+
+                                        <b>
+                                            {{ $promotion->localized('button_text', $locale, __('storefront.sections.view_all')) }}
+                                            {{ $direction === 'rtl' ? '<' : '>' }}
+                                        </b>
+                                    </span>
+                                </a>
+                            @endforeach
+                        </div>
+
+                        @if($homeAdSlides->count() > 1)
+                            <button type="button" class="scp-products-ad-nav prev" data-scp-home-ad-prev aria-label="Previous ad">‹</button>
+                            <button type="button" class="scp-products-ad-nav next" data-scp-home-ad-next aria-label="Next ad">›</button>
+                        @endif
+                    </div>
+                @endif
+
+                @if($homeAdTiles->isNotEmpty())
+                    <div class="scp-products-ad-tiles">
+                        @foreach($homeAdTiles as $promotion)
+                            <a
+                                href="{{ $resolveStoreUrl($promotion->button_url) }}"
+                                class="scp-products-ad-tile"
+                                @if($promotion->background_color || $promotion->text_color)
+                                    style="{{ $promotion->background_color ? '--scp-ad-bg: '.$promotion->background_color.';' : '' }} {{ $promotion->text_color ? '--scp-ad-text: '.$promotion->text_color.';' : '' }}"
+                                @endif
+                            >
+                                @if($promotion->imageUrl())
+                                    <img src="{{ $promotion->imageUrl() }}" alt="{{ $promotion->localized('title', $locale) }}">
+                                @endif
+
+                                <span>
+                                    <strong>{{ $promotion->localized('title', $locale) }}</strong>
+
+                                    @if($promotion->localized('button_text', $locale))
+                                        <small>{{ $promotion->localized('button_text', $locale) }}</small>
+                                    @endif
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </section>
+    @endif
 
     @if($homePromotions->isNotEmpty())
         <section class="scp-promo-section">
@@ -720,6 +796,34 @@
                 show(0);
                 start();
             });
+
+            var homeAdTrack = document.querySelector('[data-scp-home-ad-track]');
+            var homeAdPrev = document.querySelector('[data-scp-home-ad-prev]');
+            var homeAdNext = document.querySelector('[data-scp-home-ad-next]');
+
+            if (homeAdTrack) {
+                var scrollHomeAd = function (direction) {
+                    var slide = homeAdTrack.querySelector('.scp-products-ad-slide');
+                    var distance = slide ? slide.getBoundingClientRect().width + 14 : homeAdTrack.clientWidth;
+
+                    homeAdTrack.scrollBy({
+                        left: direction * distance,
+                        behavior: 'smooth',
+                    });
+                };
+
+                if (homeAdPrev) {
+                    homeAdPrev.addEventListener('click', function () {
+                        scrollHomeAd(-1);
+                    });
+                }
+
+                if (homeAdNext) {
+                    homeAdNext.addEventListener('click', function () {
+                        scrollHomeAd(1);
+                    });
+                }
+            }
         });
     </script>
 

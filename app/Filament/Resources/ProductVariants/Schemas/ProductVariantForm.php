@@ -51,6 +51,11 @@ class ProductVariantForm
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
 
+                        TextInput::make('provider_sku')
+                            ->label('Provider SKU')
+                            ->maxLength(255)
+                            ->helperText('Used by Game Top-Up/API providers for this package.'),
+
                         TextInput::make('barcode')
                             ->label('Barcode')
                             ->maxLength(255),

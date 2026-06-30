@@ -33,6 +33,43 @@ class StorefrontHomepagePromotionTest extends TestCase
         $response->assertDontSee('href="#"', false);
     }
 
+    public function test_homepage_renders_large_ads_slider_and_small_ad_tiles(): void
+    {
+        StorefrontPromotion::query()->forceCreate([
+            'title' => ['en' => 'Homepage Mega Campaign'],
+            'description' => ['en' => 'Large homepage ad controlled from admin.'],
+            'button_text' => ['en' => 'Explore'],
+            'button_url' => '/store/products?on_sale=1',
+            'image_path' => 'storefront/promotions/home-mega.jpg',
+            'placement' => 'home_ads_hero',
+            'style' => 'dark',
+            'is_active' => true,
+        ]);
+
+        StorefrontPromotion::query()->forceCreate([
+            'title' => ['en' => 'Homepage Small Deal'],
+            'button_text' => ['en' => 'Shop'],
+            'button_url' => '/store/products',
+            'image_path' => 'storefront/promotions/home-small.jpg',
+            'placement' => 'home_ads_strip',
+            'style' => 'light',
+            'is_active' => true,
+        ]);
+
+        $response = $this->get('/?lang=en');
+
+        $response->assertOk();
+        $response->assertSee('data-scp-home-ads', false);
+        $response->assertSee('scp-products-ad-slider', false);
+        $response->assertSee('scp-products-ad-tiles', false);
+        $response->assertSee('Homepage Mega Campaign');
+        $response->assertSee('Large homepage ad controlled from admin.');
+        $response->assertSee('/store/products?on_sale=1&amp;lang=en', false);
+        $response->assertSee('Homepage Small Deal');
+        $response->assertSee('storage/storefront/promotions/home-mega.jpg', false);
+        $response->assertSee('storage/storefront/promotions/home-small.jpg', false);
+    }
+
     public function test_homepage_section_copy_is_loaded_from_storefront_settings(): void
     {
         StorefrontSetting::query()->forceCreate([
