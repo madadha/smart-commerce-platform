@@ -4,12 +4,22 @@ namespace Tests\Feature;
 
 use App\Models\Game;
 use App\Models\GameRegion;
+use App\Models\Language;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class GameCatalogTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RolePermissionSeeder::class);
+    }
 
     public function test_games_have_localized_names_and_active_ordered_scope(): void
     {
@@ -93,5 +103,43 @@ class GameCatalogTest extends TestCase
 
         $this->assertCount(1, $game->regions);
         $this->assertCount(0, $game->activeRegions);
+    }
+
+    public function test_admin_games_and_regions_pages_render_without_label_errors(): void
+    {
+        Language::query()->forceCreate([
+            'name' => 'Arabic',
+            'native_name' => 'العربية',
+            'code' => 'ar',
+            'direction' => 'rtl',
+            'is_default' => true,
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $admin = User::factory()->create();
+        $admin->assignRole('super-admin');
+
+        Game::query()->forceCreate([
+            'name' => ['ar' => 'ببجي', 'en' => 'PUBG MOBILE'],
+            'slug' => 'pubg-mobile',
+            'is_active' => true,
+        ]);
+
+        GameRegion::query()->forceCreate([
+            'name' => ['ar' => 'الشرق الأوسط', 'en' => 'Middle East'],
+            'code' => 'middle-east',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/games')
+            ->assertOk()
+            ->assertSee('ببجي');
+
+        $this->actingAs($admin)
+            ->get('/admin/game-regions')
+            ->assertOk()
+            ->assertSee('MIDDLE_EAST');
     }
 }

@@ -20,11 +20,13 @@ class GamesTable
             ->columns([
                 Tables\Columns\ImageColumn::make('icon')
                     ->label('Icon')
+                    ->translateLabel(false)
                     ->disk('public')
                     ->square(),
 
                 Tables\Columns\TextColumn::make('game_name')
                     ->label('Game')
+                    ->translateLabel(false)
                     ->state(fn (Game $record): string => $record->getName($locale))
                     ->searchable(query: function ($query, string $search) {
                         return $query->where('slug', 'like', "%{$search}%")
@@ -35,29 +37,35 @@ class GamesTable
 
                 Tables\Columns\TextColumn::make('slug')
                     ->label('Slug')
+                    ->translateLabel(false)
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('default_provider')
                     ->label('Provider')
+                    ->translateLabel(false)
                     ->placeholder('-')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('regions_count')
                     ->counts('regions')
                     ->label('Regions')
+                    ->translateLabel(false)
                     ->sortable(),
 
                 Tables\Columns\IconColumn::make('supports_player_validation')
                     ->label('Validation')
+                    ->translateLabel(false)
                     ->boolean(),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
+                    ->translateLabel(false)
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sort')
+                    ->translateLabel(false)
                     ->sortable(),
             ])
             ->defaultSort('sort_order')

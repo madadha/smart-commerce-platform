@@ -20,11 +20,13 @@ class GameRegionsTable
             ->columns([
                 Tables\Columns\ImageColumn::make('icon')
                     ->label('Icon')
+                    ->translateLabel(false)
                     ->disk('public')
                     ->square(),
 
                 Tables\Columns\TextColumn::make('region_name')
                     ->label('Region')
+                    ->translateLabel(false)
                     ->state(fn (GameRegion $record): string => $record->getName($locale))
                     ->searchable(query: function ($query, string $search) {
                         return $query->where('code', 'like', "%{$search}%")
@@ -35,20 +37,24 @@ class GameRegionsTable
 
                 Tables\Columns\TextColumn::make('code')
                     ->label('Code')
+                    ->translateLabel(false)
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('games_count')
                     ->counts('games')
                     ->label('Games')
+                    ->translateLabel(false)
                     ->sortable(),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
+                    ->translateLabel(false)
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sort')
+                    ->translateLabel(false)
                     ->sortable(),
             ])
             ->defaultSort('sort_order')
