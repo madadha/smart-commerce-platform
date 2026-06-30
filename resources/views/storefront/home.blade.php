@@ -37,6 +37,7 @@
         $midPromotions = $midPromotions ?? collect();
         $homeAdSlides = $homeAdSlides ?? collect();
         $homeAdTiles = $homeAdTiles ?? collect();
+        $featuredGames = $featuredGames ?? collect();
         $showCategoriesSection = $storefrontSettings?->show_categories_section ?? true;
         $showFeaturedSection = $storefrontSettings?->show_featured_section ?? true;
         $showLatestSection = $storefrontSettings?->show_latest_section ?? true;
@@ -360,6 +361,71 @@
         </div>
     </section>
 
+    @endif
+
+    @if(($storefrontSettings?->enable_game_topups ?? true) && $featuredGames->isNotEmpty())
+    <section class="scp-section scp-gaming-section">
+        <div class="scp-container">
+            <div class="scp-section-heading">
+                <div>
+                    <h2>{{ __('storefront.sections.game_topups') }}</h2>
+                    <p>{{ __('storefront.sections.game_topups_subtitle') }}</p>
+                </div>
+
+                <a href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'type' => 'game_topup']) }}" class="scp-link-more">
+                    {{ __('storefront.sections.view_all') }} {{ $direction === 'rtl' ? '←' : '→' }}
+                </a>
+            </div>
+
+            <div class="scp-game-grid">
+                @foreach($featuredGames as $game)
+                    @php
+                        $gameBanner = method_exists($game, 'bannerUrl') ? $game->bannerUrl() : null;
+                        $gameIcon = method_exists($game, 'iconUrl') ? $game->iconUrl() : null;
+                    @endphp
+
+                    <a
+                        href="{{ route('storefront.products.index', ['lang' => $locale ?? 'ar', 'type' => 'game_topup']) }}"
+                        class="scp-game-card"
+                        @if($gameBanner)
+                            style="--scp-game-bg: url('{{ $gameBanner }}')"
+                        @endif
+                    >
+                        <span class="scp-game-card-glow" aria-hidden="true"></span>
+
+                        <div class="scp-game-card-media">
+                            @if($gameIcon)
+                                <img src="{{ $gameIcon }}" alt="{{ $game->getName($locale) }}">
+                            @else
+                                <strong>{{ mb_substr($game->getName($locale), 0, 1) }}</strong>
+                            @endif
+                        </div>
+
+                        <div class="scp-game-card-content">
+                            <span>{{ __('storefront.game_topup.badge') }}</span>
+                            <h3>{{ $game->getName($locale) }}</h3>
+                            <p>{{ $game->getDescription($locale) ?: __('storefront.sections.game_topups_card_hint') }}</p>
+
+                            <div class="scp-game-card-meta">
+                                @if(($game->active_regions_count ?? 0) > 0)
+                                    <small>{{ trans_choice('storefront.sections.game_regions_count', $game->active_regions_count, ['count' => $game->active_regions_count]) }}</small>
+                                @endif
+
+                                @if($game->supports_player_validation)
+                                    <small>{{ __('storefront.sections.player_validation') }}</small>
+                                @endif
+                            </div>
+                        </div>
+
+                        <b>
+                            {{ __('storefront.sections.recharge_now') }}
+                            {{ $direction === 'rtl' ? '←' : '→' }}
+                        </b>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </section>
     @endif
 
     @if($showFeaturedSection)

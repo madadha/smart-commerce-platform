@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Game;
+use App\Models\GameRegion;
 use App\Models\StorefrontPromotion;
 use App\Models\StorefrontSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -97,5 +99,59 @@ class StorefrontHomepagePromotionTest extends TestCase
         $response->assertSee('Admin latest subtitle.');
         $response->assertSee('Admin Brands');
         $response->assertSee('Admin brands subtitle.');
+    }
+
+    public function test_homepage_renders_game_topup_section_when_active_games_exist(): void
+    {
+        $game = Game::query()->forceCreate([
+            'name' => ['en' => 'PUBG MOBILE', 'ar' => 'ببجي موبايل'],
+            'description' => ['en' => 'Recharge UC packages safely.'],
+            'slug' => 'pubg-mobile',
+            'icon' => 'games/icons/pubg.png',
+            'banner_image' => 'games/banners/pubg.jpg',
+            'supports_player_validation' => true,
+            'is_active' => true,
+        ]);
+
+        $region = GameRegion::query()->forceCreate([
+            'name' => ['en' => 'Middle East'],
+            'code' => 'middle-east',
+            'is_active' => true,
+        ]);
+
+        $game->regions()->attach($region->id, ['is_active' => true]);
+
+        $response = $this->get('/?lang=en');
+
+        $response->assertOk();
+        $response->assertSee('Gaming Recharge');
+        $response->assertSee('PUBG MOBILE');
+        $response->assertSee('Recharge UC packages safely.');
+        $response->assertSee('Player validation');
+        $response->assertSee('/store/products?lang=en&amp;type=game_topup', false);
+        $response->assertSee('storage/games/icons/pubg.png', false);
+        $response->assertSee('storage/games/banners/pubg.jpg', false);
+    }
+
+    public function test_homepage_hides_game_topup_section_when_feature_is_disabled(): void
+    {
+        StorefrontSetting::query()->forceCreate([
+            'store_name' => ['en' => 'Smart Commerce'],
+            'store_tagline' => ['en' => 'Marketplace Platform'],
+            'enable_game_topups' => false,
+            'is_active' => true,
+        ]);
+
+        Game::query()->forceCreate([
+            'name' => ['en' => 'PUBG MOBILE'],
+            'slug' => 'pubg-mobile',
+            'is_active' => true,
+        ]);
+
+        $response = $this->get('/?lang=en');
+
+        $response->assertOk();
+        $response->assertDontSee('Gaming Recharge');
+        $response->assertDontSee('PUBG MOBILE');
     }
 }

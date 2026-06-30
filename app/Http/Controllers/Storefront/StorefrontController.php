@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Game;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\StorefrontPromotion;
@@ -80,6 +81,15 @@ class StorefrontController extends Controller
             ->limit(12)
             ->get();
 
+        $featuredGames = ($storefrontSettings?->enable_game_topups ?? true)
+            ? Game::query()
+                ->active()
+                ->ordered()
+                ->withCount('activeRegions')
+                ->limit(10)
+                ->get()
+            : collect();
+
         return view('storefront.home', [
             'locale' => $locale,
             'direction' => $this->direction($locale),
@@ -87,6 +97,7 @@ class StorefrontController extends Controller
             'featuredProducts' => $featuredProducts,
             'latestProducts' => $latestProducts,
             'brands' => $brands,
+            'featuredGames' => $featuredGames,
             'storefrontSettings' => $storefrontSettings,
             'storefrontSlides' => $storefrontSlides,
             'homePromotions' => $homePromotions,
