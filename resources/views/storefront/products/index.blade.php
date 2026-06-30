@@ -60,6 +60,25 @@
 
             return asset('storage/' . ltrim(str_replace('storage/', '', $path), '/'));
         };
+
+        $resolveStoreUrl = function (?string $url) use ($locale): string {
+            $url = trim((string) $url);
+
+            if ($url === '') {
+                return route('storefront.products.index', ['lang' => $locale]);
+            }
+
+            if (\Illuminate\Support\Str::startsWith($url, ['http://', 'https://', '#'])) {
+                return $url;
+            }
+
+            $separator = str_contains($url, '?') ? '&' : '?';
+
+            return $url . $separator . 'lang=' . urlencode($locale);
+        };
+
+        $productAdSlides = $productAdSlides ?? collect();
+        $productAdTiles = $productAdTiles ?? collect();
     @endphp
 
     <section class="scp-products-hero">
@@ -96,6 +115,80 @@
             </div>
         </div>
     </section>
+
+    @if($productAdSlides->isNotEmpty() || $productAdTiles->isNotEmpty())
+        <section class="scp-products-ad-showcase" data-scp-products-ads>
+            <div class="scp-container">
+                @if($productAdSlides->isNotEmpty())
+                    <div class="scp-products-ad-slider">
+                        <div class="scp-products-ad-track" data-scp-products-ad-track>
+                            @foreach($productAdSlides as $promotion)
+                                <a
+                                    href="{{ $resolveStoreUrl($promotion->button_url) }}"
+                                    class="scp-products-ad-slide"
+                                    @if($promotion->background_color || $promotion->text_color)
+                                        style="{{ $promotion->background_color ? '--scp-ad-bg: '.$promotion->background_color.';' : '' }} {{ $promotion->text_color ? '--scp-ad-text: '.$promotion->text_color.';' : '' }}"
+                                    @endif
+                                >
+                                    @if($promotion->imageUrl())
+                                        <img src="{{ $promotion->imageUrl() }}" alt="{{ $promotion->localized('title', $locale) }}">
+                                    @endif
+
+                                    <span class="scp-products-ad-overlay">
+                                        @if($promotion->localized('eyebrow', $locale))
+                                            <small>{{ $promotion->localized('eyebrow', $locale) }}</small>
+                                        @endif
+
+                                        <strong>{{ $promotion->localized('title', $locale) }}</strong>
+
+                                        @if($promotion->localized('description', $locale))
+                                            <em>{{ $promotion->localized('description', $locale) }}</em>
+                                        @endif
+
+                                        <b>
+                                            {{ $promotion->localized('button_text', $locale, __('storefront.sections.view_all')) }}
+                                            {{ $direction === 'rtl' ? '<' : '>' }}
+                                        </b>
+                                    </span>
+                                </a>
+                            @endforeach
+                        </div>
+
+                        @if($productAdSlides->count() > 1)
+                            <button type="button" class="scp-products-ad-nav prev" data-scp-products-ad-prev aria-label="Previous ad">‹</button>
+                            <button type="button" class="scp-products-ad-nav next" data-scp-products-ad-next aria-label="Next ad">›</button>
+                        @endif
+                    </div>
+                @endif
+
+                @if($productAdTiles->isNotEmpty())
+                    <div class="scp-products-ad-tiles">
+                        @foreach($productAdTiles as $promotion)
+                            <a
+                                href="{{ $resolveStoreUrl($promotion->button_url) }}"
+                                class="scp-products-ad-tile"
+                                @if($promotion->background_color || $promotion->text_color)
+                                    style="{{ $promotion->background_color ? '--scp-ad-bg: '.$promotion->background_color.';' : '' }} {{ $promotion->text_color ? '--scp-ad-text: '.$promotion->text_color.';' : '' }}"
+                                @endif
+                            >
+                                @if($promotion->imageUrl())
+                                    <img src="{{ $promotion->imageUrl() }}" alt="{{ $promotion->localized('title', $locale) }}">
+                                @endif
+
+                                <span>
+                                    <strong>{{ $promotion->localized('title', $locale) }}</strong>
+
+                                    @if($promotion->localized('button_text', $locale))
+                                        <small>{{ $promotion->localized('button_text', $locale) }}</small>
+                                    @endif
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </section>
+    @endif
 
     <section class="scp-products-section">
         <div class="scp-container">
@@ -468,6 +561,26 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const adShowcase = document.querySelector('[data-scp-products-ads]');
+            const adTrack = document.querySelector('[data-scp-products-ad-track]');
+            const adPrev = document.querySelector('[data-scp-products-ad-prev]');
+            const adNext = document.querySelector('[data-scp-products-ad-next]');
+
+            if (adShowcase && adTrack) {
+                const scrollAd = (direction) => {
+                    const slide = adTrack.querySelector('.scp-products-ad-slide');
+                    const distance = slide ? slide.getBoundingClientRect().width + 14 : adTrack.clientWidth;
+
+                    adTrack.scrollBy({
+                        left: direction * distance,
+                        behavior: 'smooth',
+                    });
+                };
+
+                adPrev?.addEventListener('click', () => scrollAd(-1));
+                adNext?.addEventListener('click', () => scrollAd(1));
+            }
+
             const productsGrid = document.getElementById('products-grid');
             const infiniteScroll = document.getElementById('products-infinite-scroll');
 

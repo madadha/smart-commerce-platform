@@ -67,6 +67,8 @@ class StorefrontPromotionForm
                             ->options([
                                 'home_after_hero' => 'Homepage after hero',
                                 'home_between_products' => 'Homepage between product sections',
+                                'products_ads_hero' => 'Products page large ads slider',
+                                'products_ads_strip' => 'Products page small ads strip',
                             ])
                             ->default('home_after_hero')
                             ->required(),

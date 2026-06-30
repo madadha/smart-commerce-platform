@@ -399,6 +399,10 @@
     </a>
 @endif
 
+@if(request()->is('store') || request()->is('store/*'))
+    <x-cookie-consent :locale="$currentLocale" />
+@endif
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

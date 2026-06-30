@@ -235,12 +235,17 @@ class StorefrontController extends Controller
             ->orderBy('id')
             ->get();
 
+        $productAdSlides = StorefrontPromotion::activeForPlacement('products_ads_hero', 8);
+        $productAdTiles = StorefrontPromotion::activeForPlacement('products_ads_strip', 8);
+
         return view('storefront.products.index', [
             'locale' => $locale,
             'direction' => $this->direction($locale),
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
+            'productAdSlides' => $productAdSlides,
+            'productAdTiles' => $productAdTiles,
             'storefrontSettings' => StorefrontSetting::current(),
             'filters' => [
                 'q' => $search,
