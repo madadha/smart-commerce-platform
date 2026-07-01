@@ -8,6 +8,8 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\Currency;
+use App\Models\Game;
+use App\Models\GameRegion;
 use App\Models\MediaFile;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
@@ -224,6 +226,30 @@ class ProductForm
                 Section::make('Game Top-Up Settings')
                     ->description('Use this section for products such as PUBG UC, game recharge packages, subscriptions, or direct player top-ups.')
                     ->schema([
+                        Select::make('game_id')
+                            ->label('Linked Game')
+                            ->options(fn (): array => Game::query()
+                                ->active()
+                                ->ordered()
+                                ->get()
+                                ->mapWithKeys(fn (Game $game): array => [
+                                    $game->id => $game->getName(app()->getLocale()) . ' - ' . $game->slug,
+                                ])
+                                ->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->helperText('Choose the game from Gaming Recharge catalog. Product title fields below remain as optional fallback.'),
+
+                        Select::make('gameRegions')
+                            ->label('Supported Regions For This Product')
+                            ->relationship(name: 'gameRegions', titleAttribute: 'code')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->getOptionLabelFromRecordUsing(fn (GameRegion $record): string => $record->getName(app()->getLocale()) . ' - ' . $record->code)
+                            ->helperText('Optional. If empty, the storefront uses all active regions linked to the selected game.'),
+
                         TextInput::make('game_title.ar')
                             ->label('Game Title Arabic')
                             ->placeholder('PUBG MOBILE'),
@@ -276,6 +302,13 @@ class ProductForm
                         Toggle::make('game_requires_server')
                             ->label('Require Server')
                             ->default(false),
+
+                        KeyValue::make('game_server_options')
+                            ->label('Server Options')
+                            ->keyLabel('Server Code')
+                            ->valueLabel('Customer Label')
+                            ->helperText('Optional. Add choices like asia => Asia Server. If empty and server is required, customer can type it manually.')
+                            ->columnSpanFull(),
 
                         Toggle::make('game_can_validate_player')
                             ->label('Provider Can Validate Player')

@@ -7,6 +7,8 @@ use App\Models\Coupon;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Game;
+use App\Models\GameRegion;
 use App\Models\Order;
 use App\Models\PaymentProviderSetting;
 use App\Models\Product;
@@ -73,6 +75,48 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertSame('Middle East', $item->options['game_topup']['region']);
         $this->assertSame('PUBG-60-UC', $item->options['game_topup']['provider_sku']);
         $this->assertSame('manual', $item->options['game_topup']['delivery_mode']);
+    }
+
+    public function test_game_topup_product_page_uses_managed_game_regions_and_server_options(): void
+    {
+        [$product] = $this->createLinkedGameTopUpProduct();
+
+        $response = $this->get('/store/products/'.$product->slug.'?lang=en');
+
+        $response->assertOk();
+        $response->assertSee('name="game_region_id"', false);
+        $response->assertSee('Middle East - MIDDLE_EAST');
+        $response->assertSee('name="game_server_key"', false);
+        $response->assertSee('Asia Server');
+    }
+
+    public function test_game_topup_add_to_cart_stores_linked_game_region_and_server_snapshot(): void
+    {
+        [$product, $variant, $region] = $this->createLinkedGameTopUpProduct();
+
+        $this->from('/store/products/'.$product->slug.'?lang=en')
+            ->post(route('storefront.cart.add'), [
+                'product_id' => $product->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => 1,
+                'game_player_id' => '99887766',
+                'game_region_id' => $region->id,
+                'game_server_key' => 'asia',
+                'lang' => 'en',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $cart = Cart::query()->findOrFail(session('storefront_cart_id'));
+        $gameTopUp = $cart->items()->firstOrFail()->options['game_topup'];
+
+        $this->assertSame($product->game_id, $gameTopUp['game_id']);
+        $this->assertSame('PUBG MOBILE', $gameTopUp['game_title']);
+        $this->assertSame($region->id, $gameTopUp['region_id']);
+        $this->assertSame('MIDDLE_EAST', $gameTopUp['region_code']);
+        $this->assertSame('Middle East', $gameTopUp['region']);
+        $this->assertSame('asia', $gameTopUp['server_key']);
+        $this->assertSame('Asia Server', $gameTopUp['server']);
     }
 
     public function test_game_topup_is_blocked_when_disabled_from_storefront_settings(): void
@@ -521,5 +565,49 @@ class StorefrontCartCheckoutTest extends TestCase
         ]);
 
         return [$product, $variant];
+    }
+
+    private function createLinkedGameTopUpProduct(string $suffix = 'linked'): array
+    {
+        [$product, $variant] = $this->createGameTopUpProduct($suffix);
+
+        $game = Game::query()->forceCreate([
+            'name' => ['en' => 'PUBG MOBILE', 'ar' => 'PUBG MOBILE', 'he' => 'PUBG MOBILE'],
+            'slug' => 'pubg-mobile-'.$suffix.'-'.uniqid(),
+            'description' => ['en' => 'Recharge PUBG UC'],
+            'default_provider' => 'Manual Team',
+            'supports_player_validation' => false,
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $region = GameRegion::query()->forceCreate([
+            'name' => ['en' => 'Middle East', 'ar' => 'الشرق الأوسط', 'he' => 'Middle East'],
+            'code' => 'middle-east',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $game->regions()->attach($region->id, [
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $product->forceFill([
+            'game_id' => $game->id,
+            'game_requires_region' => true,
+            'game_requires_server' => true,
+            'game_server_options' => [
+                'asia' => 'Asia Server',
+                'europe' => 'Europe Server',
+            ],
+        ])->save();
+
+        $product->gameRegions()->attach($region->id, [
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        return [$product->fresh(['game.activeRegions', 'gameRegions']), $variant, $region];
     }
 }

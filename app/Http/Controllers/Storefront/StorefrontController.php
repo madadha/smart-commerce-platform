@@ -295,6 +295,8 @@ class StorefrontController extends Controller
                 'options' => fn ($query) => $query->where('is_active', true),
                 'variants' => fn ($query) => $query->where('is_active', true)->with('mediaFile'),
                 'media' => fn ($query) => $query->where('is_active', true)->with('mediaFile'),
+                'game.activeRegions',
+                'gameRegions',
                 'approvedReviews',
                 'approvedQuestions',
             ])

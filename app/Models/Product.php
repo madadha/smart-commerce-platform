@@ -35,6 +35,7 @@ class Product extends Model
         'main_image',
         'youtube_url',
         'youtube_enabled',
+        'game_id',
         'game_title',
         'game_currency_name',
         'game_delivery_mode',
@@ -43,6 +44,7 @@ class Product extends Model
         'game_requires_player_id',
         'game_requires_region',
         'game_requires_server',
+        'game_server_options',
         'game_can_validate_player',
         'game_player_id_label',
         'game_region_label',
@@ -81,6 +83,7 @@ class Product extends Model
         'game_requires_player_id' => 'boolean',
         'game_requires_region' => 'boolean',
         'game_requires_server' => 'boolean',
+        'game_server_options' => 'array',
         'game_can_validate_player' => 'boolean',
         'game_player_id_label' => 'array',
         'game_region_label' => 'array',
@@ -135,6 +138,11 @@ class Product extends Model
         return $this->belongsTo(Currency::class);
     }
 
+    public function game(): BelongsTo
+    {
+        return $this->belongsTo(Game::class);
+    }
+
     public function mainMedia(): BelongsTo
     {
         return $this->belongsTo(MediaFile::class, 'main_media_id');
@@ -145,6 +153,72 @@ class Product extends Model
         return $this->belongsToMany(Category::class)
             ->withPivot('sort_order')
             ->withTimestamps();
+    }
+
+    public function gameRegions(): BelongsToMany
+    {
+        return $this->belongsToMany(GameRegion::class, 'game_product_region')
+            ->withPivot(['is_active', 'sort_order'])
+            ->withTimestamps()
+            ->orderByPivot('sort_order')
+            ->orderBy('game_regions.sort_order')
+            ->orderBy('game_regions.id');
+    }
+
+    public function activeGameRegions(): BelongsToMany
+    {
+        return $this->gameRegions()
+            ->wherePivot('is_active', true)
+            ->where('game_regions.is_active', true);
+    }
+
+    public function availableGameRegions()
+    {
+        if ($this->relationLoaded('gameRegions') && $this->gameRegions->isNotEmpty()) {
+            return $this->gameRegions
+                ->filter(fn (GameRegion $region): bool => (bool) $region->is_active && (bool) ($region->pivot?->is_active ?? true))
+                ->values();
+        }
+
+        if ($this->relationLoaded('game') && $this->game?->relationLoaded('activeRegions')) {
+            return $this->game->activeRegions;
+        }
+
+        if ($this->game_id) {
+            return $this->activeGameRegions()->get()->whenEmpty(function () {
+                return $this->game?->activeRegions()->get() ?? collect();
+            });
+        }
+
+        return collect();
+    }
+
+    public function gameServerOptions(): array
+    {
+        $options = $this->game_server_options ?? [];
+
+        if (! is_array($options)) {
+            return [];
+        }
+
+        return collect($options)
+            ->mapWithKeys(function ($label, $key): array {
+                if (is_array($label)) {
+                    $value = $label['value'] ?? $label['label'] ?? $key;
+                    $key = $label['key'] ?? $value;
+                    $label = $value;
+                }
+
+                $key = trim((string) $key);
+                $label = trim((string) $label);
+
+                if ($key === '' || $label === '') {
+                    return [];
+                }
+
+                return [$key => $label];
+            })
+            ->all();
     }
 
     public function scopeActive($query)

@@ -100,6 +100,12 @@
         $storefrontSettings = $storefrontSettings ?? \App\Models\StorefrontSetting::current();
         $gameTopUpsEnabled = $storefrontSettings?->enable_game_topups ?? true;
         $isGameTopUp = $productTypeValue($product) === 'game_topup';
+        $availableGameRegions = $isGameTopUp && method_exists($product, 'availableGameRegions')
+            ? $product->availableGameRegions()
+            : collect();
+        $gameServerOptions = $isGameTopUp && method_exists($product, 'gameServerOptions')
+            ? $product->gameServerOptions()
+            : [];
         $localizedProductField = function ($value, string $fallback = '') use ($locale): string {
             if (is_string($value)) {
                 $decoded = json_decode($value, true);
@@ -112,6 +118,9 @@
 
             return (string) ($value ?: $fallback);
         };
+        $gameTitle = $product->game
+            ? $product->game->getName($locale)
+            : $localizedProductField($product->game_title, $product->getName($locale));
     @endphp
 
     <section class="scp-product-details-section">
@@ -312,7 +321,7 @@
             <div class="scp-game-topup-box">
                 <div>
                     <span>{{ __('storefront.game_topup.badge') }}</span>
-                    <strong>{{ $localizedProductField($product->game_title, $product->getName($locale)) }}</strong>
+                    <strong>{{ $gameTitle }}</strong>
                     @if($localizedProductField($product->game_currency_name))
                         <small>{{ __('storefront.game_topup.currency') }}: {{ $localizedProductField($product->game_currency_name) }}</small>
                     @endif
@@ -346,26 +355,48 @@
                         @if($product->game_requires_region)
                             <label>
                                 <span>{{ $localizedProductField($product->game_region_label, __('storefront.game_topup.region')) }}</span>
-                                <input
-                                    type="text"
-                                    name="game_region"
-                                    value="{{ old('game_region') }}"
-                                    placeholder="{{ __('storefront.game_topup.region_placeholder') }}"
-                                    required
-                                >
+                                @if($availableGameRegions->isNotEmpty())
+                                    <select name="game_region_id" required>
+                                        <option value="">{{ __('storefront.game_topup.region_placeholder') }}</option>
+                                        @foreach($availableGameRegions as $region)
+                                            <option value="{{ $region->id }}" @selected((string) old('game_region_id') === (string) $region->id)>
+                                                {{ $region->getName($locale) }}{{ $region->code ? ' - '.$region->code : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <input
+                                        type="text"
+                                        name="game_region"
+                                        value="{{ old('game_region') }}"
+                                        placeholder="{{ __('storefront.game_topup.region_placeholder') }}"
+                                        required
+                                    >
+                                @endif
                             </label>
                         @endif
 
                         @if($product->game_requires_server)
                             <label>
                                 <span>{{ $localizedProductField($product->game_server_label, __('storefront.game_topup.server')) }}</span>
-                                <input
-                                    type="text"
-                                    name="game_server"
-                                    value="{{ old('game_server') }}"
-                                    placeholder="{{ __('storefront.game_topup.server_placeholder') }}"
-                                    required
-                                >
+                                @if(! empty($gameServerOptions))
+                                    <select name="game_server_key" required>
+                                        <option value="">{{ __('storefront.game_topup.server_placeholder') }}</option>
+                                        @foreach($gameServerOptions as $serverKey => $serverLabel)
+                                            <option value="{{ $serverKey }}" @selected((string) old('game_server_key') === (string) $serverKey)>
+                                                {{ $serverLabel }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <input
+                                        type="text"
+                                        name="game_server"
+                                        value="{{ old('game_server') }}"
+                                        placeholder="{{ __('storefront.game_topup.server_placeholder') }}"
+                                        required
+                                    >
+                                @endif
                             </label>
                         @endif
                     </div>

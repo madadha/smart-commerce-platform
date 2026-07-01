@@ -1337,7 +1337,8 @@ select {
     font-weight: 850;
 }
 
-.scp-game-topup-fields input {
+.scp-game-topup-fields input,
+.scp-game-topup-fields select {
     width: 100%;
     border: 1px solid rgba(148, 163, 184, 0.30);
     border-radius: 14px;
@@ -1348,7 +1349,8 @@ select {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.scp-game-topup-fields input:focus {
+.scp-game-topup-fields input:focus,
+.scp-game-topup-fields select:focus {
     border-color: var(--scp-primary);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }

@@ -420,6 +420,8 @@ return [
     'validation_available' => 'Player validation is enabled when the connected provider supports it.',
     'manual_check_note' => 'Please double-check the player details. This recharge will be reviewed before fulfillment.',
     'disabled' => 'Game top-up products are currently disabled by store settings.',
+    'invalid_region' => 'Please choose a valid game region.',
+    'invalid_server' => 'Please choose a valid game server.',
 ],
 
 

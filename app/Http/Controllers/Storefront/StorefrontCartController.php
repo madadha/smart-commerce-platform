@@ -58,7 +58,7 @@ class StorefrontCartController extends Controller
         $quantity = max(1, (int) ($validated['quantity'] ?? 1));
 
         $product = Product::query()
-            ->with(['currency', 'activeVariants'])
+            ->with(['currency', 'activeVariants', 'game.activeRegions', 'gameRegions'])
             ->where('is_active', true)
             ->findOrFail($validated['product_id']);
 
@@ -476,16 +476,49 @@ class StorefrontCartController extends Controller
             return false;
         }
 
+        $availableRegions = $product->availableGameRegions();
+        $serverOptions = $product->gameServerOptions();
+
         $rules = [
             'game_player_id' => [$product->game_requires_player_id ? 'required' : 'nullable', 'string', 'max:120'],
-            'game_region' => [$product->game_requires_region ? 'required' : 'nullable', 'string', 'max:120'],
-            'game_server' => [$product->game_requires_server ? 'required' : 'nullable', 'string', 'max:120'],
+            'game_region_id' => [$product->game_requires_region && $availableRegions->isNotEmpty() ? 'required' : 'nullable', 'integer'],
+            'game_region' => [$product->game_requires_region && $availableRegions->isEmpty() ? 'required' : 'nullable', 'string', 'max:120'],
+            'game_server_key' => [$product->game_requires_server && $serverOptions !== [] ? 'required' : 'nullable', 'string', 'max:120'],
+            'game_server' => [$product->game_requires_server && $serverOptions === [] ? 'required' : 'nullable', 'string', 'max:120'],
         ];
 
         $validated = $request->validate($rules);
+        $selectedRegion = null;
+
+        if ($product->game_requires_region) {
+            $selectedRegionId = (int) ($validated['game_region_id'] ?? 0);
+            $selectedRegion = $availableRegions->firstWhere('id', $selectedRegionId);
+
+            if ($availableRegions->isNotEmpty() && ! $selectedRegion) {
+                abort(422, __('storefront.game_topup.invalid_region'));
+            }
+        }
+
+        $selectedServerKey = trim((string) ($validated['game_server_key'] ?? ''));
+        $server = trim((string) ($validated['game_server'] ?? ''));
+
+        if ($serverOptions !== []) {
+            if ($product->game_requires_server && $selectedServerKey === '') {
+                abort(422, __('storefront.game_topup.invalid_server'));
+            }
+
+            if ($selectedServerKey !== '' && ! array_key_exists($selectedServerKey, $serverOptions)) {
+                abort(422, __('storefront.game_topup.invalid_server'));
+            }
+
+            $server = $selectedServerKey !== '' ? $serverOptions[$selectedServerKey] : '';
+        }
 
         return [
-            'game_title' => $this->localizedProductField($product->game_title, $locale, $product->getName($locale)),
+            'game_id' => $product->game_id,
+            'game_title' => $product->game
+                ? $product->game->getName($locale)
+                : $this->localizedProductField($product->game_title, $locale, $product->getName($locale)),
             'currency_name' => $this->localizedProductField($product->game_currency_name, $locale, null),
             'delivery_mode' => $product->game_delivery_mode ?: 'manual',
             'provider' => $product->game_provider,
@@ -495,8 +528,13 @@ class StorefrontCartController extends Controller
             'requires_server' => (bool) $product->game_requires_server,
             'can_validate_player' => (bool) $product->game_can_validate_player,
             'player_id' => trim((string) ($validated['game_player_id'] ?? '')),
-            'region' => trim((string) ($validated['game_region'] ?? '')),
-            'server' => trim((string) ($validated['game_server'] ?? '')),
+            'region_id' => $selectedRegion?->id,
+            'region_code' => $selectedRegion?->code,
+            'region' => $selectedRegion
+                ? $selectedRegion->getName($locale)
+                : trim((string) ($validated['game_region'] ?? '')),
+            'server_key' => $selectedServerKey ?: null,
+            'server' => $server,
         ];
     }
 
