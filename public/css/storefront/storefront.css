@@ -1355,6 +1355,17 @@ select {
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
+.scp-variant-card .scp-variant-package {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.10);
+    color: var(--scp-primary);
+    font-weight: 900;
+}
+
 .scp-game-topup-disabled {
     padding: 12px 14px;
     border-radius: 16px;

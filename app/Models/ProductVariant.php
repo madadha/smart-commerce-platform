@@ -14,8 +14,14 @@ class ProductVariant extends Model
         'name',
         'sku',
         'provider_sku',
+        'provider_package_id',
+        'provider_payload',
+        'fulfillment_mode',
         'barcode',
         'option_values',
+        'package_amount',
+        'package_unit',
+        'package_label',
         'media_file_id',
         'image',
         'price',
@@ -36,6 +42,9 @@ class ProductVariant extends Model
     protected $casts = [
         'name' => 'array',
         'option_values' => 'array',
+        'package_amount' => 'decimal:2',
+        'package_label' => 'array',
+        'provider_payload' => 'array',
         'price' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
@@ -104,6 +113,48 @@ class ProductVariant extends Model
         }
 
         return is_array($values) ? $values : [];
+    }
+
+    public function getPackageLabel(string $locale = 'ar'): string
+    {
+        $label = $this->package_label;
+
+        if (is_string($label)) {
+            $decoded = json_decode($label, true);
+            $label = is_array($decoded) ? $decoded : [];
+        }
+
+        if (is_array($label) && ! empty($label)) {
+            return (string) (
+                $label[$locale]
+                ?? $label['en']
+                ?? $label['ar']
+                ?? $label['he']
+                ?? ''
+            );
+        }
+
+        if ($this->package_amount !== null && filled($this->package_unit)) {
+            return rtrim(rtrim(number_format((float) $this->package_amount, 2, '.', ''), '0'), '.')
+                .' '
+                .(string) $this->package_unit;
+        }
+
+        return $this->getName($locale);
+    }
+
+    public function gamePackageSnapshot(string $locale = 'ar'): array
+    {
+        return [
+            'variant_id' => $this->id,
+            'label' => $this->getPackageLabel($locale),
+            'amount' => $this->package_amount !== null ? (float) $this->package_amount : null,
+            'unit' => $this->package_unit,
+            'provider_sku' => $this->provider_sku,
+            'provider_package_id' => $this->provider_package_id,
+            'fulfillment_mode' => $this->fulfillment_mode,
+            'provider_payload' => $this->provider_payload ?? [],
+        ];
     }
 
     public function getImageUrl(): ?string

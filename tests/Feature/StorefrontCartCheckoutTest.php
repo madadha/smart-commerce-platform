@@ -74,6 +74,10 @@ class StorefrontCartCheckoutTest extends TestCase
         $this->assertSame('5123456789', $item->options['game_topup']['player_id']);
         $this->assertSame('Middle East', $item->options['game_topup']['region']);
         $this->assertSame('PUBG-60-UC', $item->options['game_topup']['provider_sku']);
+        $this->assertSame('provider-60-uc', $item->options['game_topup']['provider_package_id']);
+        $this->assertSame('60 UC', $item->options['game_topup']['package']['label']);
+        $this->assertEquals(60.0, $item->options['game_topup']['package']['amount']);
+        $this->assertSame('UC', $item->options['game_topup']['package']['unit']);
         $this->assertSame('manual', $item->options['game_topup']['delivery_mode']);
     }
 
@@ -88,6 +92,7 @@ class StorefrontCartCheckoutTest extends TestCase
         $response->assertSee('Middle East - MIDDLE_EAST');
         $response->assertSee('name="game_server_key"', false);
         $response->assertSee('Asia Server');
+        $response->assertSee('60 UC');
     }
 
     public function test_game_topup_add_to_cart_stores_linked_game_region_and_server_snapshot(): void
@@ -556,7 +561,13 @@ class StorefrontCartCheckoutTest extends TestCase
             'name' => ['ar' => '60 UC', 'en' => '60 UC'],
             'sku' => 'PUBG-60-'.$suffix.'-'.uniqid(),
             'provider_sku' => 'PUBG-60-UC',
+            'provider_package_id' => 'provider-60-uc',
+            'provider_payload' => ['package_id' => 'provider-60-uc'],
+            'fulfillment_mode' => 'inherit',
             'option_values' => ['package' => '60uc'],
+            'package_amount' => 60,
+            'package_unit' => 'UC',
+            'package_label' => ['ar' => '60 UC', 'en' => '60 UC', 'he' => '60 UC'],
             'price' => 10,
             'track_stock' => false,
             'stock_quantity' => 0,

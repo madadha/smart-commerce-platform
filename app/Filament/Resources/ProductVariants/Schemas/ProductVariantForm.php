@@ -56,6 +56,20 @@ class ProductVariantForm
                             ->maxLength(255)
                             ->helperText('Used by Game Top-Up/API providers for this package.'),
 
+                        TextInput::make('provider_package_id')
+                            ->label('Provider Package ID')
+                            ->maxLength(255)
+                            ->helperText('External package identifier when the provider separates package ID from SKU.'),
+
+                        Select::make('fulfillment_mode')
+                            ->label('Fulfillment Mode')
+                            ->options([
+                                'inherit' => 'Inherit from product',
+                                'manual' => 'Manual fulfillment',
+                                'api' => 'API fulfillment',
+                            ])
+                            ->default('inherit'),
+
                         TextInput::make('barcode')
                             ->label('Barcode')
                             ->maxLength(255),
@@ -84,6 +98,40 @@ class ProductVariantForm
                             ->helperText('Example: color = black, storage = 256gb')
                             ->columnSpanFull(),
                     ]),
+
+                Section::make('Game Top-Up Package')
+                    ->description('Structured package metadata for gaming recharge products, such as 60 UC, 325 Diamonds, or Battle Pass.')
+                    ->schema([
+                        TextInput::make('package_amount')
+                            ->label('Package Amount')
+                            ->numeric()
+                            ->helperText('Example: 60, 325, 660.'),
+
+                        TextInput::make('package_unit')
+                            ->label('Package Unit')
+                            ->maxLength(255)
+                            ->placeholder('UC / Diamonds / Coins'),
+
+                        TextInput::make('package_label.ar')
+                            ->label('Package Label Arabic')
+                            ->maxLength(255),
+
+                        TextInput::make('package_label.he')
+                            ->label('Package Label Hebrew')
+                            ->maxLength(255),
+
+                        TextInput::make('package_label.en')
+                            ->label('Package Label English')
+                            ->maxLength(255),
+
+                        KeyValue::make('provider_payload')
+                            ->label('Provider Payload')
+                            ->keyLabel('Provider Key')
+                            ->valueLabel('Value')
+                            ->helperText('Optional extra fields required by the API provider.')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(3),
 
                 Section::make('Variant Image')
                     ->schema([

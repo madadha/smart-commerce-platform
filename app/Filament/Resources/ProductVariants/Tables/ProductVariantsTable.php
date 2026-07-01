@@ -44,6 +44,29 @@ class ProductVariantsTable
                     ->searchable()
                     ->placeholder('-'),
 
+                Tables\Columns\TextColumn::make('package')
+                    ->label('Package')
+                    ->state(fn (ProductVariant $record): string => $record->getPackageLabel(app()->getLocale()))
+                    ->searchable(query: function ($query, string $search) {
+                        return $query->where('package_unit', 'like', "%{$search}%")
+                            ->orWhere('package_label->ar', 'like', "%{$search}%")
+                            ->orWhere('package_label->en', 'like', "%{$search}%")
+                            ->orWhere('package_label->he', 'like', "%{$search}%");
+                    })
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('provider_sku')
+                    ->label('Provider SKU')
+                    ->searchable()
+                    ->placeholder('-')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('provider_package_id')
+                    ->label('Provider Package ID')
+                    ->searchable()
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('option_values')
                     ->label('Options')
                     ->formatStateUsing(function ($state): string {

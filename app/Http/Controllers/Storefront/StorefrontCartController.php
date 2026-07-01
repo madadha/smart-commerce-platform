@@ -514,15 +514,23 @@ class StorefrontCartController extends Controller
             $server = $selectedServerKey !== '' ? $serverOptions[$selectedServerKey] : '';
         }
 
+        $variantPackage = $variant && method_exists($variant, 'gamePackageSnapshot')
+            ? $variant->gamePackageSnapshot($locale)
+            : null;
+
         return [
             'game_id' => $product->game_id,
             'game_title' => $product->game
                 ? $product->game->getName($locale)
                 : $this->localizedProductField($product->game_title, $locale, $product->getName($locale)),
             'currency_name' => $this->localizedProductField($product->game_currency_name, $locale, null),
-            'delivery_mode' => $product->game_delivery_mode ?: 'manual',
+            'delivery_mode' => $variantPackage && in_array($variantPackage['fulfillment_mode'], ['manual', 'api'], true)
+                ? $variantPackage['fulfillment_mode']
+                : ($product->game_delivery_mode ?: 'manual'),
             'provider' => $product->game_provider,
-            'provider_sku' => $variant?->provider_sku ?: $product->game_provider_sku,
+            'provider_sku' => $variantPackage['provider_sku'] ?? $product->game_provider_sku,
+            'provider_package_id' => $variantPackage['provider_package_id'] ?? null,
+            'package' => $variantPackage,
             'requires_player_id' => (bool) $product->game_requires_player_id,
             'requires_region' => (bool) $product->game_requires_region,
             'requires_server' => (bool) $product->game_requires_server,

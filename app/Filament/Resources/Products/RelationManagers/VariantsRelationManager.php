@@ -9,6 +9,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -30,6 +31,21 @@ class VariantsRelationManager extends RelationManager
             TextInput::make('name.en')->label('Name (English)'),
             TextInput::make('sku')->unique(ignoreRecord: true),
             TextInput::make('provider_sku')->label('Provider SKU')->helperText('Optional provider package SKU for Game Top-Up products.'),
+            TextInput::make('provider_package_id')->label('Provider Package ID')->helperText('External package ID when used by provider API.'),
+            Select::make('fulfillment_mode')
+                ->label('Fulfillment Mode')
+                ->options([
+                    'inherit' => 'Inherit from product',
+                    'manual' => 'Manual fulfillment',
+                    'api' => 'API fulfillment',
+                ])
+                ->default('inherit'),
+            TextInput::make('package_amount')->label('Package Amount')->numeric()->helperText('Example: 60'),
+            TextInput::make('package_unit')->label('Package Unit')->placeholder('UC / Diamonds / Coins'),
+            TextInput::make('package_label.ar')->label('Package Label (Arabic)'),
+            TextInput::make('package_label.he')->label('Package Label (Hebrew)'),
+            TextInput::make('package_label.en')->label('Package Label (English)'),
+            KeyValue::make('provider_payload')->keyLabel('Provider key')->valueLabel('Value')->helperText('Optional provider API payload fields.')->columnSpanFull(),
             KeyValue::make('option_values')->keyLabel('Option slug')->valueLabel('Technical value')->helperText('Must match Product Options, e.g. storage = 256gb')->columnSpanFull(),
             FileUpload::make('image')->image()->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->disk('public')->directory('products/variants')->visibility('public')->maxSize(5120)->imageEditor(),
             TextInput::make('price')->numeric()->helperText('Leave empty to use the product price.'),
@@ -49,7 +65,10 @@ class VariantsRelationManager extends RelationManager
                 Tables\Columns\ImageColumn::make('image')->disk('public')->square(),
                 Tables\Columns\TextColumn::make('name.ar')->label('Variant'),
                 Tables\Columns\TextColumn::make('sku')->searchable(),
+                Tables\Columns\TextColumn::make('package_amount')->label('Amount')->toggleable(),
+                Tables\Columns\TextColumn::make('package_unit')->label('Unit')->toggleable(),
                 Tables\Columns\TextColumn::make('provider_sku')->label('Provider SKU')->toggleable(),
+                Tables\Columns\TextColumn::make('provider_package_id')->label('Provider Package ID')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('option_values')->formatStateUsing(fn ($state) => collect($state ?? [])->map(fn ($value, $key) => "$key: $value")->implode(' | ')),
                 Tables\Columns\TextColumn::make('price')->money('ILS'),
                 Tables\Columns\TextColumn::make('stock_quantity')->label('Stock'),

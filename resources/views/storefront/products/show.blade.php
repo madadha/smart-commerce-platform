@@ -88,6 +88,7 @@
         $variantPayload = $activeVariants->map(fn ($variant) => [
             'id' => $variant->id,
             'name' => $variant->getName($locale),
+            'package_label' => method_exists($variant, 'getPackageLabel') ? $variant->getPackageLabel($locale) : $variant->getName($locale),
             'sku' => $variant->sku,
             'options' => $variant->getOptionValues(),
             'price' => $variant->finalPrice(),
@@ -286,6 +287,10 @@
                                 @foreach($activeVariants as $variant)
                                     <button type="button" class="scp-variant-card {{ $selectedVariant?->id === $variant->id ? 'active' : '' }}" data-scp-variant-id="{{ $variant->id }}" @disabled(! $variant->isInStock())>
                                         <span>{{ $variant->getName($locale) }}</span>
+
+                                        @if($isGameTopUp && method_exists($variant, 'getPackageLabel'))
+                                            <small class="scp-variant-package">{{ $variant->getPackageLabel($locale) }}</small>
+                                        @endif
 
                                         @if(! empty($variant->sku))
                                             <small>{{ $variant->sku }}</small>
